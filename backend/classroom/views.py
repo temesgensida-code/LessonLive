@@ -8,11 +8,11 @@ from django.contrib.auth.models import User
 from django.core.mail import send_mail
 from django.core.validators import validate_email
 from django.core.exceptions import ValidationError
-from django.db import transaction
 from django.http import JsonResponse
 from django.utils import timezone
 from django.views.decorators.csrf import csrf_exempt
 
+from authentication.jwt_auth import get_user_from_request
 from authentication.models import UserProfile
 from classroom.models import Classroom, ClassroomInvitation, Enrollment
 
@@ -24,12 +24,15 @@ def _json_body(request):
 
 
 def _require_teacher(request):
-	if not request.user.is_authenticated:
-		return JsonResponse({'detail': 'Authentication required'}, status=401)
-	role = getattr(getattr(request.user, 'profile', None), 'role', None)
+	user = get_user_from_request(request)
+	if user is None:
+		return None, JsonResponse({'detail': 'Authentication required'}, status=401)
+
+	role = getattr(getattr(user, 'profile', None), 'role', None)
 	if role != UserProfile.ROLE_TEACHER:
-		return JsonResponse({'detail': 'Teacher role required'}, status=403)
-	return None
+		return None, JsonResponse({'detail': 'Teacher role required'}, status=403)
+
+	return user, None
 
 
 def _collect_emails(emails_text, csv_file):
@@ -78,7 +81,7 @@ def create_classroom(request):
 	if request.method != 'POST':
 		return JsonResponse({'detail': 'Method not allowed'}, status=405)
 
-	teacher_error = _require_teacher(request)
+	user, teacher_error = _require_teacher(request)
 	if teacher_error:
 		return teacher_error
 
@@ -87,7 +90,7 @@ def create_classroom(request):
 	if not class_name:
 		return JsonResponse({'detail': 'Classroom name is required'}, status=400)
 
-	classroom = Classroom.objects.create(owner=request.user, name=class_name)
+	classroom = Classroom.objects.create(owner=user, name=class_name)
 	return JsonResponse(
 		{
 			'classroom': _serialize_classroom(classroom),
@@ -98,15 +101,17 @@ def create_classroom(request):
 
 
 def list_my_classrooms(request):
-	if not request.user.is_authenticated:
+	user = get_user_from_request(request)
+	if user is None:
 		return JsonResponse({'detail': 'Authentication required'}, status=401)
 
-	classrooms = Classroom.objects.filter(owner=request.user).order_by('-created_at')
+	classrooms = Classroom.objects.filter(owner=user).order_by('-created_at')
 	return JsonResponse({'classrooms': [_serialize_classroom(item) for item in classrooms]})
 
 
 def classroom_detail(request, class_id):
-	if not request.user.is_authenticated:
+	user = get_user_from_request(request)
+	if user is None:
 		return JsonResponse({'detail': 'Authentication required'}, status=401)
 
 	try:
@@ -114,10 +119,10 @@ def classroom_detail(request, class_id):
 	except Classroom.DoesNotExist:
 		return JsonResponse({'detail': 'Classroom not found'}, status=404)
 
-	if classroom.owner_id == request.user.id:
+	if classroom.owner_id == user.id:
 		return JsonResponse({'classroom': _serialize_classroom(classroom, include_students=True), 'owned': True})
 
-	is_enrolled = Enrollment.objects.filter(classroom=classroom, student=request.user).exists()
+	is_enrolled = Enrollment.objects.filter(classroom=classroom, student=user).exists()
 	if not is_enrolled:
 		return JsonResponse({'detail': 'Not allowed'}, status=403)
 
@@ -129,18 +134,24 @@ def invite_students(request, class_id):
 	if request.method != 'POST':
 		return JsonResponse({'detail': 'Method not allowed'}, status=405)
 
-	teacher_error = _require_teacher(request)
+	teacher, teacher_error = _require_teacher(request)
 	if teacher_error:
 		return teacher_error
 
 	try:
-		classroom = Classroom.objects.get(class_id=class_id, owner=request.user)
+		classroom = Classroom.objects.get(class_id=class_id, owner=teacher)
 	except Classroom.DoesNotExist:
 		return JsonResponse({'detail': 'Classroom not found'}, status=404)
 
 	emails_text = request.POST.get('emails', '')
 	csv_file = request.FILES.get('file')
-	expiration_hours = int(request.POST.get('expiration_hours', 72))
+	try:
+		expiration_hours = int(request.POST.get('expiration_hours', 72))
+	except (TypeError, ValueError):
+		return JsonResponse({'detail': 'expiration_hours must be an integer'}, status=400)
+
+	if expiration_hours <= 0:
+		return JsonResponse({'detail': 'expiration_hours must be greater than 0'}, status=400)
 
 	emails = _collect_emails(emails_text, csv_file)
 	if not emails:
@@ -149,50 +160,51 @@ def invite_students(request, class_id):
 	invited = []
 	skipped = []
 
-	with transaction.atomic():
-		for email in emails:
-			try:
-				validate_email(email)
-			except ValidationError:
-				skipped.append({'email': email, 'reason': 'invalid_email'})
-				continue
+	for email in emails:
+		try:
+			validate_email(email)
+		except ValidationError:
+			skipped.append({'email': email, 'reason': 'invalid_email'})
+			continue
 
-			user = User.objects.filter(email__iexact=email).first()
-			if user and Enrollment.objects.filter(classroom=classroom, student=user).exists():
-				skipped.append({'email': email, 'reason': 'already_enrolled'})
-				continue
+		existing_user = User.objects.filter(email__iexact=email).first()
+		if existing_user and Enrollment.objects.filter(classroom=classroom, student=existing_user).exists():
+			skipped.append({'email': email, 'reason': 'already_enrolled'})
+			continue
 
-			existing_pending = ClassroomInvitation.objects.filter(
-				classroom=classroom,
-				email__iexact=email,
-				status=ClassroomInvitation.STATUS_PENDING,
-				expires_at__gt=timezone.now(),
-			).exists()
-			if existing_pending:
-				skipped.append({'email': email, 'reason': 'already_invited'})
-				continue
+		existing_pending = ClassroomInvitation.objects.filter(
+			classroom=classroom,
+			email__iexact=email,
+			status=ClassroomInvitation.STATUS_PENDING,
+			expires_at__gt=timezone.now(),
+		).exists()
+		if existing_pending:
+			skipped.append({'email': email, 'reason': 'already_invited'})
+			continue
 
-			raw_token, token_hash = ClassroomInvitation.issue_token()
-			invite = ClassroomInvitation.objects.create(
-				classroom=classroom,
-				invited_by=request.user,
-				email=email,
-				role=ClassroomInvitation.ROLE_STUDENT,
-				token_hash=token_hash,
-				expires_at=timezone.now() + timedelta(hours=expiration_hours),
-				status=ClassroomInvitation.STATUS_PENDING,
-			)
+		raw_token, token_hash = ClassroomInvitation.issue_token()
+		expires_at = timezone.now() + timedelta(hours=expiration_hours)
+		invite = ClassroomInvitation.objects.create(
+			classroom=classroom,
+			invited_by=teacher,
+			email=email,
+			role=ClassroomInvitation.ROLE_STUDENT,
+			token_hash=token_hash,
+			expires_at=expires_at,
+			status=ClassroomInvitation.STATUS_PENDING,
+		)
 
-			invite_link = f"{settings.FRONTEND_BASE_URL}/invite/{raw_token}"
-			teacher_name = request.user.get_full_name() or request.user.email
-			message = (
-				f"Hello,\n\n"
-				f"{teacher_name} invited you to join the class '{classroom.name}'.\n\n"
-				f"Join now: {invite_link}\n"
-				f"This invitation expires at {invite.expires_at.isoformat()} (UTC).\n\n"
-				f"If you already have an account, log in and you'll be enrolled automatically."
-			)
+		invite_link = f"{settings.FRONTEND_BASE_URL}/invite/{raw_token}"
+		teacher_name = teacher.get_full_name() or teacher.email
+		message = (
+			f"Hello,\n\n"
+			f"{teacher_name} invited you to join the class '{classroom.name}'.\n\n"
+			f"Join now: {invite_link}\n"
+			f"This invitation expires at {invite.expires_at.isoformat()} (UTC).\n\n"
+			f"If you already have an account, log in and you'll be enrolled automatically."
+		)
 
+		try:
 			send_mail(
 				subject=f"Invitation to join {classroom.name}",
 				message=message,
@@ -200,15 +212,19 @@ def invite_students(request, class_id):
 				recipient_list=[email],
 				fail_silently=False,
 			)
+		except Exception:
+			invite.delete()
+			skipped.append({'email': email, 'reason': 'email_send_failed'})
+			continue
 
-			invited.append(
-				{
-					'email': email,
-					'existing_user': bool(user),
-					'status': 'pending',
-					'expires_at': invite.expires_at.isoformat(),
-				}
-			)
+		invited.append(
+			{
+				'email': email,
+				'existing_user': bool(existing_user),
+				'status': 'pending',
+				'expires_at': invite.expires_at.isoformat(),
+			}
+		)
 
 	return JsonResponse(
 		{
@@ -222,6 +238,7 @@ def invite_students(request, class_id):
 
 
 def invitation_status(request, token):
+	user = get_user_from_request(request)
 	token_hash = ClassroomInvitation.hash_token(token)
 	invite = ClassroomInvitation.objects.filter(token_hash=token_hash).select_related('classroom').first()
 
@@ -237,8 +254,8 @@ def invitation_status(request, token):
 			invite.save(update_fields=['status'])
 		return JsonResponse({'valid': False, 'reason': 'expired'}, status=400)
 
-	if request.user.is_authenticated:
-		if request.user.email.lower() != invite.email.lower():
+	if user is not None:
+		if user.email.lower() != invite.email.lower():
 			return JsonResponse(
 				{
 					'valid': True,
@@ -248,7 +265,7 @@ def invitation_status(request, token):
 				}
 			)
 
-		Enrollment.objects.get_or_create(classroom=invite.classroom, student=request.user)
+		Enrollment.objects.get_or_create(classroom=invite.classroom, student=user)
 		invite.mark_accepted()
 		return JsonResponse(
 			{

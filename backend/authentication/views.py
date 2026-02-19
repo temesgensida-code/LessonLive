@@ -1,11 +1,17 @@
 import json
-from django.contrib.auth import authenticate, login, logout
+from django.contrib.auth import authenticate
 from django.contrib.auth.models import User
 from django.db import transaction
 from django.http import JsonResponse
-from django.utils import timezone
 from django.views.decorators.csrf import csrf_exempt
 
+from authentication.jwt_auth import (
+	clear_refresh_cookie,
+	get_user_from_request,
+	issue_tokens_for_user,
+	refresh_access_from_cookie,
+	set_refresh_cookie,
+)
 from authentication.models import UserProfile
 from classroom.models import ClassroomInvitation, Enrollment
 
@@ -46,6 +52,17 @@ def _accept_invite_for_user(raw_token, user):
 	}
 
 
+def _auth_payload(user):
+	tokens = issue_tokens_for_user(user)
+	role = getattr(getattr(user, 'profile', None), 'role', None)
+	return {
+		'id': user.id,
+		'email': user.email,
+		'role': role,
+		'access': tokens['access'],
+	}, tokens['refresh']
+
+
 @csrf_exempt
 def teacher_signup(request):
 	if request.method != 'POST':
@@ -73,12 +90,10 @@ def teacher_signup(request):
 		)
 		UserProfile.objects.create(user=user, role=UserProfile.ROLE_TEACHER)
 
-	login(request, user)
-	return JsonResponse({
-		'id': user.id,
-		'email': user.email,
-		'role': UserProfile.ROLE_TEACHER,
-	}, status=201)
+	payload, refresh_token = _auth_payload(user)
+	response = JsonResponse(payload, status=201)
+	set_refresh_cookie(response, refresh_token)
+	return response
 
 
 @csrf_exempt
@@ -125,13 +140,11 @@ def register_from_invite(request):
 		Enrollment.objects.get_or_create(classroom=invite.classroom, student=user)
 		invite.mark_accepted()
 
-	login(request, user)
-	return JsonResponse({
-		'id': user.id,
-		'email': user.email,
-		'role': UserProfile.ROLE_STUDENT,
-		'class_id': invite.classroom.class_id,
-	}, status=201)
+	payload, refresh_token = _auth_payload(user)
+	payload['class_id'] = invite.classroom.class_id
+	response = JsonResponse(payload, status=201)
+	set_refresh_cookie(response, refresh_token)
+	return response
 
 
 @csrf_exempt
@@ -148,33 +161,47 @@ def login_view(request):
 	if user is None:
 		return JsonResponse({'detail': 'Invalid credentials'}, status=400)
 
-	login(request, user)
 	invite_result = _accept_invite_for_user(invite_token, user)
-	role = getattr(getattr(user, 'profile', None), 'role', None)
+	payload, refresh_token = _auth_payload(user)
+	payload['invite_result'] = invite_result
 
-	return JsonResponse({
-		'id': user.id,
-		'email': user.email,
-		'role': role,
-		'invite_result': invite_result,
-	})
+	response = JsonResponse(payload)
+	set_refresh_cookie(response, refresh_token)
+	return response
+
+
+@csrf_exempt
+def refresh_token(request):
+	if request.method != 'POST':
+		return JsonResponse({'detail': 'Method not allowed'}, status=405)
+
+	tokens = refresh_access_from_cookie(request)
+	if tokens is None:
+		return JsonResponse({'detail': 'Invalid or expired refresh token'}, status=401)
+
+	response = JsonResponse({'access': tokens['access']})
+	set_refresh_cookie(response, tokens['refresh'])
+	return response
 
 
 @csrf_exempt
 def logout_view(request):
 	if request.method != 'POST':
 		return JsonResponse({'detail': 'Method not allowed'}, status=405)
-	logout(request)
-	return JsonResponse({'detail': 'Logged out'})
+	response = JsonResponse({'detail': 'Logged out'})
+	clear_refresh_cookie(response)
+	return response
 
 
 def me(request):
-	if not request.user.is_authenticated:
+	user = get_user_from_request(request)
+	if user is None:
 		return JsonResponse({'authenticated': False})
-	role = getattr(getattr(request.user, 'profile', None), 'role', None)
+
+	role = getattr(getattr(user, 'profile', None), 'role', None)
 	return JsonResponse({
 		'authenticated': True,
-		'id': request.user.id,
-		'email': request.user.email,
+		'id': user.id,
+		'email': user.email,
 		'role': role,
 	})

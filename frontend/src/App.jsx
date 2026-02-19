@@ -4,14 +4,45 @@ import './App.css'
 
 const API_BASE = '/api'
 
-async function apiFetch(path, options = {}) {
+async function requestAccessTokenRefresh(setAccessToken) {
+  const response = await fetch(`${API_BASE}/auth/token/refresh/`, {
+    method: 'POST',
+    credentials: 'include',
+  })
+
+  if (!response.ok) {
+    setAccessToken('')
+    return ''
+  }
+
+  const data = await response.json()
+  const access = data?.access || ''
+  setAccessToken(access)
+  return access
+}
+
+async function apiFetch(path, options = {}, auth = {}) {
+  const { accessToken = '', setAccessToken, skipAuthRefresh = false } = auth
+
   const response = await fetch(`${API_BASE}${path}`, {
     credentials: 'include',
     headers: {
+      ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
       ...(options.headers || {}),
     },
     ...options,
   })
+
+  if (response.status === 401 && !skipAuthRefresh && typeof setAccessToken === 'function') {
+    const refreshedAccess = await requestAccessTokenRefresh(setAccessToken)
+    if (refreshedAccess) {
+      return apiFetch(path, options, {
+        accessToken: refreshedAccess,
+        setAccessToken,
+        skipAuthRefresh: true,
+      })
+    }
+  }
 
   const isJson = response.headers.get('content-type')?.includes('application/json')
   const data = isJson ? await response.json() : null
@@ -26,14 +57,24 @@ async function apiFetch(path, options = {}) {
   return data
 }
 
-function useMe() {
+function useMe(accessToken, setAccessToken) {
   const [me, setMe] = useState(null)
   const [loading, setLoading] = useState(true)
 
   const refresh = async () => {
     setLoading(true)
     try {
-      const data = await apiFetch('/auth/me/')
+      let token = accessToken
+      if (!token) {
+        token = await requestAccessTokenRefresh(setAccessToken)
+      }
+
+      if (!token) {
+        setMe(null)
+        return
+      }
+
+      const data = await apiFetch('/auth/me/', {}, { accessToken: token, setAccessToken })
       setMe(data?.authenticated ? data : null)
     } catch {
       setMe(null)
@@ -44,7 +85,7 @@ function useMe() {
 
   useEffect(() => {
     refresh()
-  }, [])
+  }, [accessToken])
 
   return { me, loading, refresh }
 }
@@ -95,20 +136,21 @@ function TeacherAuth({ onSuccess }) {
     setError('')
     setLoading(true)
     try {
+      let data
       if (mode === 'signup') {
-        await apiFetch('/auth/teacher-signup/', {
+        data = await apiFetch('/auth/teacher-signup/', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(form),
-        })
+        }, { skipAuthRefresh: true })
       } else {
-        await apiFetch('/auth/login/', {
+        data = await apiFetch('/auth/login/', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ email: form.email, password: form.password }),
-        })
+        }, { skipAuthRefresh: true })
       }
-      onSuccess()
+      onSuccess(data?.access || '')
     } catch (err) {
       setError(err.message)
     } finally {
@@ -171,7 +213,7 @@ function TeacherAuth({ onSuccess }) {
   )
 }
 
-function TeacherDashboard({ me, refreshMe }) {
+function TeacherDashboard({ me, refreshMe, accessToken, setAccessToken }) {
   const [classrooms, setClassrooms] = useState([])
   const [loading, setLoading] = useState(true)
   const [className, setClassName] = useState('')
@@ -181,7 +223,7 @@ function TeacherDashboard({ me, refreshMe }) {
   const fetchClassrooms = async () => {
     setLoading(true)
     try {
-      const data = await apiFetch('/classrooms/')
+      const data = await apiFetch('/classrooms/', {}, { accessToken, setAccessToken })
       setClassrooms(data.classrooms || [])
     } catch (err) {
       setError(err.message)
@@ -202,7 +244,7 @@ function TeacherDashboard({ me, refreshMe }) {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name: className }),
-      })
+      }, { accessToken, setAccessToken })
       setClassName('')
       await fetchClassrooms()
       refreshMe()
@@ -247,7 +289,7 @@ function TeacherDashboard({ me, refreshMe }) {
   )
 }
 
-function ClassroomPage() {
+function ClassroomPage({ accessToken, setAccessToken }) {
   const { classId } = useParams()
   const [classroom, setClassroom] = useState(null)
   const [owned, setOwned] = useState(false)
@@ -259,7 +301,7 @@ function ClassroomPage() {
 
   const fetchClassroom = async () => {
     try {
-      const data = await apiFetch(`/classrooms/${classId}/`)
+      const data = await apiFetch(`/classrooms/${classId}/`, {}, { accessToken, setAccessToken })
       setClassroom(data.classroom)
       setOwned(data.owned)
     } catch (err) {
@@ -287,7 +329,7 @@ function ClassroomPage() {
       const data = await apiFetch(`/classrooms/${classId}/invite/`, {
         method: 'POST',
         body: formData,
-      })
+      }, { accessToken, setAccessToken })
       setMessage(`Invited ${data.invited_count} students. Skipped ${data.skipped_count}.`)
       setEmails('')
       setFile(null)
@@ -356,7 +398,7 @@ function ClassroomPage() {
   )
 }
 
-function InvitePage() {
+function InvitePage({ accessToken, setAccessToken }) {
   const { token } = useParams()
   const [status, setStatus] = useState(null)
   const [error, setError] = useState('')
@@ -371,7 +413,11 @@ function InvitePage() {
   useEffect(() => {
     const loadStatus = async () => {
       try {
-        const data = await apiFetch(`/classrooms/invitations/${token}/`)
+        const data = await apiFetch(
+          `/classrooms/invitations/${token}/`,
+          {},
+          { accessToken, setAccessToken }
+        )
         setStatus(data)
         if (data.requires_registration) {
           setMode('register')
@@ -402,7 +448,9 @@ function InvitePage() {
           password: form.password,
           invite_token: token,
         }),
-      })
+      }, { skipAuthRefresh: true })
+
+      setAccessToken(data?.access || '')
 
       const classId = data.invite_result?.class_id || status.class_id
       navigate(`/classrooms/${classId}`)
@@ -424,7 +472,9 @@ function InvitePage() {
           first_name: form.first_name,
           last_name: form.last_name,
         }),
-      })
+      }, { skipAuthRefresh: true })
+
+      setAccessToken(data?.access || '')
       navigate(`/classrooms/${data.class_id}`)
     } catch (err) {
       setError(err.message)
@@ -523,13 +573,15 @@ function InvitePage() {
 }
 
 function App() {
-  const { me, loading, refresh } = useMe()
+  const [accessToken, setAccessToken] = useState('')
+  const { me, loading, refresh } = useMe(accessToken, setAccessToken)
   const [logoutError, setLogoutError] = useState('')
 
   const handleLogout = async () => {
     setLogoutError('')
     try {
-      await apiFetch('/auth/logout/', { method: 'POST' })
+      await apiFetch('/auth/logout/', { method: 'POST' }, { accessToken, setAccessToken, skipAuthRefresh: true })
+      setAccessToken('')
       await refresh()
     } catch (err) {
       setLogoutError(err.message)
@@ -551,14 +603,30 @@ function App() {
             loading ? (
               <p>Loading profile…</p>
             ) : me?.authenticated ? (
-              <TeacherDashboard me={me} refreshMe={refresh} />
+              <TeacherDashboard
+                me={me}
+                refreshMe={refresh}
+                accessToken={accessToken}
+                setAccessToken={setAccessToken}
+              />
             ) : (
-              <TeacherAuth onSuccess={refresh} />
+              <TeacherAuth
+                onSuccess={async (newAccessToken) => {
+                  setAccessToken(newAccessToken)
+                  await refresh()
+                }}
+              />
             )
           }
         />
-        <Route path="/classrooms/:classId" element={<ClassroomPage />} />
-        <Route path="/invite/:token" element={<InvitePage />} />
+        <Route
+          path="/classrooms/:classId"
+          element={<ClassroomPage accessToken={accessToken} setAccessToken={setAccessToken} />}
+        />
+        <Route
+          path="/invite/:token"
+          element={<InvitePage accessToken={accessToken} setAccessToken={setAccessToken} />}
+        />
       </Routes>
     </Layout>
   )
