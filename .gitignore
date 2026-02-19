@@ -1,0 +1,12 @@
+.env
+.env.*
+*.env
+
+# Django
+*.sqlite3
+__pycache__/
+*.pyc
+venv/
+
+# Frontend
+node_modules/
