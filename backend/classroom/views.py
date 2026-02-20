@@ -11,10 +11,12 @@ from django.core.exceptions import ValidationError
 from django.http import JsonResponse
 from django.utils import timezone
 from django.views.decorators.csrf import csrf_exempt
+from asgiref.sync import async_to_sync
+from channels.layers import get_channel_layer
 
 from authentication.jwt_auth import get_user_from_request
 from authentication.models import UserProfile
-from classroom.models import Classroom, ClassroomInvitation, Enrollment
+from classroom.models import Classroom, ClassroomInvitation, ClassroomNote, DisplayedClassroomNote, Enrollment
 
 
 def _json_body(request):
@@ -76,6 +78,66 @@ def _serialize_classroom(classroom, include_students=False):
 	return payload
 
 
+def _require_class_member(request, class_id):
+	user = get_user_from_request(request)
+	if user is None:
+		return None, None, False, JsonResponse({'detail': 'Authentication required'}, status=401)
+
+	try:
+		classroom = Classroom.objects.get(class_id=class_id)
+	except Classroom.DoesNotExist:
+		return None, None, False, JsonResponse({'detail': 'Classroom not found'}, status=404)
+
+	is_owner = classroom.owner_id == user.id
+	is_enrolled = Enrollment.objects.filter(classroom=classroom, student=user).exists()
+	if not is_owner and not is_enrolled:
+		return None, None, False, JsonResponse({'detail': 'Not allowed'}, status=403)
+
+	return user, classroom, is_owner, None
+
+
+def _serialize_saved_note(note):
+	return {
+		'id': note.id,
+		'index': note.id,
+		'title': note.title,
+		'content': note.content,
+		'saved_date': note.created_at.isoformat(),
+	}
+
+
+def _serialize_displayed_note(displayed_note):
+	note = displayed_note.note
+	return {
+		'id': displayed_note.id,
+		'note_id': note.id,
+		'index': note.id,
+		'title': note.title,
+		'content': note.content,
+		'saved_date': note.created_at.isoformat(),
+		'displayed_date': displayed_note.displayed_at.isoformat(),
+	}
+
+
+def _note_group_name(class_id):
+	return f'classroom_{class_id}_notes'
+
+
+def _broadcast_note_event(class_id, event_type, payload):
+	channel_layer = get_channel_layer()
+	if channel_layer is None:
+		return
+
+	async_to_sync(channel_layer.group_send)(
+		_note_group_name(class_id),
+		{
+			'type': 'note.event',
+			'event_type': event_type,
+			'payload': payload,
+		},
+	)
+
+
 @csrf_exempt
 def create_classroom(request):
 	if request.method != 'POST':
@@ -106,6 +168,21 @@ def list_my_classrooms(request):
 		return JsonResponse({'detail': 'Authentication required'}, status=401)
 
 	classrooms = Classroom.objects.filter(owner=user).order_by('-created_at')
+	return JsonResponse({'classrooms': [_serialize_classroom(item) for item in classrooms]})
+
+
+def list_enrolled_classrooms(request):
+	user = get_user_from_request(request)
+	if user is None:
+		return JsonResponse({'detail': 'Authentication required'}, status=401)
+
+	classrooms = (
+		Classroom.objects
+		.filter(enrollments__student=user)
+		.select_related('owner')
+		.order_by('-created_at')
+		.distinct()
+	)
 	return JsonResponse({'classrooms': [_serialize_classroom(item) for item in classrooms]})
 
 
@@ -288,3 +365,88 @@ def invitation_status(request, token):
 			'expires_at': invite.expires_at.isoformat(),
 		}
 	)
+
+
+@csrf_exempt
+def classroom_notes(request, class_id):
+	user, classroom, is_owner, error_response = _require_class_member(request, class_id)
+	if error_response:
+		return error_response
+
+	if request.method == 'GET':
+		notes = ClassroomNote.objects.filter(classroom=classroom).order_by('id')
+		return JsonResponse({'notes': [_serialize_saved_note(note) for note in notes]})
+
+	if request.method == 'POST':
+		if not is_owner:
+			return JsonResponse({'detail': 'Only the teacher can save notes'}, status=403)
+
+		data = _json_body(request)
+		title = (data.get('title') or '').strip()
+		content = (data.get('content') or '').strip()
+
+		if not title:
+			return JsonResponse({'detail': 'Note title is required'}, status=400)
+		if not content:
+			return JsonResponse({'detail': 'Note content is required'}, status=400)
+
+		note = ClassroomNote.objects.create(classroom=classroom, title=title, content=content)
+		return JsonResponse({'note': _serialize_saved_note(note)}, status=201)
+
+	return JsonResponse({'detail': 'Method not allowed'}, status=405)
+
+
+def displayed_notes(request, class_id):
+	_, classroom, _, error_response = _require_class_member(request, class_id)
+	if error_response:
+		return error_response
+
+	if request.method != 'GET':
+		return JsonResponse({'detail': 'Method not allowed'}, status=405)
+
+	displayed = DisplayedClassroomNote.objects.filter(classroom=classroom).select_related('note').order_by('displayed_at', 'id')
+	return JsonResponse({'displayed_notes': [_serialize_displayed_note(item) for item in displayed]})
+
+
+@csrf_exempt
+def display_note(request, class_id, note_id):
+	user, classroom, is_owner, error_response = _require_class_member(request, class_id)
+	if error_response:
+		return error_response
+
+	if request.method != 'POST':
+		return JsonResponse({'detail': 'Method not allowed'}, status=405)
+
+	if not is_owner:
+		return JsonResponse({'detail': 'Only the teacher can display notes'}, status=403)
+
+	note = ClassroomNote.objects.filter(classroom=classroom, id=note_id).first()
+	if note is None:
+		return JsonResponse({'detail': 'Note not found'}, status=404)
+
+	displayed = DisplayedClassroomNote.objects.create(classroom=classroom, note=note, displayed_by=user)
+	payload = _serialize_displayed_note(displayed)
+	_broadcast_note_event(class_id, 'note_displayed', payload)
+	return JsonResponse({'displayed_note': payload}, status=201)
+
+
+@csrf_exempt
+def remove_displayed_note(request, class_id, displayed_note_id):
+	_, classroom, is_owner, error_response = _require_class_member(request, class_id)
+	if error_response:
+		return error_response
+
+	if request.method != 'DELETE':
+		return JsonResponse({'detail': 'Method not allowed'}, status=405)
+
+	if not is_owner:
+		return JsonResponse({'detail': 'Only the teacher can remove displayed notes'}, status=403)
+
+	displayed_note = DisplayedClassroomNote.objects.filter(classroom=classroom, id=displayed_note_id).first()
+	if displayed_note is None:
+		return JsonResponse({'detail': 'Displayed note not found'}, status=404)
+
+	displayed_note.delete()
+	payload = {'id': displayed_note_id}
+	_broadcast_note_event(class_id, 'note_removed', payload)
+	return JsonResponse({'removed': payload})

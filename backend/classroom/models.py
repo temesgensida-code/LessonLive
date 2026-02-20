@@ -69,3 +69,29 @@ class ClassroomInvitation(models.Model):
 
 	def __str__(self):
 		return f'{self.email} -> {self.classroom.class_id} ({self.status})'
+
+
+class ClassroomNote(models.Model):
+	classroom = models.ForeignKey(Classroom, on_delete=models.CASCADE, related_name='notes')
+	title = models.CharField(max_length=255)
+	content = models.TextField()
+	created_at = models.DateTimeField(auto_now_add=True)
+
+	class Meta:
+		ordering = ['id']
+
+	def __str__(self):
+		return f'Note #{self.id} - {self.title}'
+
+
+class DisplayedClassroomNote(models.Model):
+	classroom = models.ForeignKey(Classroom, on_delete=models.CASCADE, related_name='displayed_notes')
+	note = models.ForeignKey(ClassroomNote, on_delete=models.CASCADE, related_name='display_instances')
+	displayed_by = models.ForeignKey(User, on_delete=models.CASCADE, related_name='displayed_classroom_notes')
+	displayed_at = models.DateTimeField(auto_now_add=True)
+
+	class Meta:
+		ordering = ['displayed_at', 'id']
+
+	def __str__(self):
+		return f'Displayed #{self.id} for {self.classroom.class_id} (note #{self.note_id})'
