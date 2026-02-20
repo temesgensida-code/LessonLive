@@ -168,12 +168,15 @@
 
 .notes-shell {
   padding: 1rem;
+  width: calc(100vw - 3rem);
+  margin-left: 50%;
+  transform: translateX(-50%);
 }
 
 .notes-layout {
   display: flex;
   gap: 1rem;
-  min-height: 520px;
+  min-height: calc(100vh - 220px);
 }
 
 .notes-canvas {
@@ -184,6 +187,7 @@
   background: #f8fafc;
   display: flex;
   flex-direction: column;
+  min-height: calc(100vh - 260px);
 }
 
 .displayed-list {
@@ -191,7 +195,8 @@
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
-  max-height: 430px;
+  flex: 1;
+  min-height: 0;
   overflow-y: auto;
   padding-right: 0.4rem;
 }
@@ -212,6 +217,8 @@
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
+  min-height: calc(100vh - 260px);
+  overflow-y: auto;
 }
 
 .danger {
@@ -230,10 +237,18 @@
 @media (max-width: 900px) {
   .notes-layout {
     flex-direction: column;
+    min-height: auto;
   }
 
   .notes-canvas,
   .notes-panel {
     width: 100%;
+    min-height: auto;
+  }
+
+  .notes-shell {
+    width: 100%;
+    margin-left: 0;
+    transform: none;
   }
 }
