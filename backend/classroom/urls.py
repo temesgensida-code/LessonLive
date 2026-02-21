@@ -13,4 +13,6 @@ urlpatterns = [
     path('<str:class_id>/notes/<int:note_id>/display/', views.display_note, name='display-note'),
     path('<str:class_id>/displayed-notes/<int:displayed_note_id>/', views.remove_displayed_note, name='remove-displayed-note'),
     path('invitations/<str:token>/', views.invitation_status, name='invitation-status'),
+    path('<str:class_id>/token/', views.get_livekit_token, name='get-livekit-token'),
 ]
+

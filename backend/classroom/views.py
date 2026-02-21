@@ -1,6 +1,8 @@
 import csv
 import io
 import json
+import os
+from livekit import api
 from datetime import timedelta
 
 from django.conf import settings
@@ -450,3 +452,43 @@ def remove_displayed_note(request, class_id, displayed_note_id):
 	payload = {'id': displayed_note_id}
 	_broadcast_note_event(class_id, 'note_removed', payload)
 	return JsonResponse({'removed': payload})
+
+
+def get_livekit_token(request, class_id):
+	user = get_user_from_request(request)
+	if user is None:
+		return JsonResponse({'detail': 'Authentication required'}, status=401)
+	
+	classroom = Classroom.objects.filter(class_id=class_id).first()
+	if not classroom:
+		return JsonResponse({'detail': 'Classroom not found'}, status=404)
+	
+	# Check enrollment or ownership
+	is_owner = classroom.owner == user
+	if not is_owner:
+		enrollment = Enrollment.objects.filter(classroom=classroom, student=user).exists()
+		if not enrollment:
+			return JsonResponse({'detail': 'Not enrolled in this classroom'}, status=403)
+	
+	try:
+		API_KEY = os.getenv('LIVEKIT_API_KEY')
+		API_SECRET = os.getenv('LIVEKIT_API_SECRET')
+
+		if not API_KEY or not API_SECRET:
+			return JsonResponse({'detail': 'LiveKit server credentials are not configured'}, status=500)
+		
+		# Define participant token
+		token = api.AccessToken(API_KEY, API_SECRET) \
+			.with_identity(str(user.username)) \
+			.with_name(user.first_name or user.username) \
+			.with_grants(api.VideoGrants(
+				room_join=True,
+				room=class_id,
+				can_publish=True,
+				can_subscribe=True,
+			))
+		
+		return JsonResponse({'token': token.to_jwt()})
+	except Exception as e:
+		return JsonResponse({'detail': str(e)}, status=500)
+
