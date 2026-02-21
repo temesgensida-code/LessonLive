@@ -1,9 +1,15 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link, Route, Routes, useNavigate, useParams } from 'react-router-dom'
+import { LiveKitRoom, RoomAudioRenderer, useLocalParticipant } from '@livekit/components-react'
+import '@livekit/components-styles'
+import LiveClassroom from './LiveClassroom'
+import UsernameChat from './UsernameChat'
 import './App.css'
+
 
 const API_BASE = '/api'
 const SESSION_HINT_KEY = 'lessonlive_has_session'
+const LIVEKIT_SERVER_URL = 'wss://lessonlivemain-i0wqfwh8.livekit.cloud'
 
 function getNotesWebSocketUrl(classId, accessToken) {
   const protocol = window.location.protocol === 'https:' ? 'wss' : 'ws'
@@ -483,6 +489,11 @@ function ClassroomPage({ accessToken, setAccessToken }) {
   const [noteContent, setNoteContent] = useState('')
   const [noteError, setNoteError] = useState('')
   const [noteMessage, setNoteMessage] = useState('')
+  const [liveMode, setLiveMode] = useState(false)
+  const [liveToken, setLiveToken] = useState('')
+  const [liveLoading, setLiveLoading] = useState(false)
+  const [liveError, setLiveError] = useState('')
+  const [liveAutoInitialized, setLiveAutoInitialized] = useState(false)
 
   const upsertDisplayedNote = (incomingNote) => {
     if (!incomingNote?.id) {
@@ -518,42 +529,81 @@ function ClassroomPage({ accessToken, setAccessToken }) {
     return parsed.toLocaleString()
   }
 
-  const fetchClassroom = async () => {
-    try {
-      const data = await apiFetch(`/classrooms/${classId}/`, {}, { accessToken, setAccessToken })
-      setClassroom(data.classroom)
-      setOwned(data.owned)
-    } catch (err) {
-      setError(err.message)
-    }
-  }
-
-  const loadSavedNotes = async () => {
-    try {
-      const data = await apiFetch(`/classrooms/${classId}/notes/`, {}, { accessToken, setAccessToken })
-      setSavedNotes(data.notes || [])
-    } catch (err) {
-      setNoteError(err.message)
-    }
-  }
-
-  const loadDisplayedNotes = async () => {
-    try {
-      const data = await apiFetch(`/classrooms/${classId}/displayed-notes/`, {}, { accessToken, setAccessToken })
-      setDisplayedNotes(data.displayed_notes || [])
-    } catch (err) {
-      setNoteError(err.message)
-    }
-  }
-
   useEffect(() => {
-    fetchClassroom()
+    let isCurrent = true
+
+    setClassroom(null)
+    setOwned(false)
+    setError('')
+    setNoteError('')
+    setNoteMessage('')
+    setSavedNotes([])
+    setDisplayedNotes([])
+    setLiveMode(false)
+    setLiveToken('')
+    setLiveLoading(false)
+    setLiveError('')
+    setLiveAutoInitialized(false)
+
+    const loadClassroom = async () => {
+      try {
+        const data = await apiFetch(`/classrooms/${classId}/`, {}, { accessToken, setAccessToken })
+        if (!isCurrent) {
+          return
+        }
+        setClassroom(data.classroom)
+        setOwned(data.owned)
+      } catch (err) {
+        if (!isCurrent) {
+          return
+        }
+        setError(err.message)
+      }
+    }
+
+    const loadSavedNotes = async () => {
+      try {
+        const data = await apiFetch(`/classrooms/${classId}/notes/`, {}, { accessToken, setAccessToken })
+        if (!isCurrent) {
+          return
+        }
+        setSavedNotes(data.notes || [])
+      } catch (err) {
+        if (!isCurrent) {
+          return
+        }
+        setSavedNotes([])
+        setNoteError(err.message)
+      }
+    }
+
+    const loadDisplayedNotes = async () => {
+      try {
+        const data = await apiFetch(`/classrooms/${classId}/displayed-notes/`, {}, { accessToken, setAccessToken })
+        if (!isCurrent) {
+          return
+        }
+        setDisplayedNotes(data.displayed_notes || [])
+      } catch (err) {
+        if (!isCurrent) {
+          return
+        }
+        setDisplayedNotes([])
+        setNoteError(err.message)
+      }
+    }
+
+    loadClassroom()
     loadSavedNotes()
     loadDisplayedNotes()
-  }, [classId])
+
+    return () => {
+      isCurrent = false
+    }
+  }, [classId, accessToken, setAccessToken])
 
   useEffect(() => {
-    if (!accessToken) {
+    if (!accessToken || liveMode) {
       return undefined
     }
 
@@ -604,7 +654,7 @@ function ClassroomPage({ accessToken, setAccessToken }) {
         socket.close()
       }
     }
-  }, [classId, accessToken])
+  }, [classId, accessToken, liveMode])
 
   const handleInvite = async (event) => {
     event.preventDefault()
@@ -677,6 +727,49 @@ function ClassroomPage({ accessToken, setAccessToken }) {
     }
   }
 
+  const activateLiveClass = async () => {
+    if (liveToken) {
+      setLiveMode(true)
+      setLiveError('')
+      return
+    }
+
+    setLiveLoading(true)
+    setLiveError('')
+    try {
+      const data = await apiFetch(`/classrooms/${classId}/token/`, {}, { accessToken, setAccessToken })
+      setLiveToken(data?.token || '')
+      setLiveMode(Boolean(data?.token))
+      if (!data?.token) {
+        setLiveError('Unable to start live class.')
+      }
+    } catch (err) {
+      setLiveError(err.message)
+      setLiveMode(false)
+    } finally {
+      setLiveLoading(false)
+    }
+  }
+
+  const handleToggleLiveClass = async () => {
+    if (liveMode) {
+      setLiveMode(false)
+      setLiveError('')
+      return
+    }
+
+    await activateLiveClass()
+  }
+
+  useEffect(() => {
+    if (!accessToken || owned !== false || liveAutoInitialized) {
+      return
+    }
+
+    setLiveAutoInitialized(true)
+    activateLiveClass()
+  }, [accessToken, owned, liveAutoInitialized])
+
   if (!classroom && !error) {
     return <p>Loading classroom…</p>
   }
@@ -689,12 +782,20 @@ function ClassroomPage({ accessToken, setAccessToken }) {
             <h2>{classroom?.name}</h2>
             <p className="muted">Class ID: {classroom?.class_id}</p>
           </div>
-          {owned && (
-            <button type="button" className="ghost" onClick={() => setMenuOpen((open) => !open)}>
-              ☰ Menu
-            </button>
-          )}
+          <div className="row classroom-actions">
+            {owned && (
+              <button type="button" className="primary" onClick={handleToggleLiveClass} disabled={liveLoading}>
+                {liveLoading ? 'Loading…' : liveMode ? 'Back to Notes' : 'Live Class'}
+              </button>
+            )}
+            {owned && (
+              <button type="button" className="ghost" onClick={() => setMenuOpen((open) => !open)}>
+                ☰ Menu
+              </button>
+            )}
+          </div>
         </div>
+        {liveError && <p className="error">{liveError}</p>}
         {owned && menuOpen && (
           <div className="drawer">
             <h3>Invite students</h3>
@@ -768,7 +869,9 @@ function ClassroomPage({ accessToken, setAccessToken }) {
           </div>
 
           <div className="notes-panel">
-            {owned ? (
+            {liveMode && liveToken ? (
+              <LiveClassSidePanel token={liveToken} />
+            ) : owned ? (
               <>
                 <h3>Teacher Notes</h3>
                 <form className="form" onSubmit={handleSaveNote}>
@@ -795,10 +898,9 @@ function ClassroomPage({ accessToken, setAccessToken }) {
                   <ul className="list">
                     {savedNotes.map((note) => (
                       <li key={note.id} className="note-list-item">
-                        <div>
+                        <div className="note-list-meta">
                           <strong>#{note.index}</strong>
-                          <p>{note.title}</p>
-                          <p className="muted">{formatDate(note.saved_date)}</p>
+                          <p className="note-list-title">{note.title}</p>
                         </div>
                         <button
                           type="button"
@@ -825,6 +927,51 @@ function ClassroomPage({ accessToken, setAccessToken }) {
         </div>
       </section>
     </div>
+  )
+}
+
+function LiveClassSidePanel({ token }) {
+  return (
+    <div className="live-side-shell">
+      <LiveKitRoom
+        connect
+        video={false}
+        audio
+        token={token}
+        serverUrl={LIVEKIT_SERVER_URL}
+        data-lk-theme="default"
+        className="live-room"
+      >
+        <div className="live-side-content">
+          <h3>Live Class Chat</h3>
+          <div className="live-chat-box">
+            <UsernameChat />
+          </div>
+          <div className="live-audio-box">
+            <h4>Audio Chat</h4>
+            <LiveAudioButton />
+          </div>
+        </div>
+        <RoomAudioRenderer />
+      </LiveKitRoom>
+    </div>
+  )
+}
+
+function LiveAudioButton() {
+  const { localParticipant, isMicrophoneEnabled } = useLocalParticipant()
+
+  const handleToggleMic = async () => {
+    if (!localParticipant) {
+      return
+    }
+    await localParticipant.setMicrophoneEnabled(!isMicrophoneEnabled)
+  }
+
+  return (
+    <button type="button" className="primary live-audio-btn" onClick={handleToggleMic}>
+      {isMicrophoneEnabled ? 'Mute audio' : 'Unmute audio'}
+    </button>
   )
 }
 
@@ -1065,7 +1212,12 @@ function App() {
           element={<ClassroomPage accessToken={accessToken} setAccessToken={setAccessToken} />}
         />
         <Route
+          path="/classrooms/:classId/live"
+          element={<LiveClassroom accessToken={accessToken} />}
+        />
+        <Route
           path="/invite/:token"
+
           element={<InvitePage accessToken={accessToken} setAccessToken={setAccessToken} />}
         />
       </Routes>

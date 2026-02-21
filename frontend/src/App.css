@@ -227,11 +227,99 @@
 }
 
 .note-list-item {
-  gap: 0.75rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.15rem;
+  min-height: 34px;
+  padding: 0.15rem 0.75rem;
+}
+
+.note-list-meta {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  min-width: 0;
+}
+
+.note-list-title {
+  margin: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .note-list-item .primary {
   white-space: nowrap;
+  padding: 0.4rem 0.75rem;
+  border-radius: 8px;
+}
+
+.classroom-actions {
+  justify-content: flex-end;
+}
+
+.live-side-shell,
+.live-room {
+  height: 100%;
+}
+
+.live-side-content {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.live-chat-box {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.live-audio-box {
+  border-top: 1px solid #e2e8f0;
+  padding-top: 0.75rem;
+}
+
+.live-audio-btn {
+  width: 100%;
+}
+
+.username-chat {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.username-chat-list {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 0.75rem;
+  background: #fff;
+}
+
+.username-chat-item {
+  margin: 0 0 0.5rem 0;
+  word-break: break-word;
+}
+
+.username-chat-form {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 0.5rem;
+}
+
+.username-chat-form input {
+  width: 100%;
+  padding: 0.65rem 0.75rem;
+  border-radius: 10px;
+  border: 1px solid #e2e8f0;
+  background: #f8fafc;
 }
 
 @media (max-width: 900px) {
