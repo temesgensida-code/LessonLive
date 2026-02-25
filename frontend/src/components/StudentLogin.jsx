@@ -34,7 +34,7 @@ function StudentLogin({ onSuccess }) {
   }
 
   return (
-    <div className="card">
+    <div className="card auth-card">
       <h2>Student Login</h2>
       <form onSubmit={handleSubmit} className="form">
         <label>

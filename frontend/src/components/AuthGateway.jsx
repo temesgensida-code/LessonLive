@@ -6,8 +6,8 @@ function AuthGateway({ onSuccess }) {
   const [authType, setAuthType] = useState('teacher')
 
   return (
-    <div className="stack">
-      <section className="card">
+    <div className="stack auth-stack">
+      <section className="auth-switch">
         <div className="tabs">
           <button
             type="button"

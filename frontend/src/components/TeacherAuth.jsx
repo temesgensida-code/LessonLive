@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { apiFetch } from './apiClient'
 
 function TeacherAuth({ onSuccess }) {
-  const [mode, setMode] = useState('signup')
+  const [mode, setMode] = useState('login')
   const [form, setForm] = useState({
     email: '',
     password: '',
@@ -50,23 +50,8 @@ function TeacherAuth({ onSuccess }) {
   }
 
   return (
-    <div className="card">
-      <div className="tabs">
-        <button
-          type="button"
-          className={mode === 'signup' ? 'tab active' : 'tab'}
-          onClick={() => setMode('signup')}
-        >
-          Teacher Sign Up
-        </button>
-        <button
-          type="button"
-          className={mode === 'login' ? 'tab active' : 'tab'}
-          onClick={() => setMode('login')}
-        >
-          Log In
-        </button>
-      </div>
+    <div className="card auth-card">
+      <h2>{mode === 'signup' ? 'Teacher Register' : 'Teacher Login'}</h2>
 
       <form onSubmit={handleSubmit} className="form">
         {mode === 'signup' && (
@@ -99,6 +84,15 @@ function TeacherAuth({ onSuccess }) {
         <button type="submit" className="primary" disabled={loading}>
           {loading ? 'Please wait…' : mode === 'signup' ? 'Create teacher account' : 'Log in'}
         </button>
+        {mode === 'login' ? (
+          <button type="button" className="link-button" onClick={() => setMode('signup')}>
+            Don&apos;t have account yet? Register
+          </button>
+        ) : (
+          <button type="button" className="link-button" onClick={() => setMode('login')}>
+            Already have an account? Log in
+          </button>
+        )}
       </form>
     </div>
   )
