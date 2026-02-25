@@ -2,7 +2,6 @@ import csv
 import io
 import json
 import os
-from livekit import api
 from datetime import timedelta
 
 from django.conf import settings
@@ -469,6 +468,14 @@ def get_livekit_token(request, class_id):
 		enrollment = Enrollment.objects.filter(classroom=classroom, student=user).exists()
 		if not enrollment:
 			return JsonResponse({'detail': 'Not enrolled in this classroom'}, status=403)
+
+	try:
+		from livekit import api as livekit_api
+	except ImportError:
+		return JsonResponse(
+			{'detail': 'LiveKit API SDK is not installed. Install it with: pip install livekit-api'},
+			status=500,
+		)
 	
 	try:
 		API_KEY = os.getenv('LIVEKIT_API_KEY')
@@ -478,10 +485,10 @@ def get_livekit_token(request, class_id):
 			return JsonResponse({'detail': 'LiveKit server credentials are not configured'}, status=500)
 		
 		# Define participant token
-		token = api.AccessToken(API_KEY, API_SECRET) \
+		token = livekit_api.AccessToken(API_KEY, API_SECRET) \
 			.with_identity(str(user.username)) \
 			.with_name(user.first_name or user.username) \
-			.with_grants(api.VideoGrants(
+			.with_grants(livekit_api.VideoGrants(
 				room_join=True,
 				room=class_id,
 				can_publish=True,
