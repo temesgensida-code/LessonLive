@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { createPortal } from 'react-dom'
 import { useParams } from 'react-router-dom'
 import LiveClassSidePanel from './LiveClassSidePanel'
 import { apiFetch, getNotesWebSocketUrl } from './apiClient'
@@ -7,7 +8,6 @@ function ClassroomPage({ accessToken, setAccessToken }) {
   const { classId } = useParams()
   const [classroom, setClassroom] = useState(null)
   const [owned, setOwned] = useState(false)
-  const [menuOpen, setMenuOpen] = useState(false)
   const [emails, setEmails] = useState('')
   const [file, setFile] = useState(null)
   const [message, setMessage] = useState('')
@@ -23,6 +23,11 @@ function ClassroomPage({ accessToken, setAccessToken }) {
   const [liveLoading, setLiveLoading] = useState(false)
   const [liveError, setLiveError] = useState('')
   const [liveAutoInitialized, setLiveAutoInitialized] = useState(false)
+  const [sidebarPortalTarget, setSidebarPortalTarget] = useState(null)
+
+  useEffect(() => {
+    setSidebarPortalTarget(document.getElementById('sidebar-portal-target'))
+  }, [])
 
   const upsertDisplayedNote = (incomingNote) => {
     if (!incomingNote?.id) {
@@ -132,7 +137,7 @@ function ClassroomPage({ accessToken, setAccessToken }) {
   }, [classId, accessToken, setAccessToken])
 
   useEffect(() => {
-    if (!accessToken || liveMode) {
+    if (!accessToken) {
       return undefined
     }
 
@@ -183,7 +188,7 @@ function ClassroomPage({ accessToken, setAccessToken }) {
         socket.close()
       }
     }
-  }, [classId, accessToken, liveMode])
+  }, [classId, accessToken])
 
   const handleInvite = async (event) => {
     event.preventDefault()
@@ -305,49 +310,41 @@ function ClassroomPage({ accessToken, setAccessToken }) {
 
   return (
     <div className="stack">
-      <section className="card">
-        <div className="row">
-          <div>
-            <h2>{classroom?.name}</h2>
-            <p className="muted">Class ID: {classroom?.class_id}</p>
+      {owned && sidebarPortalTarget && createPortal(
+        <div className="drawer">
+          <h3>Invite students</h3>
+          <form onSubmit={handleInvite} className="form">
+            <label>
+              Paste student emails (comma or newline separated)
+              <textarea
+                rows={4}
+                value={emails}
+                onChange={(event) => setEmails(event.target.value)}
+              />
+            </label>
+            <label>
+              Or upload a CSV (first column = email)
+              <input type="file" accept=".csv" onChange={(event) => setFile(event.target.files[0])} />
+            </label>
+            {error && <p className="error">{error}</p>}
+            {message && <p className="success">{message}</p>}
+            <button type="submit" className="primary">Send invitations</button>
+          </form>
+        </div>,
+        sidebarPortalTarget
+      )}
+
+      {owned && (
+        <section className="card">
+          <div className="row">
+            <div>
+              <h2>{classroom?.name}</h2>
+              <p className="muted">Class ID: {classroom?.class_id}</p>
+            </div>
           </div>
-          <div className="row classroom-actions">
-            {owned && (
-              <button type="button" className="primary" onClick={handleToggleLiveClass} disabled={liveLoading}>
-                {liveLoading ? 'Loading…' : liveMode ? 'Back to Notes' : 'Live Class'}
-              </button>
-            )}
-            {owned && (
-              <button type="button" className="ghost" onClick={() => setMenuOpen((open) => !open)}>
-                ☰ Menu
-              </button>
-            )}
-          </div>
-        </div>
-        {liveError && <p className="error">{liveError}</p>}
-        {owned && menuOpen && (
-          <div className="drawer">
-            <h3>Invite students</h3>
-            <form onSubmit={handleInvite} className="form">
-              <label>
-                Paste student emails (comma or newline separated)
-                <textarea
-                  rows={4}
-                  value={emails}
-                  onChange={(event) => setEmails(event.target.value)}
-                />
-              </label>
-              <label>
-                Or upload a CSV (first column = email)
-                <input type="file" accept=".csv" onChange={(event) => setFile(event.target.files[0])} />
-              </label>
-              {error && <p className="error">{error}</p>}
-              {message && <p className="success">{message}</p>}
-              <button type="submit" className="primary">Send invitations</button>
-            </form>
-          </div>
-        )}
-      </section>
+          {liveError && <p className="error">{liveError}</p>}
+        </section>
+      )}
 
       {owned && classroom?.students && (
         <section className="card">
@@ -367,7 +364,15 @@ function ClassroomPage({ accessToken, setAccessToken }) {
       <section className="card notes-shell">
         <div className="notes-layout">
           <div className="notes-canvas">
-            <h3>Class Notes Canvas</h3>
+            <div className="notes-canvas-title-row">
+              <h3>Class Notes Canvas</h3>
+              {!owned && (
+                <div className="notes-canvas-meta">
+                  <strong>{classroom?.name}</strong>
+                  <p className="muted">Class ID: {classroom?.class_id}</p>
+                </div>
+              )}
+            </div>
             {displayedNotes.length === 0 ? (
               <p className="muted">No notes displayed yet.</p>
             ) : (
@@ -398,11 +403,21 @@ function ClassroomPage({ accessToken, setAccessToken }) {
           </div>
 
           <div className="notes-panel">
+            <div className="notes-panel-header">
+              <h3>{liveMode && liveToken ? 'Live Class' : owned ? 'Teacher Notes' : 'Right Panel'}</h3>
+              {owned && (
+                <button type="button" className="primary" onClick={handleToggleLiveClass} disabled={liveLoading}>
+                  {liveLoading ? 'Loading…' : liveMode ? 'Back to Notes' : 'Live Class'}
+                </button>
+              )}
+            </div>
+
+            {liveError && <p className="error">{liveError}</p>}
+
             {liveMode && liveToken ? (
               <LiveClassSidePanel token={liveToken} />
             ) : owned ? (
               <>
-                <h3>Teacher Notes</h3>
                 <form className="form" onSubmit={handleSaveNote}>
                   <label>
                     Title
@@ -445,7 +460,6 @@ function ClassroomPage({ accessToken, setAccessToken }) {
               </>
             ) : (
               <>
-                <h3>Right Panel</h3>
                 <p className="muted">Reserved for another student component.</p>
               </>
             )}

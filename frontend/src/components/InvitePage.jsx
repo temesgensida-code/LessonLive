@@ -89,9 +89,11 @@ function InvitePage({ accessToken, setAccessToken }) {
 
   if (error) {
     return (
-      <div className="card">
-        <h2>Invitation</h2>
-        <p className="error">{error}</p>
+      <div className="stack auth-stack">
+        <section className="card auth-card auth-box">
+          <h2>Invitation</h2>
+          <p className="error">{error}</p>
+        </section>
       </div>
     )
   }
@@ -102,78 +104,95 @@ function InvitePage({ accessToken, setAccessToken }) {
 
   if (status.auto_enrolled) {
     return (
-      <div className="card">
-        <h2>Welcome to {status.classroom_name}</h2>
-        <p className="success">You have been enrolled automatically.</p>
-        <Link className="primary" to={`/classrooms/${status.class_id}`}>
-          Go to classroom
-        </Link>
+      <div className="stack auth-stack">
+        <section className="card auth-card auth-box">
+          <h2>Welcome to {status.classroom_name}</h2>
+          <p className="success">You have been enrolled automatically.</p>
+          <Link className="primary" to={`/classrooms/${status.class_id}`}>
+            Go to classroom
+          </Link>
+        </section>
       </div>
     )
   }
 
   return (
-    <div className="card">
-      <h2>Join {status.classroom_name}</h2>
-      <p className="muted">Invitation for {status.email}</p>
-
-      {mode === 'login' ? (
-        <form onSubmit={handleLogin} className="form">
-          <label>
-            Email
-            <input value={status.email} disabled />
-          </label>
-          <label>
-            Password
-            <input
-              name="password"
-              type="password"
-              value={form.password}
-              onChange={handleChange}
-              required
-            />
-          </label>
-          {error && <p className="error">{error}</p>}
-          <button type="submit" className="primary">Log in & join</button>
-          {status.requires_registration && (
-            <button type="button" className="ghost" onClick={() => setMode('register')}>
-              Need an account? Register instead
+    <div className="stack auth-stack">
+      <section className="card auth-card auth-box">
+        <div className="auth-switch">
+          <div className="tabs">
+            <button
+              type="button"
+              className={mode === 'login' ? 'tab active' : 'tab'}
+              onClick={() => setMode('login')}
+            >
+              Login
             </button>
-          )}
-        </form>
-      ) : (
-        <form onSubmit={handleRegister} className="form">
-          <label>
-            Email
-            <input value={status.email} disabled />
-          </label>
-          <div className="grid">
-            <label>
-              First name
-              <input name="first_name" value={form.first_name} onChange={handleChange} />
-            </label>
-            <label>
-              Last name
-              <input name="last_name" value={form.last_name} onChange={handleChange} />
-            </label>
+            {status.requires_registration && (
+              <button
+                type="button"
+                className={mode === 'register' ? 'tab active' : 'tab'}
+                onClick={() => setMode('register')}
+              >
+                Register
+              </button>
+            )}
           </div>
-          <label>
-            Password
-            <input
-              name="password"
-              type="password"
-              value={form.password}
-              onChange={handleChange}
-              required
-            />
-          </label>
-          {error && <p className="error">{error}</p>}
-          <button type="submit" className="primary">Create account & join</button>
-          <button type="button" className="ghost" onClick={() => setMode('login')}>
-            Already have an account? Log in
-          </button>
-        </form>
-      )}
+        </div>
+
+        <h2>Join {status.classroom_name}</h2>
+        <p className="muted">Invitation for {status.email}</p>
+
+        {mode === 'login' ? (
+          <form onSubmit={handleLogin} className="form">
+            <label>
+              Email
+              <input value={status.email} disabled />
+            </label>
+            <label>
+              Password
+              <input
+                name="password"
+                type="password"
+                value={form.password}
+                onChange={handleChange}
+                required
+              />
+            </label>
+            {error && <p className="error">{error}</p>}
+            <button type="submit" className="primary">Log in & join</button>
+          </form>
+        ) : (
+          <form onSubmit={handleRegister} className="form">
+            <label>
+              Email
+              <input value={status.email} disabled />
+            </label>
+            <div className="grid">
+              <label>
+                First name
+                <input name="first_name" value={form.first_name} onChange={handleChange} />
+              </label>
+              <label>
+                Last name
+                <input name="last_name" value={form.last_name} onChange={handleChange} />
+              </label>
+            </div>
+            <label>
+              Password
+              <input
+                name="password"
+                type="password"
+                value={form.password}
+                onChange={handleChange}
+                required
+              />
+            </label>
+            {error && <p className="error">{error}</p>}
+            <button type="submit" className="primary">Create account & join</button>
+          </form>
+        )}
+      </section>
     </div>
   )
 }

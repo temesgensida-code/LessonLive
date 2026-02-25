@@ -7,26 +7,28 @@ function AuthGateway({ onSuccess }) {
 
   return (
     <div className="stack auth-stack">
-      <section className="auth-switch">
-        <div className="tabs">
-          <button
-            type="button"
-            className={authType === 'teacher' ? 'tab active' : 'tab'}
-            onClick={() => setAuthType('teacher')}
-          >
-            Teacher
-          </button>
-          <button
-            type="button"
-            className={authType === 'student' ? 'tab active' : 'tab'}
-            onClick={() => setAuthType('student')}
-          >
-            Student
-          </button>
+      <section className="card auth-card auth-box">
+        <div className="auth-switch">
+          <div className="tabs">
+            <button
+              type="button"
+              className={authType === 'teacher' ? 'tab active' : 'tab'}
+              onClick={() => setAuthType('teacher')}
+            >
+              Teacher
+            </button>
+            <button
+              type="button"
+              className={authType === 'student' ? 'tab active' : 'tab'}
+              onClick={() => setAuthType('student')}
+            >
+              Student
+            </button>
+          </div>
         </div>
-      </section>
 
-      {authType === 'teacher' ? <TeacherAuth onSuccess={onSuccess} /> : <StudentLogin onSuccess={onSuccess} />}
+        {authType === 'teacher' ? <TeacherAuth onSuccess={onSuccess} /> : <StudentLogin onSuccess={onSuccess} />}
+      </section>
     </div>
   )
 }
