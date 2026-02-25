@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useRoomContext } from '@livekit/components-react'
 import { DataPacket_Kind, RoomEvent } from 'livekit-client'
 
@@ -8,17 +8,28 @@ function getParticipantName(participant) {
   if (!participant) {
     return 'Unknown'
   }
-  return participant.name || participant.identity || 'Unknown'
+
+  const name = (participant.name || '').trim()
+  if (name) {
+    return name
+  }
+
+  const identity = (participant.identity || '').trim()
+  if (!identity) {
+    return 'Unknown'
+  }
+
+  if (identity.includes('@')) {
+    return identity.split('@')[0]
+  }
+
+  return identity
 }
 
 export default function UsernameChat() {
   const room = useRoomContext()
   const [messages, setMessages] = useState([])
   const [draft, setDraft] = useState('')
-
-  const localSenderName = useMemo(() => {
-    return getParticipantName(room?.localParticipant)
-  }, [room?.localParticipant])
 
   useEffect(() => {
     if (!room) {
@@ -45,7 +56,9 @@ export default function UsernameChat() {
             ...prev,
             {
               id: parsed.id,
-              sender: parsed.sender || getParticipantName(participant),
+              sender: parsed.sender && parsed.sender !== 'Unknown'
+                ? parsed.sender
+                : getParticipantName(participant),
               text: parsed.text,
             },
           ]
@@ -70,7 +83,7 @@ export default function UsernameChat() {
 
     const outgoing = {
       id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
-      sender: localSenderName,
+      sender: getParticipantName(room.localParticipant),
       text,
     }
 
