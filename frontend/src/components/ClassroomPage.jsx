@@ -24,6 +24,7 @@ function ClassroomPage({ accessToken, setAccessToken }) {
   const [liveError, setLiveError] = useState('')
   const [liveAutoInitialized, setLiveAutoInitialized] = useState(false)
   const [sidebarPortalTarget, setSidebarPortalTarget] = useState(null)
+  const [sidebarTab, setSidebarTab] = useState('enrolled')
 
   useEffect(() => {
     setSidebarPortalTarget(document.getElementById('sidebar-portal-target'))
@@ -311,53 +312,70 @@ function ClassroomPage({ accessToken, setAccessToken }) {
   return (
     <div className="stack">
       {owned && sidebarPortalTarget && createPortal(
-        <div className="drawer">
-          <h3>Invite students</h3>
-          <form onSubmit={handleInvite} className="form">
-            <label>
-              Paste student emails (comma or newline separated)
-              <textarea
-                rows={4}
-                value={emails}
-                onChange={(event) => setEmails(event.target.value)}
-              />
-            </label>
-            <label>
-              Or upload a CSV (first column = email)
-              <input type="file" accept=".csv" onChange={(event) => setFile(event.target.files[0])} />
-            </label>
-            {error && <p className="error">{error}</p>}
-            {message && <p className="success">{message}</p>}
-            <button type="submit" className="primary">Send invitations</button>
-          </form>
+        <div className="sidebar-layout">
+          <nav className="sidebar-nav">
+            <button 
+              type="button"
+              className={`sidebar-nav-item ${sidebarTab === 'enrolled' ? 'active' : ''}`}
+              onClick={() => setSidebarTab('enrolled')}
+            >
+              Enrolled Students
+            </button>
+            <button 
+              type="button"
+              className={`sidebar-nav-item ${sidebarTab === 'invite' ? 'active' : ''}`}
+              onClick={() => setSidebarTab('invite')}
+            >
+              Invite Students
+            </button>
+          </nav>
+
+          <div className="sidebar-pane">
+            {sidebarTab === 'enrolled' && (
+              <div className="drawer">
+                <h3>Enrolled students</h3>
+                {classroom?.students?.length === 0 ? (
+                  <p className="muted">No students enrolled yet.</p>
+                ) : (
+                  <ul className="list">
+                    {classroom?.students?.map((email) => (
+                      <li key={email}>{email}</li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+            )}
+
+            {sidebarTab === 'invite' && (
+              <div className="drawer">
+                <h3>Invite students</h3>
+                <form onSubmit={handleInvite} className="form">
+                  <label>
+                    Paste student emails (comma or newline separated)
+                    <textarea
+                      rows={4}
+                      value={emails}
+                      onChange={(event) => setEmails(event.target.value)}
+                    />
+                  </label>
+                  <label>
+                    Or upload a CSV (first column = email)
+                    <input type="file" accept=".csv" onChange={(event) => setFile(event.target.files[0])} />
+                  </label>
+                  {error && <p className="error">{error}</p>}
+                  {message && <p className="success">{message}</p>}
+                  <button type="submit" className="primary">Send invitations</button>
+                </form>
+              </div>
+            )}
+          </div>
         </div>,
         sidebarPortalTarget
       )}
 
-      {owned && (
+      {owned && liveError && (
         <section className="card">
-          <div className="row">
-            <div>
-              <h2>{classroom?.name}</h2>
-              <p className="muted">Class ID: {classroom?.class_id}</p>
-            </div>
-          </div>
-          {liveError && <p className="error">{liveError}</p>}
-        </section>
-      )}
-
-      {owned && classroom?.students && (
-        <section className="card">
-          <h3>Enrolled students</h3>
-          {classroom.students.length === 0 ? (
-            <p className="muted">No students enrolled yet.</p>
-          ) : (
-            <ul className="list">
-              {classroom.students.map((email) => (
-                <li key={email}>{email}</li>
-              ))}
-            </ul>
-          )}
+          <p className="error">{liveError}</p>
         </section>
       )}
 
@@ -366,12 +384,10 @@ function ClassroomPage({ accessToken, setAccessToken }) {
           <div className="notes-canvas">
             <div className="notes-canvas-title-row">
               <h3>Class Notes Canvas</h3>
-              {!owned && (
-                <div className="notes-canvas-meta">
-                  <strong>{classroom?.name}</strong>
-                  <p className="muted">Class ID: {classroom?.class_id}</p>
-                </div>
-              )}
+              <div className="notes-canvas-meta">
+                <strong>{classroom?.name}</strong>
+                <p className="muted">Class ID: {classroom?.class_id}</p>
+              </div>
             </div>
             {displayedNotes.length === 0 ? (
               <p className="muted">No notes displayed yet.</p>
