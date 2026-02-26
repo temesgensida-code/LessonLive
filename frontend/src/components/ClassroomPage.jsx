@@ -1,8 +1,10 @@
 import { useEffect, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { useParams } from 'react-router-dom'
+import { LiveKitRoom } from '@livekit/components-react'
 import LiveClassSidePanel from './LiveClassSidePanel'
-import { apiFetch, getNotesWebSocketUrl } from './apiClient'
+import ScreenShareView from './ScreenShareView'
+import { apiFetch, getNotesWebSocketUrl, LIVEKIT_SERVER_URL } from './apiClient'
 
 function ClassroomPage({ accessToken, setAccessToken }) {
   const { classId } = useParams()
@@ -379,112 +381,182 @@ function ClassroomPage({ accessToken, setAccessToken }) {
         </section>
       )}
 
-      <section className="card notes-shell">
-        <div className="notes-layout">
-          <div className="notes-canvas">
-            <div className="notes-canvas-title-row">
-              <h3>Class Notes Canvas</h3>
-              <div className="notes-canvas-meta">
-                <strong>{classroom?.name}</strong>
-                <p className="muted">Class ID: {classroom?.class_id}</p>
+      {liveMode && liveToken ? (
+        <LiveKitRoom
+          connect
+          video={false}
+          audio
+          token={liveToken}
+          serverUrl={LIVEKIT_SERVER_URL}
+          data-lk-theme="default"
+          className="live-room"
+        >
+          <section className="card notes-shell">
+            <div className="notes-layout">
+              <div className="notes-canvas">
+                <div className="notes-canvas-title-row">
+                  <h3>Class Notes Canvas</h3>
+                  <div className="notes-canvas-meta">
+                    <strong>{classroom?.name}</strong>
+                    <p className="muted">Class ID: {classroom?.class_id}</p>
+                  </div>
+                </div>
+                <ScreenShareView />
+                {displayedNotes.length === 0 ? (
+                  <p className="muted">No notes displayed yet.</p>
+                ) : (
+                  <div className="displayed-list">
+                    {displayedNotes.map((item) => (
+                      <article key={item.id} className="displayed-item">
+                        <div className="row">
+                          <div>
+                            <strong>#{item.index} — {item.title}</strong>
+                            <p className="muted">Saved: {formatDate(item.saved_date)}</p>
+                          </div>
+                          {owned && (
+                            <button
+                              type="button"
+                              className="ghost danger"
+                              onClick={() => handleRemoveDisplayed(item.id)}
+                              title="Remove displayed note"
+                            >
+                              🗑
+                            </button>
+                          )}
+                        </div>
+                        <p>{item.content}</p>
+                      </article>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              <div className="notes-panel">
+                <div className="notes-panel-header">
+                  <h3>Live Class</h3>
+                  {owned && (
+                    <button type="button" className="primary" onClick={handleToggleLiveClass} disabled={liveLoading}>
+                      {liveLoading ? 'Loading…' : 'Back to Notes'}
+                    </button>
+                  )}
+                </div>
+
+                {liveError && <p className="error">{liveError}</p>}
+
+                <LiveClassSidePanel owned={owned} />
+
+                {noteError && <p className="error">{noteError}</p>}
+                {noteMessage && <p className="success">{noteMessage}</p>}
               </div>
             </div>
-            {displayedNotes.length === 0 ? (
-              <p className="muted">No notes displayed yet.</p>
-            ) : (
-              <div className="displayed-list">
-                {displayedNotes.map((item) => (
-                  <article key={item.id} className="displayed-item">
-                    <div className="row">
-                      <div>
-                        <strong>#{item.index} — {item.title}</strong>
-                        <p className="muted">Saved: {formatDate(item.saved_date)}</p>
-                      </div>
-                      {owned && (
-                        <button
-                          type="button"
-                          className="ghost danger"
-                          onClick={() => handleRemoveDisplayed(item.id)}
-                          title="Remove displayed note"
-                        >
-                          🗑
-                        </button>
-                      )}
-                    </div>
-                    <p>{item.content}</p>
-                  </article>
-                ))}
+          </section>
+        </LiveKitRoom>
+      ) : (
+        <section className="card notes-shell">
+          <div className="notes-layout">
+            <div className="notes-canvas">
+              <div className="notes-canvas-title-row">
+                <h3>Class Notes Canvas</h3>
+                <div className="notes-canvas-meta">
+                  <strong>{classroom?.name}</strong>
+                  <p className="muted">Class ID: {classroom?.class_id}</p>
+                </div>
               </div>
-            )}
-          </div>
-
-          <div className="notes-panel">
-            <div className="notes-panel-header">
-              <h3>{liveMode && liveToken ? 'Live Class' : owned ? 'Teacher Notes' : 'Right Panel'}</h3>
-              {owned && (
-                <button type="button" className="primary" onClick={handleToggleLiveClass} disabled={liveLoading}>
-                  {liveLoading ? 'Loading…' : liveMode ? 'Back to Notes' : 'Live Class'}
-                </button>
+              {displayedNotes.length === 0 ? (
+                <p className="muted">No notes displayed yet.</p>
+              ) : (
+                <div className="displayed-list">
+                  {displayedNotes.map((item) => (
+                    <article key={item.id} className="displayed-item">
+                      <div className="row">
+                        <div>
+                          <strong>#{item.index} — {item.title}</strong>
+                          <p className="muted">Saved: {formatDate(item.saved_date)}</p>
+                        </div>
+                        {owned && (
+                          <button
+                            type="button"
+                            className="ghost danger"
+                            onClick={() => handleRemoveDisplayed(item.id)}
+                            title="Remove displayed note"
+                          >
+                            🗑
+                          </button>
+                        )}
+                      </div>
+                      <p>{item.content}</p>
+                    </article>
+                  ))}
+                </div>
               )}
             </div>
 
-            {liveError && <p className="error">{liveError}</p>}
-
-            {liveMode && liveToken ? (
-              <LiveClassSidePanel token={liveToken} />
-            ) : owned ? (
-              <>
-                <form className="form" onSubmit={handleSaveNote}>
-                  <label>
-                    Title
-                    <input value={noteTitle} onChange={(event) => setNoteTitle(event.target.value)} required />
-                  </label>
-                  <label>
-                    Note
-                    <textarea
-                      rows={6}
-                      value={noteContent}
-                      onChange={(event) => setNoteContent(event.target.value)}
-                      required
-                    />
-                  </label>
-                  <button type="submit" className="primary">Save note</button>
-                </form>
-
-                <h4>Saved Notes</h4>
-                {savedNotes.length === 0 ? (
-                  <p className="muted">No saved notes yet.</p>
-                ) : (
-                  <ul className="list">
-                    {savedNotes.map((note) => (
-                      <li key={note.id} className="note-list-item">
-                        <div className="note-list-meta">
-                          <strong>#{note.index}</strong>
-                          <p className="note-list-title">{note.title}</p>
-                        </div>
-                        <button
-                          type="button"
-                          className="primary"
-                          onClick={() => handleDisplayNote(note.id)}
-                        >
-                          Display #{note.index}
-                        </button>
-                      </li>
-                    ))}
-                  </ul>
+            <div className="notes-panel">
+              <div className="notes-panel-header">
+                <h3>{owned ? 'Teacher Notes' : 'Right Panel'}</h3>
+                {owned && (
+                  <button type="button" className="primary" onClick={handleToggleLiveClass} disabled={liveLoading}>
+                    {liveLoading ? 'Loading…' : 'Live Class'}
+                  </button>
                 )}
-              </>
-            ) : (
-              <>
-                <p className="muted">Reserved for another student component.</p>
-              </>
-            )}
+              </div>
 
-            {noteError && <p className="error">{noteError}</p>}
-            {noteMessage && <p className="success">{noteMessage}</p>}
+              {liveError && <p className="error">{liveError}</p>}
+
+              {owned ? (
+                <>
+                  <form className="form" onSubmit={handleSaveNote}>
+                    <label>
+                      Title
+                      <input value={noteTitle} onChange={(event) => setNoteTitle(event.target.value)} required />
+                    </label>
+                    <label>
+                      Note
+                      <textarea
+                        rows={6}
+                        value={noteContent}
+                        onChange={(event) => setNoteContent(event.target.value)}
+                        required
+                      />
+                    </label>
+                    <button type="submit" className="primary">Save note</button>
+                  </form>
+
+                  <h4>Saved Notes</h4>
+                  {savedNotes.length === 0 ? (
+                    <p className="muted">No saved notes yet.</p>
+                  ) : (
+                    <ul className="list">
+                      {savedNotes.map((note) => (
+                        <li key={note.id} className="note-list-item">
+                          <div className="note-list-meta">
+                            <strong>#{note.index}</strong>
+                            <p className="note-list-title">{note.title}</p>
+                          </div>
+                          <button
+                            type="button"
+                            className="primary"
+                            onClick={() => handleDisplayNote(note.id)}
+                          >
+                            Display #{note.index}
+                          </button>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </>
+              ) : (
+                <>
+                  <p className="muted">Reserved for another student component.</p>
+                </>
+              )}
+
+              {noteError && <p className="error">{noteError}</p>}
+              {noteMessage && <p className="success">{noteMessage}</p>}
+            </div>
           </div>
-        </div>
-      </section>
+        </section>
+      )}
     </div>
   )
 }
