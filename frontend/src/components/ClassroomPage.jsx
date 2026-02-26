@@ -24,7 +24,7 @@ function ClassroomPage({ accessToken, setAccessToken }) {
   const [liveError, setLiveError] = useState('')
   const [liveAutoInitialized, setLiveAutoInitialized] = useState(false)
   const [sidebarPortalTarget, setSidebarPortalTarget] = useState(null)
-  const [sidebarTab, setSidebarTab] = useState('enrolled')
+  const [sidebarTab, setSidebarTab] = useState(null)
 
   useEffect(() => {
     setSidebarPortalTarget(document.getElementById('sidebar-portal-target'))
@@ -317,14 +317,14 @@ function ClassroomPage({ accessToken, setAccessToken }) {
             <button 
               type="button"
               className={`sidebar-nav-item ${sidebarTab === 'enrolled' ? 'active' : ''}`}
-              onClick={() => setSidebarTab('enrolled')}
+              onClick={() => setSidebarTab(sidebarTab === 'enrolled' ? null : 'enrolled')}
             >
               Enrolled Students
             </button>
             <button 
               type="button"
               className={`sidebar-nav-item ${sidebarTab === 'invite' ? 'active' : ''}`}
-              onClick={() => setSidebarTab('invite')}
+              onClick={() => setSidebarTab(sidebarTab === 'invite' ? null : 'invite')}
             >
               Invite Students
             </button>

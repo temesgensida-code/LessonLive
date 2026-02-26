@@ -51,8 +51,8 @@
 .sidebar {
   position: fixed;
   top: 0;
-  right: -350px;
-  width: 350px;
+  right: -525px;
+  width: 525px;
   height: 100vh;
   background: #ffffff;
   box-shadow: -5px 0 15px rgba(0, 0, 0, 0.1);
