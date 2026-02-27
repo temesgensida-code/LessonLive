@@ -1,0 +1,40 @@
+services:
+  - type: web
+    name: lessonlive-backend
+    env: python
+    rootDir: backend
+    buildCommand: "./build.sh"
+    startCommand: "daphne -b 0.0.0.0 -p $PORT backend.asgi:application"
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.0
+      - key: DATABASE_URL
+        fromDatabase:
+          name: lessonlive-db
+          property: connectionString
+      - key: REDIS_URL
+        fromService:
+          type: redis
+          name: lessonlive-redis
+          property: connectionString
+      - key: DJANGO_SECRET_KEY
+        generateValue: true
+      - key: DEBUG
+        value: "false"
+      - key: ALLOWED_HOSTS
+        value: "*"
+      - key: CORS_ALLOWED_ORIGINS
+        value: "https://your-netlify-app.netlify.app" # UPDATE THIS
+      - key: CSRF_TRUSTED_ORIGINS
+        value: "https://your-netlify-app.netlify.app" # UPDATE THIS
+
+  - type: redis
+    name: lessonlive-redis
+    ipAllowList: [] # only allow internal connections
+    plan: free
+
+databases:
+  - name: lessonlive-db
+    databaseName: lessonlive
+    user: lessonlive
+    plan: free
