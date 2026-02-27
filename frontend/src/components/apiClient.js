@@ -1,9 +1,15 @@
-const API_BASE = '/api'
+const API_BASE = import.meta.env.VITE_API_URL || '/api'
 const SESSION_HINT_KEY = 'lessonlive_has_session'
 const LIVEKIT_SERVER_URL = 'wss://lessonlivemain-i0wqfwh8.livekit.cloud'
 
 function getNotesWebSocketUrl(classId, accessToken) {
   const protocol = window.location.protocol === 'https:' ? 'wss' : 'ws'
+  
+  // Use the environment variable if provided, otherwise fallback to the old logic
+  if (import.meta.env.VITE_WS_URL) {
+    return `${import.meta.env.VITE_WS_URL}/ws/classrooms/${classId}/notes/?token=${encodeURIComponent(accessToken)}`
+  }
+
   const backendHost = import.meta.env.DEV
     ? `${window.location.hostname}:8000`
     : window.location.host
