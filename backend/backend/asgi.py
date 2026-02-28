@@ -14,9 +14,9 @@ os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'backend.settings')
 from channels.routing import ProtocolTypeRouter
 from django.core.asgi import get_asgi_application
 
-from backend.routing import websocket_application
-
 django_asgi_application = get_asgi_application()
+
+from backend.routing import websocket_application
 
 application = ProtocolTypeRouter(
 	{
