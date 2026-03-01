@@ -197,6 +197,12 @@ function ClassroomPage({ accessToken, setAccessToken }) {
     event.preventDefault()
     setError('')
     setMessage('')
+
+    if (!emails.trim() && !file) {
+      setError('Enter at least one student email or upload a CSV file.')
+      return
+    }
+
     const formData = new FormData()
     if (emails.trim()) {
       formData.append('emails', emails)
