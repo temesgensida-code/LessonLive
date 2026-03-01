@@ -271,32 +271,53 @@ def invite_students(request, class_id):
 			email__iexact=email,
 			status=ClassroomInvitation.STATUS_PENDING,
 			expires_at__gt=timezone.now(),
-		).exists()
-		if existing_pending:
+		).first()
+		if existing_pending and not existing_user:
 			skipped.append({'email': email, 'reason': 'already_invited'})
 			continue
 
-		raw_token, token_hash = ClassroomInvitation.issue_token()
-		expires_at = timezone.now() + timedelta(hours=expiration_hours)
-		invite = ClassroomInvitation.objects.create(
-			classroom=classroom,
-			invited_by=teacher,
-			email=email,
-			role=ClassroomInvitation.ROLE_STUDENT,
-			token_hash=token_hash,
-			expires_at=expires_at,
-			status=ClassroomInvitation.STATUS_PENDING,
-		)
+		if existing_pending:
+			invite = existing_pending
+			raw_token = None
+		else:
+			raw_token, token_hash = ClassroomInvitation.issue_token()
+			expires_at = timezone.now() + timedelta(hours=expiration_hours)
+			invite = ClassroomInvitation.objects.create(
+				classroom=classroom,
+				invited_by=teacher,
+				email=email,
+				role=ClassroomInvitation.ROLE_STUDENT,
+				token_hash=token_hash,
+				expires_at=expires_at,
+				status=ClassroomInvitation.STATUS_PENDING,
+			)
+
+		if raw_token is None:
+			raw_token, token_hash = ClassroomInvitation.issue_token()
+			invite.token_hash = token_hash
+			invite.expires_at = timezone.now() + timedelta(hours=expiration_hours)
+			invite.status = ClassroomInvitation.STATUS_PENDING
+			invite.invited_by = teacher
+			invite.save(update_fields=['token_hash', 'expires_at', 'status', 'invited_by'])
 
 		invite_link = f"{settings.FRONTEND_BASE_URL}/invite/{raw_token}"
 		teacher_name = teacher.get_full_name() or teacher.email
-		message = (
-			f"Hello,\n\n"
-			f"{teacher_name} invited you to join the class '{classroom.name}'.\n\n"
-			f"Join now: {invite_link}\n"
-			f"This invitation expires at {invite.expires_at.isoformat()} (UTC).\n\n"
-			f"If you already have an account, log in and you'll be enrolled automatically."
-		)
+		if existing_user:
+			message = (
+				f"Hello,\n\n"
+				f"{teacher_name} is inviting you again to join the class '{classroom.name}'.\n\n"
+				f"Join now: {invite_link}\n"
+				f"This invitation expires at {invite.expires_at.isoformat()} (UTC).\n\n"
+				f"You already have an account, so please log in with your existing account to join."
+			)
+		else:
+			message = (
+				f"Hello,\n\n"
+				f"{teacher_name} invited you to join the class '{classroom.name}'.\n\n"
+				f"Join now: {invite_link}\n"
+				f"This invitation expires at {invite.expires_at.isoformat()} (UTC).\n\n"
+				f"If you already have an account, log in and you'll be enrolled automatically."
+			)
 
 		try:
 			send_mail(
@@ -315,6 +336,7 @@ def invite_students(request, class_id):
 			{
 				'email': email,
 				'existing_user': bool(existing_user),
+				'reinvited': bool(existing_user),
 				'status': 'pending',
 				'expires_at': invite.expires_at.isoformat(),
 			}
