@@ -216,7 +216,16 @@ function ClassroomPage({ accessToken, setAccessToken }) {
         method: 'POST',
         body: formData,
       }, { accessToken, setAccessToken })
-      setMessage(`Invited ${data.invited_count} students. Skipped ${data.skipped_count}.`)
+
+      const skippedSummary = (data.skipped || [])
+        .map((item) => {
+          const reason = item.detail ? `${item.reason} (${item.detail})` : item.reason
+          return `${item.email}: ${reason}`
+        })
+        .join(' | ')
+
+      const baseMessage = `Invited ${data.invited_count} students. Skipped ${data.skipped_count}.`
+      setMessage(skippedSummary ? `${baseMessage} ${skippedSummary}` : baseMessage)
       setEmails('')
       setFile(null)
     } catch (err) {

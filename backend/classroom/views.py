@@ -327,9 +327,9 @@ def invite_students(request, class_id):
 				recipient_list=[email],
 				fail_silently=False,
 			)
-		except Exception:
+		except Exception as exc:
 			invite.delete()
-			skipped.append({'email': email, 'reason': 'email_send_failed'})
+			skipped.append({'email': email, 'reason': 'email_send_failed', 'detail': str(exc)})
 			continue
 
 		invited.append(
