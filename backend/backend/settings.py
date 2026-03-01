@@ -50,6 +50,17 @@ SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY', 'django-insecure-dev-only-chang
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.environ.get('DEBUG', 'true').lower() == 'true'
 
+FRONTEND_BASE_URL = os.environ.get('FRONTEND_BASE_URL', 'http://localhost:5173').rstrip('/')
+
+
+def _env_list(name):
+    return [value.strip() for value in os.environ.get(name, '').split(',') if value.strip()]
+
+
+default_frontend_origins = [FRONTEND_BASE_URL] if FRONTEND_BASE_URL else []
+if DEBUG:
+    default_frontend_origins.extend(['http://localhost:5173', 'http://127.0.0.1:5173'])
+
 ALLOWED_HOSTS = [host.strip() for host in os.environ.get('ALLOWED_HOSTS', '').split(',') if host.strip()]
 if DEBUG and not ALLOWED_HOSTS:
     ALLOWED_HOSTS = ['localhost', '127.0.0.1']
@@ -57,9 +68,9 @@ elif not DEBUG and not ALLOWED_HOSTS:
     ALLOWED_HOSTS = ['*']  # Render will handle routing, but it's better to set ALLOWED_HOSTS in env
 
 # CSRF Trusted Origins for Django Admin and API
-CSRF_TRUSTED_ORIGINS = [host.strip() for host in os.environ.get('CSRF_TRUSTED_ORIGINS', '').split(',') if host.strip()]
+CSRF_TRUSTED_ORIGINS = _env_list('CSRF_TRUSTED_ORIGINS')
 if not CSRF_TRUSTED_ORIGINS:
-    CSRF_TRUSTED_ORIGINS = ['http://localhost:5173', 'http://127.0.0.1:5173']
+    CSRF_TRUSTED_ORIGINS = default_frontend_origins
 
 if not DEBUG and SECRET_KEY in {'', 'django-insecure-dev-only-change-me'}:
     raise RuntimeError('DJANGO_SECRET_KEY must be set when DEBUG=false')
@@ -94,12 +105,9 @@ MIDDLEWARE = [
 ]
 
 # CORS Configuration
-CORS_ALLOWED_ORIGINS = [host.strip() for host in os.environ.get('CORS_ALLOWED_ORIGINS', '').split(',') if host.strip()]
+CORS_ALLOWED_ORIGINS = _env_list('CORS_ALLOWED_ORIGINS')
 if not CORS_ALLOWED_ORIGINS:
-    CORS_ALLOWED_ORIGINS = [
-        "http://localhost:5173",
-        "http://127.0.0.1:5173",
-    ]
+    CORS_ALLOWED_ORIGINS = default_frontend_origins
 CORS_ALLOW_CREDENTIALS = True
 
 ROOT_URLCONF = 'backend.urls'
@@ -203,8 +211,6 @@ if EMAIL_HOST:
     EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 else:
     EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
-
-FRONTEND_BASE_URL = os.environ.get('FRONTEND_BASE_URL', 'http://localhost:5173')
 
 SIMPLE_JWT = {
     'ACCESS_TOKEN_LIFETIME': timedelta(minutes=int(os.environ.get('JWT_ACCESS_MINUTES', '15'))),

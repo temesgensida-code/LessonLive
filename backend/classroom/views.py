@@ -221,6 +221,22 @@ def invite_students(request, class_id):
 	except Classroom.DoesNotExist:
 		return JsonResponse({'detail': 'Classroom not found'}, status=404)
 
+	if not settings.DEBUG and settings.EMAIL_BACKEND == 'django.core.mail.backends.console.EmailBackend':
+		return JsonResponse(
+			{
+				'detail': 'Email service is not configured in production.',
+				'configure': [
+					'EMAIL_HOST',
+					'EMAIL_PORT',
+					'EMAIL_HOST_USER',
+					'EMAIL_HOST_PASSWORD',
+					'EMAIL_USE_TLS',
+					'DEFAULT_FROM_EMAIL',
+				],
+			},
+			status=503,
+		)
+
 	emails_text = request.POST.get('emails', '')
 	csv_file = request.FILES.get('file')
 	try:
@@ -481,8 +497,20 @@ def get_livekit_token(request, class_id):
 		API_KEY = os.getenv('LIVEKIT_API_KEY')
 		API_SECRET = os.getenv('LIVEKIT_API_SECRET')
 
-		if not API_KEY or not API_SECRET:
-			return JsonResponse({'detail': 'LiveKit server credentials are not configured'}, status=500)
+		missing = []
+		if not API_KEY:
+			missing.append('LIVEKIT_API_KEY')
+		if not API_SECRET:
+			missing.append('LIVEKIT_API_SECRET')
+
+		if missing:
+			return JsonResponse(
+				{
+					'detail': 'LiveKit server credentials are not configured',
+					'missing': missing,
+				},
+				status=503,
+			)
 		
 		# Define participant token
 		token = livekit_api.AccessToken(API_KEY, API_SECRET) \
@@ -497,5 +525,5 @@ def get_livekit_token(request, class_id):
 		
 		return JsonResponse({'token': token.to_jwt()})
 	except Exception as e:
-		return JsonResponse({'detail': str(e)}, status=500)
+		return JsonResponse({'detail': f'LiveKit token generation failed: {str(e)}'}, status=500)
 

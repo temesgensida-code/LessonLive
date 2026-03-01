@@ -12,8 +12,9 @@ import '@livekit/components-styles';
 import { Track } from 'livekit-client';
 import { useParams } from 'react-router-dom';
 import UsernameChat from './UsernameChat';
+import { API_BASE, LIVEKIT_SERVER_URL } from './components/apiClient';
 
-const serverUrl = 'wss://lessonlivemain-i0wqfwh8.livekit.cloud'; 
+const serverUrl = import.meta.env.VITE_LIVEKIT_URL || LIVEKIT_SERVER_URL;
 export default function LiveClassroom({ accessToken }) {
   const { classId } = useParams();
   const [token, setToken] = useState(null);
@@ -22,7 +23,7 @@ export default function LiveClassroom({ accessToken }) {
   useEffect(() => {
     const fetchToken = async () => {
       try {
-        const response = await fetch(`/api/classrooms/${classId}/token/`, {
+        const response = await fetch(`${API_BASE}/classrooms/${classId}/token/`, {
             headers: { 'Authorization': `Bearer ${accessToken}` }
         });
         if (!response.ok) {
@@ -32,7 +33,7 @@ export default function LiveClassroom({ accessToken }) {
         const data = await response.json();
         setToken(data.token);
         
-        const userRes = await fetch('/api/auth/me/', {
+        const userRes = await fetch(`${API_BASE}/auth/me/`, {
             headers: { 'Authorization': `Bearer ${accessToken}` }
         }); 
         if(userRes.ok) {
@@ -192,7 +193,7 @@ function NotesComponent({ classId, accessToken }) {
 
     try {
       setStatus('Saving...');
-      const response = await fetch(`/api/classrooms/${classId}/notes/`, {
+      const response = await fetch(`${API_BASE}/classrooms/${classId}/notes/`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
