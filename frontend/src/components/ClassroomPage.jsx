@@ -220,7 +220,8 @@ function ClassroomPage({ accessToken, setAccessToken }) {
       const skippedSummary = (data.skipped || [])
         .map((item) => {
           const reason = item.detail ? `${item.reason} (${item.detail})` : item.reason
-          return `${item.email}: ${reason}`
+          const linkText = item.invite_link ? ` [invite link: ${item.invite_link}]` : ''
+          return `${item.email}: ${reason}${linkText}`
         })
         .join(' | ')
 
