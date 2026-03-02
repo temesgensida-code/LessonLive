@@ -3,7 +3,7 @@ import TeacherAuth from './TeacherAuth'
 import StudentLogin from './StudentLogin'
 
 function AuthGateway({ onSuccess }) {
-  const [authType, setAuthType] = useState('teacher')
+  const [authType, setAuthType] = useState('student')
 
   return (
     <div className="stack auth-stack">
