@@ -70,7 +70,7 @@ export default function LiveClassroom({ accessToken }) {
         </div>
 
         {/* Right 2/5 - Sidebar */}
-        <div style={{ flexBasis: '40%', flexGrow: 2, minWidth: 0, display: 'flex', flexDirection: 'column', background: '#f5f5f5', borderLeft: '1px solid #ddd' }}>
+        <div style={{ flexBasis: '40%', flexGrow: 2, minWidth: 0, display: 'flex', flexDirection: 'column', background: '#121212', borderLeft: '1px solid #333' }}>
           <RightPanel isTeacher={isTeacher} classId={classId} accessToken={accessToken} />
         </div>
 
@@ -134,7 +134,7 @@ function RightPanel({ isTeacher, classId, accessToken }) {
          <UsernameChat />
        </div>
        
-       <div style={{ padding: '20px', backgroundColor: '#e9ecef', borderTop: '1px solid #ccc' }}>
+       <div style={{ padding: '20px', backgroundColor: '#1e1e1e', borderTop: '1px solid #333' }}>
           <h4>Audio Controls</h4>
           <AudioStreamButton />
        </div>

@@ -2,8 +2,8 @@
   font-family: 'Inter', system-ui, -apple-system, sans-serif;
   line-height: 1.5;
   font-weight: 400;
-  color: #0f172a;
-  background-color: #f8fafc;
+  color: #e5e7eb;
+  background-color: #000000;
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
@@ -16,6 +16,8 @@
 body {
   margin: 0;
   min-height: 100vh;
+  background: #000000;
+  color: #e5e7eb;
 }
 
 a {
