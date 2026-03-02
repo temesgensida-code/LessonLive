@@ -2,6 +2,7 @@ import csv
 import io
 import json
 import os
+import logging
 from datetime import timedelta
 
 from django.conf import settings
@@ -18,6 +19,9 @@ from channels.layers import get_channel_layer
 from authentication.jwt_auth import get_user_from_request
 from authentication.models import UserProfile
 from classroom.models import Classroom, ClassroomInvitation, ClassroomNote, DisplayedClassroomNote, Enrollment
+
+
+logger = logging.getLogger(__name__)
 
 
 def _json_body(request):
@@ -272,9 +276,6 @@ def invite_students(request, class_id):
 			status=ClassroomInvitation.STATUS_PENDING,
 			expires_at__gt=timezone.now(),
 		).first()
-		if existing_pending and not existing_user:
-			skipped.append({'email': email, 'reason': 'already_invited'})
-			continue
 
 		if existing_pending:
 			invite = existing_pending
@@ -301,6 +302,7 @@ def invite_students(request, class_id):
 			invite.save(update_fields=['token_hash', 'expires_at', 'status', 'invited_by'])
 
 		invite_link = f"{settings.FRONTEND_BASE_URL}/invite/{raw_token}"
+		logger.info('Generated invitation link for %s: %s', email, invite_link)
 		teacher_name = teacher.get_full_name() or teacher.email
 		if existing_user:
 			message = (
@@ -345,6 +347,7 @@ def invite_students(request, class_id):
 				'reinvited': bool(existing_user),
 				'status': 'pending',
 				'expires_at': invite.expires_at.isoformat(),
+				'invite_link': invite_link,
 			}
 		)
 

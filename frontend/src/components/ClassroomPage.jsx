@@ -225,8 +225,20 @@ function ClassroomPage({ accessToken, setAccessToken }) {
         })
         .join(' | ')
 
+      const invitedLinks = (data.invited || [])
+        .filter((item) => item.invite_link)
+        .map((item) => `${item.email}: ${item.invite_link}`)
+        .join(' | ')
+
       const baseMessage = `Invited ${data.invited_count} students. Skipped ${data.skipped_count}.`
-      setMessage(skippedSummary ? `${baseMessage} ${skippedSummary}` : baseMessage)
+      const details = [
+        invitedLinks ? `Invite links: ${invitedLinks}` : '',
+        skippedSummary,
+      ]
+        .filter(Boolean)
+        .join(' | ')
+
+      setMessage(details ? `${baseMessage} ${details}` : baseMessage)
       setEmails('')
       setFile(null)
     } catch (err) {
