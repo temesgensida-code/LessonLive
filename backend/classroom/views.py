@@ -4,6 +4,7 @@ import json
 import os
 import logging
 from datetime import timedelta
+from urllib.parse import quote
 
 from django.conf import settings
 from django.contrib.auth.models import User
@@ -301,7 +302,7 @@ def invite_students(request, class_id):
 			invite.invited_by = teacher
 			invite.save(update_fields=['token_hash', 'expires_at', 'status', 'invited_by'])
 
-		invite_link = f"{settings.FRONTEND_BASE_URL}/invite/{raw_token}"
+		invite_link = f"{settings.FRONTEND_BASE_URL}/invite/{quote(raw_token, safe='')}"
 		logger.info('Generated invitation link for %s: %s', email, invite_link)
 		teacher_name = teacher.get_full_name() or teacher.email
 		if existing_user:

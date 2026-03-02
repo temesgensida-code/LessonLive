@@ -13,6 +13,7 @@ function ClassroomPage({ accessToken, setAccessToken }) {
   const [emails, setEmails] = useState('')
   const [file, setFile] = useState(null)
   const [message, setMessage] = useState('')
+  const [inviteLinks, setInviteLinks] = useState([])
   const [error, setError] = useState('')
   const [savedNotes, setSavedNotes] = useState([])
   const [displayedNotes, setDisplayedNotes] = useState([])
@@ -197,6 +198,7 @@ function ClassroomPage({ accessToken, setAccessToken }) {
     event.preventDefault()
     setError('')
     setMessage('')
+    setInviteLinks([])
 
     if (!emails.trim() && !file) {
       setError('Enter at least one student email or upload a CSV file.')
@@ -225,14 +227,19 @@ function ClassroomPage({ accessToken, setAccessToken }) {
         })
         .join(' | ')
 
-      const invitedLinks = (data.invited || [])
-        .filter((item) => item.invite_link)
-        .map((item) => `${item.email}: ${item.invite_link}`)
-        .join(' | ')
+      const linkItems = [
+        ...(data.invited || [])
+          .filter((item) => item.invite_link)
+          .map((item) => ({ email: item.email, link: item.invite_link, source: 'invited' })),
+        ...(data.skipped || [])
+          .filter((item) => item.invite_link)
+          .map((item) => ({ email: item.email, link: item.invite_link, source: 'fallback' })),
+      ]
+
+      setInviteLinks(linkItems)
 
       const baseMessage = `Invited ${data.invited_count} students. Skipped ${data.skipped_count}.`
       const details = [
-        invitedLinks ? `Invite links: ${invitedLinks}` : '',
         skippedSummary,
       ]
         .filter(Boolean)
@@ -394,6 +401,18 @@ function ClassroomPage({ accessToken, setAccessToken }) {
                   </label>
                   {error && <p className="error">{error}</p>}
                   {message && <p className="success">{message}</p>}
+                  {inviteLinks.length > 0 && (
+                    <div>
+                      <p className="muted">Invitation links (copy or open):</p>
+                      <ul className="list">
+                        {inviteLinks.map((item, index) => (
+                          <li key={`${item.email}-${index}`}>
+                            <strong>{item.email}</strong>: <a href={item.link} target="_blank" rel="noreferrer">{item.link}</a>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
                   <button type="submit" className="primary">Send invitations</button>
                 </form>
               </div>
