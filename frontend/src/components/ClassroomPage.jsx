@@ -1,11 +1,19 @@
+import { Suspense, lazy } from 'react'
 import { useParams } from 'react-router-dom'
 import { LiveKitRoom } from '@livekit/components-react'
 import { LIVEKIT_SERVER_URL } from './apiClient'
-import ClassroomSidebarPortal from './classroom-components/ClassroomSidebarPortal'
-import DisplayedNotesCanvas from './classroom-components/DisplayedNotesCanvas'
-import LiveNotesPanel from './classroom-components/LiveNotesPanel'
-import TeacherNotesPanel from './classroom-components/TeacherNotesPanel'
 import useClassroomPageController from './classroom-components/useClassroomPageController'
+
+const ClassroomSidebarPortal = lazy(() => import('./classroom-components/ClassroomSidebarPortal'))
+const DisplayedNotesCanvas = lazy(() => import('./classroom-components/DisplayedNotesCanvas'))
+const LiveNotesPanel = lazy(() => import('./classroom-components/LiveNotesPanel'))
+const TeacherNotesPanel = lazy(() => import('./classroom-components/TeacherNotesPanel'))
+
+const classroomLoadingFallback = (
+  <section className="card">
+    <p className="muted">Loading classroom…</p>
+  </section>
+)
 
 function ClassroomPage({ accessToken, setAccessToken }) {
   const { classId } = useParams()
@@ -45,42 +53,66 @@ function ClassroomPage({ accessToken, setAccessToken }) {
   } = useClassroomPageController({ classId, accessToken, setAccessToken })
 
   if (!classroom && !error) {
-    return <p>Loading classroom…</p>
+    return classroomLoadingFallback
   }
 
   return (
-    <div className="stack">
-      <ClassroomSidebarPortal
-        owned={owned}
-        sidebarPortalTarget={sidebarPortalTarget}
-        sidebarTab={sidebarTab}
-        setSidebarTab={setSidebarTab}
-        classroom={classroom}
-        handleInvite={handleInvite}
-        emails={emails}
-        setEmails={setEmails}
-        setFile={setFile}
-        error={error}
-        message={message}
-        inviteLinks={inviteLinks}
-      />
+    <Suspense fallback={classroomLoadingFallback}>
+      <div className="stack">
+        <ClassroomSidebarPortal
+          owned={owned}
+          sidebarPortalTarget={sidebarPortalTarget}
+          sidebarTab={sidebarTab}
+          setSidebarTab={setSidebarTab}
+          classroom={classroom}
+          handleInvite={handleInvite}
+          emails={emails}
+          setEmails={setEmails}
+          setFile={setFile}
+          error={error}
+          message={message}
+          inviteLinks={inviteLinks}
+        />
 
-      {owned && liveError && (
-        <section className="card">
-          <p className="error">{liveError}</p>
-        </section>
-      )}
+        {owned && liveError && (
+          <section className="card">
+            <p className="error">{liveError}</p>
+          </section>
+        )}
 
-      {liveMode && liveToken ? (
-        <LiveKitRoom
-          connect
-          video={false}
-          audio
-          token={liveToken}
-          serverUrl={LIVEKIT_SERVER_URL}
-          data-lk-theme="default"
-          className="live-room"
-        >
+        {liveMode && liveToken ? (
+          <LiveKitRoom
+            connect
+            video={false}
+            audio
+            token={liveToken}
+            serverUrl={LIVEKIT_SERVER_URL}
+            data-lk-theme="default"
+            className="live-room"
+          >
+            <section className="card notes-shell">
+              <div className="notes-layout">
+                <DisplayedNotesCanvas
+                  classroom={classroom}
+                  displayedNotes={displayedNotes}
+                  owned={owned}
+                  formatDate={formatDate}
+                  onRemoveDisplayed={handleRemoveDisplayed}
+                  showScreenShare
+                />
+
+                <LiveNotesPanel
+                  owned={owned}
+                  liveLoading={liveLoading}
+                  handleToggleLiveClass={handleToggleLiveClass}
+                  liveError={liveError}
+                  noteError={noteError}
+                  noteMessage={noteMessage}
+                />
+              </div>
+            </section>
+          </LiveKitRoom>
+        ) : (
           <section className="card notes-shell">
             <div className="notes-layout">
               <DisplayedNotesCanvas
@@ -89,54 +121,32 @@ function ClassroomPage({ accessToken, setAccessToken }) {
                 owned={owned}
                 formatDate={formatDate}
                 onRemoveDisplayed={handleRemoveDisplayed}
-                showScreenShare
+                showScreenShare={false}
               />
 
-              <LiveNotesPanel
+              <TeacherNotesPanel
                 owned={owned}
                 liveLoading={liveLoading}
                 handleToggleLiveClass={handleToggleLiveClass}
                 liveError={liveError}
+                handleSaveNote={handleSaveNote}
+                noteTitle={noteTitle}
+                setNoteTitle={setNoteTitle}
+                noteContent={noteContent}
+                setNoteContent={setNoteContent}
+                notePendingDelete={notePendingDelete}
+                setDeleteConfirmNoteId={setDeleteConfirmNoteId}
+                handleDeleteNote={handleDeleteNote}
+                savedNotes={savedNotes}
+                handleDisplayNote={handleDisplayNote}
                 noteError={noteError}
                 noteMessage={noteMessage}
               />
             </div>
           </section>
-        </LiveKitRoom>
-      ) : (
-        <section className="card notes-shell">
-          <div className="notes-layout">
-            <DisplayedNotesCanvas
-              classroom={classroom}
-              displayedNotes={displayedNotes}
-              owned={owned}
-              formatDate={formatDate}
-              onRemoveDisplayed={handleRemoveDisplayed}
-              showScreenShare={false}
-            />
-
-            <TeacherNotesPanel
-              owned={owned}
-              liveLoading={liveLoading}
-              handleToggleLiveClass={handleToggleLiveClass}
-              liveError={liveError}
-              handleSaveNote={handleSaveNote}
-              noteTitle={noteTitle}
-              setNoteTitle={setNoteTitle}
-              noteContent={noteContent}
-              setNoteContent={setNoteContent}
-              notePendingDelete={notePendingDelete}
-              setDeleteConfirmNoteId={setDeleteConfirmNoteId}
-              handleDeleteNote={handleDeleteNote}
-              savedNotes={savedNotes}
-              handleDisplayNote={handleDisplayNote}
-              noteError={noteError}
-              noteMessage={noteMessage}
-            />
-          </div>
-        </section>
-      )}
-    </div>
+        )}
+      </div>
+    </Suspense>
   )
 }
 
