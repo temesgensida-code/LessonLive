@@ -10,7 +10,7 @@
   justify-content: space-between;
   padding: 1rem 2rem;
   background: #0f172a;
-  color: #1e1e1e;
+  color: #ababab;
 }
 
 .brand {
@@ -223,13 +223,14 @@
 }
 
 .primary {
-  background: #2563eb;
+  background: #425377;
   color: #121212;
   border: none;
   padding: 0.75rem 1.2rem;
   border-radius: 10px;
   font-weight: 600;
   cursor: pointer;
+
 }
 
 .ghost {
@@ -539,6 +540,7 @@
   .topbar {
     position: relative;
     padding-right: 4rem;
+    height: 24px;
   }
 
   .nav-user {
@@ -564,11 +566,15 @@
     min-height: auto;
   }
 
-  .notes-canvas,
+ 
   .notes-panel {
     width: 100%;
     min-height: auto;
   }
+   .notes-canvas{
+    width: 100%;
+    min-height: 300px;
+   }
 
   .notes-shell {
     width: 100%;
@@ -602,14 +608,31 @@
   .notes-panel {
     padding: 0.75rem;
   }
+  .notes-panel-header h3{
+    display: none;
+  }
+  .notes-panel h4{
+    font-size: 0.75rem;
+     margin: 3px;
+     padding: 2px;
+  }
+
+  .note-list-meta{
+    font-size: 0.75rem;
+  }
+
+  .note-list-item{
+    height: 20px;
+  }
 
   .displayed-list {
     gap: 0.5rem;
     margin-top: 0.5rem;
+    width: 100%;
   }
 
   .displayed-item {
-    padding: 0.65rem;
+    padding: 0.35rem;
     border-radius: 4px;
     font-size: 0.9rem;
   }
@@ -620,10 +643,59 @@
     font-size: 0.56rem;
   }
 
+  button,
   .primary,
-  .ghost {
-    padding: 0.5rem 0.75rem;
-    border-radius: 8px;
-    font-size: 0.9rem;
+  .ghost,
+  .tab,
+  .sidebar-nav-item,
+  .menu-toggle {
+    padding: 0.1rem 0.2rem;
+    border-radius: 6px;
+    font-size: 0.72rem;
+    min-height: 0.7rem;
+  }
+
+  .live-side-shell,
+  .live-side-content {
+    height: auto;
+    min-height: 0;
+  }
+  .live-side-content h3{
+    font-size: 0.8rem;
+    margin:2px;
+    padding: 2px;
+  }
+
+  .live-chat-box {
+    min-height: 140px;
+    overflow: visible;
+  }
+
+  .username-chat {
+    min-height: 140px;
+  }
+
+  .username-chat-list {
+    min-height: 100px;
+    max-height: 180px;
+  }
+  .live-audio-box h4{
+    font-size: 0.8rem;
+     margin:4px;
+     padding: 2px;
+  }
+
+  .form input,
+  .form textarea {
+    padding: 0.45rem 0.55rem;
+    font-size: 0.72rem;
+  }
+
+  
+
+  .username-chat-item,
+  .username-chat-list .muted,
+  .username-chat-form input {
+    font-size: 0.6rem;
   }
 }
