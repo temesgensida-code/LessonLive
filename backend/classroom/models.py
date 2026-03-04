@@ -73,7 +73,7 @@ class ClassroomInvitation(models.Model):
 
 class ClassroomNote(models.Model):
 	classroom = models.ForeignKey(Classroom, on_delete=models.CASCADE, related_name='notes')
-	note_index = models.PositiveIntegerField(null=True, blank=True)
+	note_index = models.PositiveIntegerField()
 	title = models.CharField(max_length=255)
 	content = models.TextField()
 	created_at = models.DateTimeField(auto_now_add=True)
