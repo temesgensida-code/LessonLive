@@ -11,6 +11,8 @@ from django.contrib.auth.models import User
 from django.core.mail import send_mail
 from django.core.validators import validate_email
 from django.core.exceptions import ValidationError
+from django.db import transaction
+from django.db.models import F
 from django.http import JsonResponse
 from django.utils import timezone
 from django.views.decorators.csrf import csrf_exempt
@@ -423,7 +425,7 @@ def classroom_notes(request, class_id):
 		return error_response
 
 	if request.method == 'GET':
-		notes = ClassroomNote.objects.filter(classroom=classroom).order_by('id')
+		notes = ClassroomNote.objects.filter(classroom=classroom).order_by('note_index', 'id')
 		return JsonResponse({'notes': [_serialize_saved_note(note) for note in notes]})
 
 	if request.method == 'POST':
@@ -443,6 +445,46 @@ def classroom_notes(request, class_id):
 		return JsonResponse({'note': _serialize_saved_note(note)}, status=201)
 
 	return JsonResponse({'detail': 'Method not allowed'}, status=405)
+
+
+@csrf_exempt
+def delete_classroom_note(request, class_id, note_id):
+	_, classroom, is_owner, error_response = _require_class_member(request, class_id)
+	if error_response:
+		return error_response
+
+	if request.method != 'DELETE':
+		return JsonResponse({'detail': 'Method not allowed'}, status=405)
+
+	if not is_owner:
+		return JsonResponse({'detail': 'Only the teacher can delete notes'}, status=403)
+
+	note = ClassroomNote.objects.filter(classroom=classroom, id=note_id).first()
+	if note is None:
+		return JsonResponse({'detail': 'Note not found'}, status=404)
+
+	deleted_note_id = note.id
+	deleted_note_index = note.note_index
+	displayed_ids = list(
+		DisplayedClassroomNote.objects.filter(classroom=classroom, note=note).values_list('id', flat=True)
+	)
+
+	with transaction.atomic():
+		note.delete()
+		ClassroomNote.objects.filter(classroom=classroom, note_index__gt=deleted_note_index).update(
+			note_index=F('note_index') - 1
+		)
+
+	for displayed_id in displayed_ids:
+		_broadcast_note_event(class_id, 'note_removed', {'id': displayed_id})
+
+	remaining_notes = ClassroomNote.objects.filter(classroom=classroom).order_by('note_index', 'id')
+	return JsonResponse(
+		{
+			'removed': {'id': deleted_note_id, 'index': deleted_note_index},
+			'notes': [_serialize_saved_note(item) for item in remaining_notes],
+		}
+	)
 
 
 def displayed_notes(request, class_id):
