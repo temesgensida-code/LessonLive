@@ -531,6 +531,34 @@
 }
 
 @media (max-width: 900px) {
+  .content {
+    max-width: 100%;
+    padding: 1rem 0.5rem 1.25rem;
+  }
+
+  .topbar {
+    position: relative;
+    padding-right: 4rem;
+  }
+
+  .nav-user {
+    display: none;
+  }
+
+  .menu-toggle {
+    position: absolute;
+    top: 0.7rem;
+    right: 0.75rem;
+    padding: 0.45rem 0.65rem;
+    border-radius: 8px;
+    line-height: 1;
+  }
+
+  .sidebar {
+    width: min(88vw, 360px);
+    right: calc(-1 * min(88vw, 360px));
+  }
+
   .notes-layout {
     flex-direction: column;
     min-height: auto;
@@ -546,5 +574,56 @@
     width: 100%;
     margin-left: 0;
     transform: none;
+    padding: 0.1rem;
+  }
+
+  .notes-canvas {
+    padding: 0.75rem;
+  }
+
+  .notes-canvas-title-row {
+    margin-bottom: 0.15rem;
+    gap: 0.4rem;
+  }
+
+  .notes-canvas-title-row h3 {
+    font-size: 1px;
+  }
+
+  .notes-canvas-meta {
+    gap: 0.35rem;
+    font-size: 0.82rem;
+  }
+
+  .notes-canvas-meta .muted {
+    font-size: 0.78rem;
+  }
+
+  .notes-panel {
+    padding: 0.75rem;
+  }
+
+  .displayed-list {
+    gap: 0.5rem;
+    margin-top: 0.5rem;
+  }
+
+  .displayed-item {
+    padding: 0.65rem;
+    border-radius: 4px;
+    font-size: 0.9rem;
+  }
+
+  .displayed-item p {
+    margin: 0.35rem 0 0;
+    line-height: 1.1;
+    font-size: 0.56rem;
+  }
+
+  .primary,
+  .ghost {
+    padding: 0.5rem 0.75rem;
+    border-radius: 8px;
+    font-size: 0.9rem;
   }
 }

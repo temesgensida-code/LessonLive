@@ -14,7 +14,7 @@ function Layout({ children, me, onLogout }) {
           {me?.authenticated ? (
             <>
               <span className="nav-user">{me.email}</span>
-              <button type="button" className="ghost" onClick={() => setSidebarOpen(true)}>
+              <button type="button" className="ghost menu-toggle" onClick={() => setSidebarOpen(true)}>
                 ☰ Menu
               </button>
             </>
