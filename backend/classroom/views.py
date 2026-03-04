@@ -306,6 +306,7 @@ def invite_students(request, class_id):
 
 		invite_link = f"{settings.FRONTEND_BASE_URL}/invite/{quote(raw_token, safe='')}"
 		logger.info('Generated invitation link for %s: %s', email, invite_link)
+		print(f"Invitation link for {email}: {invite_link}")
 		teacher_name = teacher.get_full_name() or teacher.email
 		if existing_user:
 			message = (
@@ -331,6 +332,7 @@ def invite_students(request, class_id):
 				from_email=settings.DEFAULT_FROM_EMAIL,
 				recipient_list=[email],
 				fail_silently=False,
+				timeout=7,
 			)
 		except Exception as exc:
 			skipped.append(
