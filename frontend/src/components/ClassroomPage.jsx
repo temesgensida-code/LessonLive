@@ -19,6 +19,7 @@ function ClassroomPage({ accessToken, setAccessToken }) {
   const [displayedNotes, setDisplayedNotes] = useState([])
   const [noteTitle, setNoteTitle] = useState('')
   const [noteContent, setNoteContent] = useState('')
+  const [deleteConfirmNoteId, setDeleteConfirmNoteId] = useState(null)
   const [noteError, setNoteError] = useState('')
   const [noteMessage, setNoteMessage] = useState('')
   const [liveMode, setLiveMode] = useState(false)
@@ -213,7 +214,7 @@ function ClassroomPage({ accessToken, setAccessToken }) {
       formData.append('file', file)
     }
 
-    try {
+     try {
       const data = await apiFetch(`/classrooms/${classId}/invite/`, {
         method: 'POST',
         body: formData,
@@ -287,6 +288,24 @@ function ClassroomPage({ accessToken, setAccessToken }) {
     }
   }
 
+  const handleDeleteNote = async (noteId) => {
+    setNoteError('')
+    setNoteMessage('')
+    try {
+      const data = await apiFetch(`/classrooms/${classId}/notes/${noteId}/`, {
+        method: 'DELETE',
+      }, { accessToken, setAccessToken })
+
+      setSavedNotes(data?.notes || [])
+      setDeleteConfirmNoteId(null)
+      if (data?.removed?.index) {
+        setNoteMessage(`Deleted note #${data.removed.index}`)
+      }
+    } catch (err) {
+      setNoteError(err.message)
+    }
+  }
+
   const handleRemoveDisplayed = async (displayedId) => {
     setNoteError('')
     try {
@@ -298,6 +317,8 @@ function ClassroomPage({ accessToken, setAccessToken }) {
       setNoteError(err.message)
     }
   }
+
+  const notePendingDelete = savedNotes.find((note) => note.id === deleteConfirmNoteId) || null
 
   const activateLiveClass = async () => {
     if (liveToken) {
@@ -570,6 +591,27 @@ function ClassroomPage({ accessToken, setAccessToken }) {
                   </form>
 
                   <h4>Saved Notes</h4>
+                  {notePendingDelete && (
+                    <div className="drawer">
+                      <p>Delete #{notePendingDelete.index} — {notePendingDelete.title}?</p>
+                      <div className="row">
+                        <button
+                          type="button"
+                          className="ghost"
+                          onClick={() => setDeleteConfirmNoteId(null)}
+                        >
+                          Cancel
+                        </button>
+                        <button
+                          type="button"
+                          className="ghost danger"
+                          onClick={() => handleDeleteNote(notePendingDelete.id)}
+                        >
+                          Delete
+                        </button>
+                      </div>
+                    </div>
+                  )}
                   {savedNotes.length === 0 ? (
                     <p className="muted">No saved notes yet.</p>
                   ) : (
@@ -580,13 +622,23 @@ function ClassroomPage({ accessToken, setAccessToken }) {
                             <strong>#{note.index}</strong>
                             <p className="note-list-title">{note.title}</p>
                           </div>
-                          <button
-                            type="button"
-                            className="primary"
-                            onClick={() => handleDisplayNote(note.id)}
-                          >
-                            Display #{note.index}
-                          </button>
+                          <div className="row">
+                            <button
+                              type="button"
+                              className="primary"
+                              onClick={() => handleDisplayNote(note.id)}
+                            >
+                              Display #{note.index}
+                            </button>
+                            <button
+                              type="button"
+                              className="ghost danger"
+                              onClick={() => setDeleteConfirmNoteId(note.id)}
+                              title={`Delete note #${note.index}`}
+                            >
+                              🗑
+                            </button>
+                          </div>
                         </li>
                       ))}
                     </ul>
