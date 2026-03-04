@@ -32,11 +32,11 @@ function TeacherNotesPanel({
       {owned ? (
         <>
           <form className="form" onSubmit={handleSaveNote}>
-            <label>
+            <label className="tit">
               Title
               <input value={noteTitle} onChange={(event) => setNoteTitle(event.target.value)} required />
             </label>
-            <label>
+            <label className="not">
               Note
               <textarea
                 rows={6}

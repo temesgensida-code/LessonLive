@@ -643,6 +643,16 @@
     font-size: 0.56rem;
   }
 
+  .drawer h3{
+    font-size: 0.75rem;
+     margin: 3px;
+     padding: 2px;
+  }
+  .list li {
+    padding: 0.35rem 0.75rem;
+    font-size: 0.67rem;
+  }
+
   button,
   .primary,
   .ghost,
@@ -691,7 +701,23 @@
     font-size: 0.72rem;
   }
 
-  
+  .sidebar-header {
+    padding: 0.75rem;
+  }
+  .sidebar-nav {
+    padding-bottom: 0.75rem;
+    gap: 0.25rem;
+  }
+  .gibberish,
+  .gibberish2 {
+    font-size: 0.67rem;
+  }
+  .tit,
+  .not {
+    font-size: 0.72rem;
+    margin-top: 0px;
+    padding-top: 0px;
+  }
 
   .username-chat-item,
   .username-chat-list .muted,

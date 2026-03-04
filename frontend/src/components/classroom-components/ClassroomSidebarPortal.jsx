@@ -57,15 +57,15 @@ function ClassroomSidebarPortal({
           <div className="drawer">
             <h3>Invite students</h3>
             <form onSubmit={handleInvite} className="form">
-              <label>
+              <label className='gibberish'>
                 Paste student emails (comma or newline separated)
                 <textarea
-                  rows={4}
+                  rows={3}
                   value={emails}
                   onChange={(event) => setEmails(event.target.value)}
                 />
               </label>
-              <label>
+              <label className='gibberish2'>
                 Or upload a CSV (first column = email)
                 <input type="file" accept=".csv" onChange={(event) => setFile(event.target.files[0])} />
               </label>
