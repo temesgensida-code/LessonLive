@@ -105,7 +105,7 @@ def _require_class_member(request, class_id):
 def _serialize_saved_note(note):
 	return {
 		'id': note.id,
-		'index': note.id,
+		'index': note.note_index,
 		'title': note.title,
 		'content': note.content,
 		'saved_date': note.created_at.isoformat(),
@@ -117,7 +117,7 @@ def _serialize_displayed_note(displayed_note):
 	return {
 		'id': displayed_note.id,
 		'note_id': note.id,
-		'index': note.id,
+		'index': note.note_index,
 		'title': note.title,
 		'content': note.content,
 		'saved_date': note.created_at.isoformat(),
