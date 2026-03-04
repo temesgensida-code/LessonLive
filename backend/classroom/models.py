@@ -73,15 +73,24 @@ class ClassroomInvitation(models.Model):
 
 class ClassroomNote(models.Model):
 	classroom = models.ForeignKey(Classroom, on_delete=models.CASCADE, related_name='notes')
+	note_index = models.PositiveIntegerField(null=True, blank=True)
 	title = models.CharField(max_length=255)
 	content = models.TextField()
 	created_at = models.DateTimeField(auto_now_add=True)
 
 	class Meta:
 		ordering = ['id']
+		unique_together = ('classroom', 'note_index')
+
+	def save(self, *args, **kwargs):
+		if not self.note_index:
+			max_index = ClassroomNote.objects.filter(classroom=self.classroom).aggregate(
+				models.Max('note_index'))['note_index__max']
+			self.note_index = 1 if max_index is None else max_index + 1
+		super().save(*args, **kwargs)
 
 	def __str__(self):
-		return f'Note #{self.id} - {self.title}'
+		return f'Note #{self.note_index} - {self.title}'
 
 
 class DisplayedClassroomNote(models.Model):
