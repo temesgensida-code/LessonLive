@@ -1,4 +1,4 @@
-import { Suspense, lazy } from 'react'
+import { Suspense, lazy, useRef, useState } from 'react'
 import { useParams } from 'react-router-dom'
 import { LiveKitRoom } from '@livekit/components-react'
 import { LIVEKIT_SERVER_URL } from './apiClient'
@@ -9,6 +9,12 @@ const DisplayedNotesCanvas = lazy(() => import('./classroom-components/Displayed
 const LiveNotesPanel = lazy(() => import('./classroom-components/LiveNotesPanel'))
 const TeacherNotesPanel = lazy(() => import('./classroom-components/TeacherNotesPanel'))
 
+const MOBILE_BREAKPOINT = 900
+
+function clamp(value, min, max) {
+  return Math.min(max, Math.max(min, value))
+}
+
 const classroomLoadingFallback = (
   <section className="card">
     <p className="muted">Loading classroom…</p>
@@ -16,6 +22,44 @@ const classroomLoadingFallback = (
 )
 
 function ClassroomPage({ accessToken, setAccessToken }) {
+  const [mobileSplitTop, setMobileSplitTop] = useState(56)
+  const [isDraggingMobileSplit, setIsDraggingMobileSplit] = useState(false)
+  const mobileSplitLayoutRef = useRef(null)
+
+  const updateMobileSplit = (clientY) => {
+    const layoutRect = mobileSplitLayoutRef.current?.getBoundingClientRect()
+    if (!layoutRect?.height) {
+      return
+    }
+
+    const nextTopPercent = ((clientY - layoutRect.top) / layoutRect.height) * 100
+    setMobileSplitTop(clamp(nextTopPercent, 18, 78))
+  }
+
+  const handleMobileSplitterPointerDown = (event) => {
+    if (window.innerWidth > MOBILE_BREAKPOINT) {
+      return
+    }
+
+    setIsDraggingMobileSplit(true)
+    event.currentTarget.setPointerCapture(event.pointerId)
+    updateMobileSplit(event.clientY)
+  }
+
+  const handleMobileSplitterPointerMove = (event) => {
+    if (!isDraggingMobileSplit || window.innerWidth > MOBILE_BREAKPOINT) {
+      return
+    }
+    updateMobileSplit(event.clientY)
+  }
+
+  const handleMobileSplitterPointerUp = (event) => {
+    if (event.currentTarget.hasPointerCapture(event.pointerId)) {
+      event.currentTarget.releasePointerCapture(event.pointerId)
+    }
+    setIsDraggingMobileSplit(false)
+  }
+
   const { classId } = useParams()
   const {
     classroom,
@@ -91,7 +135,14 @@ function ClassroomPage({ accessToken, setAccessToken }) {
             className="live-room"
           >
             <section className="card notes-shell">
-              <div className="notes-layout">
+              <div
+                ref={mobileSplitLayoutRef}
+                className="notes-layout mobile-resizable"
+                style={{
+                  '--mobile-notes-ratio': `${mobileSplitTop}%`,
+                  '--mobile-live-ratio': `${100 - mobileSplitTop}%`,
+                }}
+              >
                 <DisplayedNotesCanvas
                   classroom={classroom}
                   displayedNotes={displayedNotes}
@@ -100,6 +151,19 @@ function ClassroomPage({ accessToken, setAccessToken }) {
                   onRemoveDisplayed={handleRemoveDisplayed}
                   showScreenShare
                 />
+
+                <div
+                  className={`mobile-splitter ${isDraggingMobileSplit ? 'is-dragging' : ''}`}
+                  onPointerDown={handleMobileSplitterPointerDown}
+                  onPointerMove={handleMobileSplitterPointerMove}
+                  onPointerUp={handleMobileSplitterPointerUp}
+                  onPointerCancel={handleMobileSplitterPointerUp}
+                  aria-label="Drag to resize notes and live panel"
+                  role="separator"
+                  aria-orientation="horizontal"
+                >
+                  <span className="mobile-splitter-arrow" aria-hidden="true">^</span>
+                </div>
 
                 <LiveNotesPanel
                   owned={owned}
