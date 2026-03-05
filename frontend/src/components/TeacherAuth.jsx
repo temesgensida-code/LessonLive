@@ -53,31 +53,32 @@ function TeacherAuth({ onSuccess }) {
     <div className="card auth-card">
       <h2>{mode === 'signup' ? 'Teacher Register' : 'Teacher Login'}</h2>
 
-      <form onSubmit={handleSubmit} className="form">
+      <form onSubmit={handleSubmit} className="form" style={{ gap: '0.5rem' }}>
         {mode === 'signup' && (
-          <div className="grid">
-            <label>
+          <>
+            <label className='forFirst'>
               First name
               <input name="first_name" value={form.first_name} onChange={handleChange} />
             </label>
-            <label>
+            <label className='forLast'>
               Last name
               <input name="last_name" value={form.last_name} onChange={handleChange} />
             </label>
-          </div>
+          </>
         )}
-        <label>
-          Email
-          <input name="email" type="email" value={form.email} onChange={handleChange} required />
+        <label className='forEmail'>
+          Email:
+          <input name="email" className='inputEmail' type="email" value={form.email} onChange={handleChange} required />
         </label>
-        <label>
-          Password
+        <label className='forPassword'>
+          Password:
           <input
             name="password"
             type="password"
             value={form.password}
             onChange={handleChange}
             required
+            className='inputPass'
           />
         </label>
         {error && <p className="error">{error}</p>}

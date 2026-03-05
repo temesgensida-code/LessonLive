@@ -2,7 +2,7 @@ import { useTracks, VideoTrack } from '@livekit/components-react'
 import { Track } from 'livekit-client'
 
 function ScreenShareView() {
-  const tracks = useTracks([Track.Source.ScreenShare])
+  const tracks = useTracks([{ source: Track.Source.ScreenShare, withPlaceholder: false }])
 
   if (tracks.length === 0) {
     return null

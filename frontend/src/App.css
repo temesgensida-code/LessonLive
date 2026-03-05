@@ -205,6 +205,12 @@
   gap: 1rem;
 }
 
+.form label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
 .form input,
 .form textarea {
   width: 100%;
@@ -662,7 +668,7 @@
     padding: 0.1rem 0.2rem;
     border-radius: 6px;
     font-size: 0.72rem;
-    min-height: 0.7rem;
+    min-height: 1.73rem;
   }
 
   .live-side-shell,
@@ -700,6 +706,16 @@
     padding: 0.45rem 0.55rem;
     font-size: 0.72rem;
   }
+  .form input {
+    height:25px;
+  }
+  .form {
+    font-size: 0.73rem;
+  }
+
+  .grid input {
+    width:inherit;
+  }
 
   .sidebar-header {
     padding: 0.75rem;
@@ -723,5 +739,16 @@
   .username-chat-list .muted,
   .username-chat-form input {
     font-size: 0.6rem;
+  }
+
+  .auth-stack {
+    width:80%;
+  }
+  .auth-card h2 {
+    font-size: 0.9rem;
+    margin: 20px;
+  }
+  .forPassord {
+    font-size: 0.3rem;
   }
 }
