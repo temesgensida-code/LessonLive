@@ -537,6 +537,26 @@
   background: #1e1e1e;
 }
 
+.button,
+.primary,
+.ghost {
+  padding: 0.5rem 0.5rem 0.5rem 0.5rem;
+
+  border-radius: 10px;
+  font-weight: 600;
+
+}
+
+button,
+.chatSendButton {
+  padding: 0.5rem 0.4rem 0.2rem;
+  border-radius: 5px;
+  border-width: 1px;
+  border-color: #333333;
+  background-color:#304359;
+  color:#121212;
+}
+
 @media (max-width: 900px) {
   .content {
     max-width: 100%;
@@ -590,7 +610,7 @@
   }
 
   .notes-canvas {
-    padding: 0.75rem;
+    padding: 0rem;
   }
 
   .notes-canvas-title-row {
@@ -599,16 +619,19 @@
   }
 
   .notes-canvas-title-row h3 {
-    font-size: 1px;
+  
+    display: none;
   }
 
   .notes-canvas-meta {
     gap: 0.35rem;
     font-size: 0.82rem;
+    padding-left: 10px;
   }
 
   .notes-canvas-meta .muted {
-    font-size: 0.78rem;
+    font-size: 0.60rem;
+    padding-left: 50px;
   }
 
   .notes-panel {
@@ -665,10 +688,21 @@
   .tab,
   .sidebar-nav-item,
   .menu-toggle {
-    padding: 0.1rem 0.2rem;
+    padding: 1rem 0.5rem 0.5rem 0.5rem;
     border-radius: 6px;
     font-size: 0.72rem;
-    min-height: 1.73rem;
+    min-height: 1rem;
+    padding-top: 0px;
+  }
+
+  button,
+  .chatSendButton {
+    padding: 0.5rem 0.4rem 0.2rem;
+    border-radius: 5px;
+    border-width: 1px;
+    border-color: #333333;
+    background-color:#304359;
+    color:#121212;
   }
 
   .live-side-shell,

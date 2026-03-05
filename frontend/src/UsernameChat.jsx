@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useRoomContext } from '@livekit/components-react'
 import { DataPacket_Kind, RoomEvent } from 'livekit-client'
+import { FiSend } from "react-icons/fi";
 
 const CHAT_TOPIC = 'lessonlive-chat'
 
@@ -111,7 +112,7 @@ export default function UsernameChat() {
         ) : (
           messages.map((message) => (
             <p key={message.id} className="username-chat-item">
-              <strong>{message.sender}:</strong> {message.text}
+              <strong>{message.sender}:</strong> <br/>{message.text}
             </p>
           ))
         )}
@@ -123,7 +124,9 @@ export default function UsernameChat() {
           onChange={(event) => setDraft(event.target.value)}
           placeholder="Type a message"
         />
-        <button type="submit" className="primary">Send</button>
+        <button type="submit" className="chatSendButton">
+          <FiSend size={20} />
+        </button>
       </form>
     </div>
   )
