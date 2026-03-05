@@ -511,16 +511,80 @@
 .username-chat-list {
   flex: 1;
   min-height: 0;
+
   overflow-y: auto;
   border: 1px solid #333333;
   border-radius: 10px;
-  padding: 0.75rem;
+  padding: 0.45rem;
   background: #121212;
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.username-chat-row {
+  display: flex;
+}
+
+.username-chat-row.is-self {
+  justify-content: flex-end;
+}
+
+.username-chat-row.is-other {
+  justify-content: flex-start;
 }
 
 .username-chat-item {
-  margin: 0 0 0.5rem 0;
+  margin: 0;
+  max-width: 82%;
+  padding: 0.15rem 0.7rem;
+  border-radius: 14px;
+  border: 1px solid #303a46;
+  background: #1c2632;
+  box-shadow: 0 1px 0 rgba(0, 0, 0, 0.25);
   word-break: break-word;
+}
+
+.username-chat-row.is-self .username-chat-item {
+  border-top-right-radius: 6px;
+  background: #2a4f4a;
+  border-color: #3f6d66;
+}
+
+.username-chat-row.is-other .username-chat-item {
+  border-top-left-radius: 6px;
+}
+
+.username-chat-meta {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  margin-bottom: 0.2rem;
+}
+
+.username-chat-sender {
+  font-weight: 700;
+  font-size: 0.8rem;
+  color: #cde2ff;
+}
+
+.username-chat-teacher-tag {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.08rem 0.32rem;
+  border-radius: 999px;
+  border: 1px solid #f3ad2d;
+  background: #3f2d0d;
+  color: #ffcb66;
+  font-size: 0.58rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+
+.username-chat-text {
+  margin: 0;
+  line-height: 1.28;
 }
 
 .username-chat-form {
@@ -773,6 +837,18 @@ button,
   .username-chat-list .muted,
   .username-chat-form input {
     font-size: 0.6rem;
+  }
+
+  .username-chat-item {
+    max-width: 90%;
+  }
+
+  .username-chat-sender {
+    font-size: 0.64rem;
+  }
+
+  .username-chat-teacher-tag {
+    font-size: 0.5rem;
   }
 
   .auth-stack {

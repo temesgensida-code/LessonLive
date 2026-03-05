@@ -27,10 +27,30 @@ function getParticipantName(participant) {
   return identity
 }
 
-export default function UsernameChat() {
+function getParticipantRole(participant) {
+  const metadata = participant?.metadata
+  if (!metadata) {
+    return null
+  }
+
+  if (metadata === 'teacher' || metadata === 'student') {
+    return metadata
+  }
+
+  try {
+    const parsed = JSON.parse(metadata)
+    return parsed?.role || null
+  } catch {
+    return null
+  }
+}
+
+export default function UsernameChat({ isTeacher = false }) {
   const room = useRoomContext()
   const [messages, setMessages] = useState([])
   const [draft, setDraft] = useState('')
+  const localIdentity = room?.localParticipant?.identity || ''
+  const localName = getParticipantName(room?.localParticipant)
 
   useEffect(() => {
     if (!room) {
@@ -60,6 +80,8 @@ export default function UsernameChat() {
               sender: parsed.sender && parsed.sender !== 'Unknown'
                 ? parsed.sender
                 : getParticipantName(participant),
+              senderIdentity: parsed.senderIdentity || participant?.identity || '',
+              senderRole: parsed.senderRole || getParticipantRole(participant),
               text: parsed.text,
             },
           ]
@@ -85,6 +107,8 @@ export default function UsernameChat() {
     const outgoing = {
       id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
       sender: getParticipantName(room.localParticipant),
+      senderIdentity: room.localParticipant.identity || '',
+      senderRole: isTeacher ? 'teacher' : null,
       text,
     }
 
@@ -110,11 +134,28 @@ export default function UsernameChat() {
         {messages.length === 0 ? (
           <p className="muted">No messages yet.</p>
         ) : (
-          messages.map((message) => (
-            <p key={message.id} className="username-chat-item">
-              <strong>{message.sender}:</strong> <br/>{message.text}
-            </p>
-          ))
+          messages.map((message) => {
+            const isSelf = message.senderIdentity
+              ? message.senderIdentity === localIdentity
+              : message.sender === localName
+
+            return (
+              <div
+                key={message.id}
+                className={`username-chat-row ${isSelf ? 'is-self' : 'is-other'}`}
+              >
+                <div className="username-chat-item">
+                <div className="username-chat-meta">
+                  <span className="username-chat-sender">{message.sender}</span>
+                  {message.senderRole === 'teacher' ? (
+                    <span className="username-chat-teacher-tag">TCHR</span>
+                  ) : null}
+                </div>
+                <p className="username-chat-text">{message.text}</p>
+              </div>
+              </div>
+            )
+          })
         )}
       </div>
 
