@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
+import { GiHamburgerMenu } from 'react-icons/gi'
 
 function Layout({ children, me, onLogout }) {
   const [sidebarOpen, setSidebarOpen] = useState(false)
@@ -14,8 +15,13 @@ function Layout({ children, me, onLogout }) {
           {me?.authenticated ? (
             <>
               <span className="nav-user">{me.email}</span>
-              <button type="button" className="ghost menu-toggle" onClick={() => setSidebarOpen(true)}>
-                ☰ Menu
+              <button
+                type="button"
+                className="ghost menu-toggle"
+                onClick={() => setSidebarOpen(true)}
+                aria-label="Open menu"
+              >
+                <GiHamburgerMenu size={16} aria-hidden="true" />
               </button>
             </>
           ) : (

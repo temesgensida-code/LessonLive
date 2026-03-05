@@ -888,11 +888,13 @@ button,
   .tab,
   .sidebar-nav-item,
   .menu-toggle {
-    padding: 1rem 0.5rem 0.5rem 0.5rem;
+    /* padding: 1rem 0.5rem 0.5rem 0.5rem; */
     border-radius: 6px;
+    border-color: transparent;
     font-size: 0.72rem;
     min-height: 1rem;
     padding-top: 0px;
+    margin-bottom: 10px;
   }
 
   button,
@@ -914,6 +916,7 @@ button,
     font-size: 0.8rem;
     margin:2px;
     padding: 2px;
+    display: none;
   }
 
   .live-chat-box {
