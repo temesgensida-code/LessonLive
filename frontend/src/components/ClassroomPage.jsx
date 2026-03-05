@@ -33,7 +33,7 @@ function ClassroomPage({ accessToken, setAccessToken }) {
     }
 
     const nextTopPercent = ((clientY - layoutRect.top) / layoutRect.height) * 100
-    setMobileSplitTop(clamp(nextTopPercent, 18, 78))
+    setMobileSplitTop(clamp(nextTopPercent, 0, 78))
   }
 
   const handleMobileSplitterPointerDown = (event) => {
