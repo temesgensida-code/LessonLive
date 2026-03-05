@@ -167,6 +167,7 @@ function ClassroomPage({ accessToken, setAccessToken }) {
 
                 <LiveNotesPanel
                   owned={owned}
+                  classId={classId}
                   liveLoading={liveLoading}
                   handleToggleLiveClass={handleToggleLiveClass}
                   liveError={liveError}

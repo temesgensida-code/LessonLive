@@ -1025,4 +1025,8 @@ button,
   .forPassord {
     font-size: 0.3rem;
   }
+  .success {
+    font-size: 0.5rem;
+    max-width: 200px;
+  }
 }

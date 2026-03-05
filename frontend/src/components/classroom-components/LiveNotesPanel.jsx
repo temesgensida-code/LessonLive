@@ -1,6 +1,6 @@
 import LiveClassSidePanel from '../LiveClassSidePanel'
 
-function LiveNotesPanel({ owned, liveLoading, handleToggleLiveClass, liveError, noteError, noteMessage }) {
+function LiveNotesPanel({ owned, classId, liveLoading, handleToggleLiveClass, liveError, noteError, noteMessage }) {
   return (
     <div className="notes-panel">
       <div className="notes-panel-header">
@@ -14,7 +14,7 @@ function LiveNotesPanel({ owned, liveLoading, handleToggleLiveClass, liveError, 
 
       {liveError && <p className="error">{liveError}</p>}
 
-      <LiveClassSidePanel owned={owned} />
+      <LiveClassSidePanel owned={owned} chatStorageKey={`classroom-${classId}`} />
 
       {noteError && <p className="error">{noteError}</p>}
       {noteMessage && <p className="success">{noteMessage}</p>}

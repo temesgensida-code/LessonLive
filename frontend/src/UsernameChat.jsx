@@ -5,6 +5,8 @@ import { FiSend } from "react-icons/fi";
 
 const CHAT_TOPIC = 'lessonlive-chat'
 const EMOJI_CHOICES = ['😀', '😂', '😍', '😎', '🤔', '👍', '👏', '🙏', '🎉', '🔥', '❤️', '✅']
+const CHAT_HISTORY_LIMIT = 50
+const CHAT_STORAGE_PREFIX = 'lessonlive-chat-history'
 
 function getParticipantName(participant) {
   if (!participant) {
@@ -46,14 +48,73 @@ function getParticipantRole(participant) {
   }
 }
 
-export default function UsernameChat({ isTeacher = false }) {
+function keepRecentMessages(items) {
+  return items.slice(-CHAT_HISTORY_LIMIT)
+}
+
+function getResolvedStorageKey(chatStorageKey, room) {
+  const scope = chatStorageKey || room?.name || room?.sid || room?.metadata || 'default'
+  return `${CHAT_STORAGE_PREFIX}:${scope}`
+}
+
+export default function UsernameChat({ isTeacher = false, chatStorageKey = '' }) {
   const room = useRoomContext()
   const [messages, setMessages] = useState([])
   const [draft, setDraft] = useState('')
   const [isEmojiPickerOpen, setIsEmojiPickerOpen] = useState(false)
+  const [historyReady, setHistoryReady] = useState(false)
   const emojiPickerRef = useRef(null)
   const localIdentity = room?.localParticipant?.identity || ''
   const localName = getParticipantName(room?.localParticipant)
+  const resolvedStorageKey = getResolvedStorageKey(chatStorageKey, room)
+
+  useEffect(() => {
+    setHistoryReady(false)
+
+    try {
+      const raw = window.localStorage.getItem(resolvedStorageKey)
+      if (!raw) {
+        setMessages([])
+        setHistoryReady(true)
+        return
+      }
+
+      const parsed = JSON.parse(raw)
+      if (!Array.isArray(parsed)) {
+        setMessages([])
+        setHistoryReady(true)
+        return
+      }
+
+      const normalized = parsed
+        .filter((item) => item && item.id && item.text)
+        .map((item) => ({
+          id: item.id,
+          sender: item.sender || 'Unknown',
+          senderIdentity: item.senderIdentity || '',
+          senderRole: item.senderRole || null,
+          text: item.text,
+        }))
+
+      setMessages(keepRecentMessages(normalized))
+    } catch {
+      setMessages([])
+    } finally {
+      setHistoryReady(true)
+    }
+  }, [resolvedStorageKey])
+
+  useEffect(() => {
+    if (!historyReady) {
+      return
+    }
+
+    try {
+      window.localStorage.setItem(resolvedStorageKey, JSON.stringify(keepRecentMessages(messages)))
+    } catch {
+      return
+    }
+  }, [historyReady, messages, resolvedStorageKey])
 
   useEffect(() => {
     if (!isEmojiPickerOpen) {
@@ -93,7 +154,7 @@ export default function UsernameChat({ isTeacher = false }) {
           if (prev.some((item) => item.id === parsed.id)) {
             return prev
           }
-          return [
+          return keepRecentMessages([
             ...prev,
             {
               id: parsed.id,
@@ -104,7 +165,7 @@ export default function UsernameChat({ isTeacher = false }) {
               senderRole: parsed.senderRole || getParticipantRole(participant),
               text: parsed.text,
             },
-          ]
+          ])
         })
       } catch {
         return
@@ -141,7 +202,7 @@ export default function UsernameChat({ isTeacher = false }) {
         }
       )
 
-      setMessages((prev) => [...prev, outgoing])
+      setMessages((prev) => keepRecentMessages([...prev, outgoing]))
       setDraft('')
       setIsEmojiPickerOpen(false)
     } catch {

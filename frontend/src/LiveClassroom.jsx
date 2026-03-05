@@ -118,7 +118,7 @@ function RightPanel({ isTeacher, classId, accessToken }) {
          
          <div style={{ flex: 1, overflow: 'hidden', position: 'relative' }}>
             {teacherMode === 'chat' ? (
-              <UsernameChat isTeacher={isTeacher} />
+              <UsernameChat isTeacher={isTeacher} chatStorageKey={`classroom-${classId}`} />
             ) : (
                  <NotesComponent classId={classId} accessToken={accessToken} />
             )}
@@ -131,7 +131,7 @@ function RightPanel({ isTeacher, classId, accessToken }) {
   return (
     <div style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
        <div style={{ flex: 1, overflow: 'hidden' }}>
-         <UsernameChat isTeacher={isTeacher} />
+         <UsernameChat isTeacher={isTeacher} chatStorageKey={`classroom-${classId}`} />
        </div>
        
        <div style={{ padding: '20px', backgroundColor: '#1e1e1e', borderTop: '1px solid #333' }}>
