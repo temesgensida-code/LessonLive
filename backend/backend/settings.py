@@ -90,6 +90,7 @@ INSTALLED_APPS = [
     'channels',
     'authentication',
     'classroom',
+    'examination',
 ]
 
 MIDDLEWARE = [

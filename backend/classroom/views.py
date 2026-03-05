@@ -602,4 +602,3 @@ def get_livekit_token(request, class_id):
 		return JsonResponse({'token': token.to_jwt()})
 	except Exception as e:
 		return JsonResponse({'detail': f'LiveKit token generation failed: {str(e)}'}, status=500)
-
