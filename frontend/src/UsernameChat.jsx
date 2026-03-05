@@ -1,9 +1,10 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useRoomContext } from '@livekit/components-react'
 import { DataPacket_Kind, RoomEvent } from 'livekit-client'
 import { FiSend } from "react-icons/fi";
 
 const CHAT_TOPIC = 'lessonlive-chat'
+const EMOJI_CHOICES = ['😀', '😂', '😍', '😎', '🤔', '👍', '👏', '🙏', '🎉', '🔥', '❤️', '✅']
 
 function getParticipantName(participant) {
   if (!participant) {
@@ -49,8 +50,27 @@ export default function UsernameChat({ isTeacher = false }) {
   const room = useRoomContext()
   const [messages, setMessages] = useState([])
   const [draft, setDraft] = useState('')
+  const [isEmojiPickerOpen, setIsEmojiPickerOpen] = useState(false)
+  const emojiPickerRef = useRef(null)
   const localIdentity = room?.localParticipant?.identity || ''
   const localName = getParticipantName(room?.localParticipant)
+
+  useEffect(() => {
+    if (!isEmojiPickerOpen) {
+      return undefined
+    }
+
+    const handleOutsideClick = (event) => {
+      if (!emojiPickerRef.current?.contains(event.target)) {
+        setIsEmojiPickerOpen(false)
+      }
+    }
+
+    document.addEventListener('pointerdown', handleOutsideClick)
+    return () => {
+      document.removeEventListener('pointerdown', handleOutsideClick)
+    }
+  }, [isEmojiPickerOpen])
 
   useEffect(() => {
     if (!room) {
@@ -123,9 +143,14 @@ export default function UsernameChat({ isTeacher = false }) {
 
       setMessages((prev) => [...prev, outgoing])
       setDraft('')
+      setIsEmojiPickerOpen(false)
     } catch {
       return
     }
+  }
+
+  const handleInsertEmoji = (emoji) => {
+    setDraft((prev) => `${prev}${emoji}`)
   }
 
   return (
@@ -165,9 +190,36 @@ export default function UsernameChat({ isTeacher = false }) {
           onChange={(event) => setDraft(event.target.value)}
           placeholder="Type a message"
         />
-        <button type="submit" className="chatSendButton">
-          <FiSend size={20} />
-        </button>
+        <div className="username-chat-actions" ref={emojiPickerRef}>
+          <button
+            type="button"
+            className="chatEmojiButton"
+            onClick={() => setIsEmojiPickerOpen((prev) => !prev)}
+            aria-label="Open emoji picker"
+          >
+            😊
+          </button>
+
+          {isEmojiPickerOpen ? (
+            <div className="chat-emoji-picker" role="listbox" aria-label="Emoji picker">
+              {EMOJI_CHOICES.map((emoji) => (
+                <button
+                  key={emoji}
+                  type="button"
+                  className="chat-emoji-item"
+                  onClick={() => handleInsertEmoji(emoji)}
+                  aria-label={`Insert ${emoji}`}
+                >
+                  {emoji}
+                </button>
+              ))}
+            </div>
+          ) : null}
+
+          <button type="submit" className="chatSendButton" aria-label="Send message">
+            <FiSend size={20} />
+          </button>
+        </div>
       </form>
     </div>
   )
