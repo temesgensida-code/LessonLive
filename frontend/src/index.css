@@ -1,9 +1,15 @@
 :root {
+  --color-1: #001B48;
+  --color-2: #02457A;
+  --color-3: #018ABE;
+  --color-4: #97CADB;
+  --color-5: #D6E8EE;
+
   font-family: 'Inter', system-ui, -apple-system, sans-serif;
   line-height: 1.5;
   font-weight: 400;
-  color: #e5e7eb;
-  background-color: #000000;
+  color: var(--color-1);
+  background-color: var(--color-4);
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
@@ -16,8 +22,8 @@
 body {
   margin: 0;
   min-height: 100vh;
-  background: #000000;
-  color: #e5e7eb;
+  background: var(--color-4);
+  color: var(--color-1);
 }
 
 a {
