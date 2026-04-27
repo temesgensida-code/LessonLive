@@ -1,5 +1,7 @@
+from unittest.mock import patch
+
 from django.contrib.auth.models import User
-from django.test import TestCase
+from django.test import TestCase, override_settings
 
 from authentication.jwt_auth import issue_tokens_for_user
 from authentication.models import UserProfile
@@ -76,3 +78,41 @@ class ClassroomNotesIsolationTests(TestCase):
 			**self._auth_header(self.student_access_token),
 		)
 		self.assertEqual(response.status_code, 403)
+
+
+class LivekitTokenConfigurationTests(TestCase):
+	def setUp(self):
+		self.teacher = User.objects.create_user(username='teacher2', email='teacher2@example.com', password='pass12345')
+		UserProfile.objects.create(user=self.teacher, role=UserProfile.ROLE_TEACHER)
+
+		self.classroom = Classroom.objects.create(owner=self.teacher, name='Live Classroom')
+
+		tokens = issue_tokens_for_user(self.teacher)
+		self.teacher_access_token = tokens['access']
+
+	def _auth_header(self, token):
+		return {'HTTP_AUTHORIZATION': f'Bearer {token}'}
+
+	@override_settings(DEBUG=True)
+	def test_missing_livekit_credentials_return_disabled_payload_in_debug(self):
+		with patch.dict('os.environ', {'LIVEKIT_API_KEY': '', 'LIVEKIT_API_SECRET': ''}, clear=False):
+			response = self.client.get(
+				f'/api/classrooms/{self.classroom.class_id}/token/',
+				**self._auth_header(self.teacher_access_token),
+			)
+
+		self.assertEqual(response.status_code, 200)
+		payload = response.json()
+		self.assertFalse(payload.get('livekit_enabled'))
+		self.assertEqual(payload.get('token'), '')
+		self.assertCountEqual(payload.get('missing', []), ['LIVEKIT_API_KEY', 'LIVEKIT_API_SECRET'])
+
+	@override_settings(DEBUG=False)
+	def test_missing_livekit_credentials_return_503_in_production(self):
+		with patch.dict('os.environ', {'LIVEKIT_API_KEY': '', 'LIVEKIT_API_SECRET': ''}, clear=False):
+			response = self.client.get(
+				f'/api/classrooms/{self.classroom.class_id}/token/',
+				**self._auth_header(self.teacher_access_token),
+			)
+
+		self.assertEqual(response.status_code, 503)
