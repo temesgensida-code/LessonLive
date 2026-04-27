@@ -1,6 +1,6 @@
 const API_BASE = import.meta.env.VITE_API_URL || '/api'
 const SESSION_HINT_KEY = 'lessonlive_has_session'
-const LIVEKIT_SERVER_URL = 'wss://lessonlivemain-i0wqfwh8.livekit.cloud'
+const LIVEKIT_SERVER_URL = import.meta.env.VITE_LIVEKIT_URL || 'wss://lessonlivemain-i0wqfwh8.livekit.cloud'
 
 function getNotesWebSocketUrl(classId, accessToken) {
   const protocol = window.location.protocol === 'https:' ? 'wss' : 'ws'

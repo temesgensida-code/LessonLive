@@ -564,10 +564,12 @@ def get_livekit_token(request, class_id):
 	try:
 		from livekit import api as livekit_api
 	except ImportError:
-		return JsonResponse(
-			{'detail': 'LiveKit API SDK is not installed. Install it with: pip install livekit-api'},
-			status=500,
-		)
+		payload = {
+			'detail': 'LiveKit API SDK is not installed. Install it with: pip install livekit-api',
+			'livekit_enabled': False,
+			'token': '',
+		}
+		return JsonResponse(payload, status=200 if settings.DEBUG else 500)
 	
 	try:
 		API_KEY = os.getenv('LIVEKIT_API_KEY')
@@ -580,13 +582,13 @@ def get_livekit_token(request, class_id):
 			missing.append('LIVEKIT_API_SECRET')
 
 		if missing:
-			return JsonResponse(
-				{
-					'detail': 'LiveKit server credentials are not configured',
-					'missing': missing,
-				},
-				status=503,
-			)
+			payload = {
+				'detail': 'LiveKit server credentials are not configured',
+				'missing': missing,
+				'livekit_enabled': False,
+				'token': '',
+			}
+			return JsonResponse(payload, status=200 if settings.DEBUG else 503)
 		
 		# Define participant token
 		token = livekit_api.AccessToken(API_KEY, API_SECRET) \
@@ -599,6 +601,6 @@ def get_livekit_token(request, class_id):
 				can_subscribe=True,
 			))
 		
-		return JsonResponse({'token': token.to_jwt()})
+		return JsonResponse({'token': token.to_jwt(), 'livekit_enabled': True})
 	except Exception as e:
 		return JsonResponse({'detail': f'LiveKit token generation failed: {str(e)}'}, status=500)

@@ -1,6 +1,10 @@
+# Environment variables and local secrets
 .env
 .env.*
 *.env
+.envrc
+backend/.env
+frontend/.env
 
 # Django
 *.sqlite3

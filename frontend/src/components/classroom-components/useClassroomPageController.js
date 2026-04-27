@@ -323,11 +323,24 @@ function useClassroomPageController({ classId, accessToken, setAccessToken }) {
     setLiveError('')
     try {
       const data = await apiFetch(`/classrooms/${classId}/token/`, {}, { accessToken, setAccessToken })
-      setLiveToken(data?.token || '')
-      setLiveMode(Boolean(data?.token))
-      if (!data?.token) {
-        setLiveError('Unable to start live class.')
+      const issuedToken = data?.token || ''
+
+      if (data?.livekit_enabled === false) {
+        setLiveToken('')
+        setLiveMode(false)
+        setLiveError(data?.detail || 'Live class is unavailable in this environment.')
+        return
       }
+
+      if (!issuedToken) {
+        setLiveToken('')
+        setLiveMode(false)
+        setLiveError(data?.detail || 'Unable to start live class.')
+        return
+      }
+
+      setLiveToken(issuedToken)
+      setLiveMode(true)
     } catch (err) {
       setLiveError(err.message)
       setLiveMode(false)
