@@ -18,19 +18,36 @@ const serverUrl = import.meta.env.VITE_LIVEKIT_URL || LIVEKIT_SERVER_URL;
 export default function LiveClassroom({ accessToken }) {
   const { classId } = useParams();
   const [token, setToken] = useState(null);
+  const [tokenLoading, setTokenLoading] = useState(true);
+  const [tokenError, setTokenError] = useState('');
   const [isTeacher, setIsTeacher] = useState(false); 
 
   useEffect(() => {
     const fetchToken = async () => {
+      setTokenLoading(true);
+      setTokenError('');
       try {
         const response = await fetch(`${API_BASE}/classrooms/${classId}/token/`, {
             headers: { 'Authorization': `Bearer ${accessToken}` }
         });
         if (!response.ok) {
-            console.error(`Error fetching token: ${response.statusText}`);
+            setTokenError(`Unable to start live class (${response.status}).`);
+            setToken(null);
             return;
         }
         const data = await response.json();
+        if (data?.livekit_enabled === false) {
+            setTokenError(data.detail || 'Live class is unavailable in this environment.');
+            setToken(null);
+            return;
+        }
+
+        if (!data?.token) {
+            setTokenError(data?.detail || 'Unable to start live class.');
+            setToken(null);
+            return;
+        }
+
         setToken(data.token);
         
         const userRes = await fetch(`${API_BASE}/auth/me/`, {
@@ -38,18 +55,35 @@ export default function LiveClassroom({ accessToken }) {
         }); 
         if(userRes.ok) {
             const userData = await userRes.json();
-            if (userData.profile?.role === 'teacher') {
+            if (userData.role === 'teacher') {
                 setIsTeacher(true);
             }
         }
       } catch (e) {
         console.error(e);
+        setTokenError('Unable to start live class.');
+        setToken(null);
+      } finally {
+        setTokenLoading(false);
       }
     };
     if (accessToken) fetchToken();
+    else {
+      setTokenLoading(false);
+    }
   }, [classId, accessToken]);
 
-  if (!token) return <div style={{display:'flex', justifyContent:'center', alignItems:'center', height:'100vh'}}>Loading Live Classroom...</div>;
+  if (tokenLoading) {
+    return <div style={{display:'flex', justifyContent:'center', alignItems:'center', height:'100vh'}}>Loading Live Classroom...</div>;
+  }
+
+  if (!token) {
+    return (
+      <div style={{ display:'flex', justifyContent:'center', alignItems:'center', height:'100vh', textAlign:'center', padding:'1rem' }}>
+        {tokenError || 'Live classroom is unavailable right now.'}
+      </div>
+    );
+  }
 
   return (
     <div style={{ height: '100vh', display: 'flex', flexDirection: 'column' }}>
