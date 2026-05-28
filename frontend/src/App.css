@@ -549,6 +549,13 @@ button:active:not(:disabled) {
   overflow: hidden;
 }
 
+.notes-canvas-slot {
+  flex: 1 1 60%;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
 /* Screen share fills the entire canvas */
 .notes-canvas-header {
   display: flex;
@@ -1113,7 +1120,8 @@ button:active:not(:disabled) {
     gap: 0;
   }
 
-  .notes-layout.mobile-resizable .notes-canvas {
+  .notes-layout.mobile-resizable .notes-canvas,
+  .notes-layout.mobile-resizable .notes-canvas-slot {
     flex: 0 0 var(--mobile-notes-ratio, 55%);
     min-height: 120px;
     border-radius: var(--radius-lg) var(--radius-lg) 0 0;
@@ -1163,7 +1171,8 @@ button:active:not(:disabled) {
     max-height: none;
   }
 
-  .notes-canvas {
+  .notes-canvas,
+  .notes-canvas-slot {
     width: 100%;
     border-radius: var(--radius-lg);
   }

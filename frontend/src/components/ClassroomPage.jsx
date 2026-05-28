@@ -25,6 +25,7 @@ const classroomLoadingFallback = (
 function ClassroomPage({ accessToken, setAccessToken }) {
   const [mobileSplitTop, setMobileSplitTop] = useState(56)
   const [isDraggingMobileSplit, setIsDraggingMobileSplit] = useState(false)
+  const [showQuizCard, setShowQuizCard] = useState(false)
   const mobileSplitLayoutRef = useRef(null)
 
   const updateMobileSplit = (clientY) => {
@@ -59,6 +60,10 @@ function ClassroomPage({ accessToken, setAccessToken }) {
       event.currentTarget.releasePointerCapture(event.pointerId)
     }
     setIsDraggingMobileSplit(false)
+  }
+
+  const handleToggleQuizCard = () => {
+    setShowQuizCard((prev) => !prev)
   }
 
   const { classId } = useParams()
@@ -181,21 +186,28 @@ function ClassroomPage({ accessToken, setAccessToken }) {
         ) : (
           <section className="card notes-shell">
             <div className="notes-layout">
-              <DisplayedNotesCanvas
-                classroom={classroom}
-                displayedNotes={displayedNotes}
-                owned={owned}
-                formatDate={formatDate}
-                onRemoveDisplayed={handleRemoveDisplayed}
-                showScreenShare={false}
-              />
-              <LiveQuizCard owned={owned} classId={classId} sessionLabel="Your Course" />
+              {owned && showQuizCard ? (
+                <div className="notes-canvas-slot">
+                  <LiveQuizCard owned={owned} classId={classId} sessionLabel="Your Course" />
+                </div>
+              ) : (
+                <DisplayedNotesCanvas
+                  classroom={classroom}
+                  displayedNotes={displayedNotes}
+                  owned={owned}
+                  formatDate={formatDate}
+                  onRemoveDisplayed={handleRemoveDisplayed}
+                  showScreenShare={false}
+                />
+              )}
 
               <TeacherNotesPanel
                 owned={owned}
                 liveLoading={liveLoading}
                 handleToggleLiveClass={handleToggleLiveClass}
                 liveError={liveError}
+                showQuizCard={showQuizCard}
+                handleToggleQuizCard={handleToggleQuizCard}
                 handleSaveNote={handleSaveNote}
                 noteTitle={noteTitle}
                 setNoteTitle={setNoteTitle}

@@ -3,6 +3,8 @@ function TeacherNotesPanel({
   liveLoading,
   handleToggleLiveClass,
   liveError,
+  showQuizCard,
+  handleToggleQuizCard,
   handleSaveNote,
   noteTitle,
   setNoteTitle,
@@ -22,9 +24,19 @@ function TeacherNotesPanel({
       <div className="notes-panel-header">
         <h3>{owned ? 'Teacher Notes' : 'Notes'}</h3>
         {owned && (
-          <button type="button" className="primary" onClick={handleToggleLiveClass} disabled={liveLoading}>
-            {liveLoading ? 'Loading…' : '▶ Go Live'}
-          </button>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)' }}>
+            <button
+              type="button"
+              className="ghost"
+              onClick={handleToggleQuizCard}
+              aria-pressed={showQuizCard}
+            >
+              {showQuizCard ? 'Show notes' : 'Show quiz'}
+            </button>
+            <button type="button" className="primary" onClick={handleToggleLiveClass} disabled={liveLoading}>
+              {liveLoading ? 'Loading…' : '▶ Go Live'}
+            </button>
+          </div>
         )}
       </div>
 
