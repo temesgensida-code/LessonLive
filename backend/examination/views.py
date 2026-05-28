@@ -7,7 +7,7 @@ from django.views.decorators.csrf import csrf_exempt
 from authentication.jwt_auth import get_user_from_request
 from authentication.models import UserProfile
 from classroom.models import Classroom, Enrollment
-from examination.models import ClassroomQuestion, QuestionAnswer, ExamAttempt, ExamAnswer
+from examination.models import ClassroomQuestion, QuestionAnswer, ExamAttempt, ExamAnswer, ExamTimingSettings
 
 
 def _json_body(request):
@@ -118,6 +118,16 @@ def _serialize_attempt(attempt):
 		'correct_count': attempt.correct_count,
 		'score_percent': score_percent,
 		'created_at': attempt.created_at.isoformat(),
+	}
+
+
+def _serialize_timing_settings(settings):
+	return {
+		'mode': settings.mode,
+		'per_question_seconds': settings.per_question_seconds,
+		'total_seconds': settings.total_seconds,
+		'updated_by_id': settings.updated_by_id,
+		'updated_at': settings.updated_at.isoformat(),
 	}
 
 
@@ -358,4 +368,78 @@ def exam_attempt_detail(request, class_id, attempt_id):
 			'attempt': _serialize_attempt(attempt),
 			'answers': [_serialize_exam_answer(answer) for answer in answer_payload],
 		}
+	)
+
+
+@csrf_exempt
+def classroom_timing_settings(request, class_id):
+	if request.method == 'GET':
+		_, classroom, _, error_response = _require_class_member(request, class_id)
+		if error_response:
+			return error_response
+
+		settings = ExamTimingSettings.objects.filter(classroom=classroom).first()
+		if settings is None:
+			return JsonResponse({'settings': None})
+
+		return JsonResponse({'settings': _serialize_timing_settings(settings)})
+
+	if request.method not in {'POST', 'PUT', 'PATCH'}:
+		return JsonResponse({'detail': 'Method not allowed'}, status=405)
+
+	teacher, teacher_error = _require_teacher(request)
+	if teacher_error:
+		return teacher_error
+
+	classroom = Classroom.objects.filter(class_id=class_id).first()
+	if classroom is None:
+		return JsonResponse({'detail': 'Classroom not found'}, status=404)
+	if classroom.owner_id != teacher.id:
+		return JsonResponse({'detail': 'Only the teacher can set timing'}, status=403)
+
+	data = _json_body(request)
+	mode = (data.get('mode') or '').strip()
+	if mode not in {ExamTimingSettings.MODE_PER_QUESTION, ExamTimingSettings.MODE_TOTAL}:
+		return JsonResponse(
+			{
+				'detail': 'mode must be per_question or total',
+				'allowed': [ExamTimingSettings.MODE_PER_QUESTION, ExamTimingSettings.MODE_TOTAL],
+			},
+			status=400,
+		)
+
+	per_question_seconds = data.get('per_question_seconds')
+	total_seconds = data.get('total_seconds')
+
+	if mode == ExamTimingSettings.MODE_PER_QUESTION:
+		try:
+			per_question_seconds = int(per_question_seconds)
+		except (TypeError, ValueError):
+			return JsonResponse({'detail': 'per_question_seconds must be an integer'}, status=400)
+		if per_question_seconds <= 0:
+			return JsonResponse({'detail': 'per_question_seconds must be greater than 0'}, status=400)
+		total_seconds = None
+
+	if mode == ExamTimingSettings.MODE_TOTAL:
+		try:
+			total_seconds = int(total_seconds)
+		except (TypeError, ValueError):
+			return JsonResponse({'detail': 'total_seconds must be an integer'}, status=400)
+		if total_seconds <= 0:
+			return JsonResponse({'detail': 'total_seconds must be greater than 0'}, status=400)
+		per_question_seconds = None
+
+	settings, created = ExamTimingSettings.objects.update_or_create(
+		classroom=classroom,
+		defaults={
+			'mode': mode,
+			'per_question_seconds': per_question_seconds,
+			'total_seconds': total_seconds,
+			'updated_by': teacher,
+		},
+	)
+
+	return JsonResponse(
+		{'settings': _serialize_timing_settings(settings)},
+		status=201 if created else 200,
 	)
