@@ -7,4 +7,5 @@ urlpatterns = [
 	path('classrooms/<str:class_id>/attempts/', views.submit_exam_attempt, name='submit-exam-attempt'),
 	path('classrooms/<str:class_id>/attempts/<int:attempt_id>/', views.exam_attempt_detail, name='exam-attempt-detail'),
 	path('classrooms/<str:class_id>/timing/', views.classroom_timing_settings, name='classroom-timing-settings'),
+	path('classrooms/<str:class_id>/participants/', views.classroom_participants_count, name='classroom-participants-count'),
 ]

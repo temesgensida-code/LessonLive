@@ -443,3 +443,28 @@ def classroom_timing_settings(request, class_id):
 		{'settings': _serialize_timing_settings(settings)},
 		status=201 if created else 200,
 	)
+
+
+def classroom_participants_count(request, class_id):
+	if request.method != 'GET':
+		return JsonResponse({'detail': 'Method not allowed'}, status=405)
+
+	# teacher, teacher_error = _require_teacher(request)
+	# if teacher_error:
+	# 	return teacher_error
+
+	classroom = Classroom.objects.filter(class_id=class_id).first()
+	if classroom is None:
+		return JsonResponse({'detail': 'Classroom not found'}, status=404)
+	# if classroom.owner_id != teacher.id:
+	# 	return JsonResponse({'detail': 'Only the teacher can view participants'}, status=403)
+
+	participants_count = (
+		ExamAttempt.objects
+		.filter(classroom=classroom)
+		.values_list('student_id', flat=True)
+		.distinct()
+		.count()
+	)
+
+	return JsonResponse({'class_id': class_id, 'participants_count': participants_count})
