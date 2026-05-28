@@ -3,6 +3,7 @@ import { useParams } from 'react-router-dom'
 import { LiveKitRoom } from '@livekit/components-react'
 import { LIVEKIT_SERVER_URL } from './apiClient'
 import useClassroomPageController from './classroom-components/useClassroomPageController'
+import LiveQuizCard from './LiveQuizCard';
 
 const ClassroomSidebarPortal = lazy(() => import('./classroom-components/ClassroomSidebarPortal'))
 const DisplayedNotesCanvas = lazy(() => import('./classroom-components/DisplayedNotesCanvas'))
@@ -188,6 +189,7 @@ function ClassroomPage({ accessToken, setAccessToken }) {
                 onRemoveDisplayed={handleRemoveDisplayed}
                 showScreenShare={false}
               />
+              <LiveQuizCard owned={owned} classId={classId} sessionLabel="Your Course" />
 
               <TeacherNotesPanel
                 owned={owned}

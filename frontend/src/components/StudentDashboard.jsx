@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { apiFetch } from './apiClient'
+import StudentQuizPage from './StudentQuizPage'
 
-function StudentDashboard({ accessToken, setAccessToken }) {
+function StudentDashboard({ accessToken, setAccessToken, studentName = 'Student' }) {
   const [classrooms, setClassrooms] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
@@ -24,31 +25,35 @@ function StudentDashboard({ accessToken, setAccessToken }) {
   }, [accessToken])
 
   return (
-    <section className="card">
-      <h2>Student portal</h2>
-      <p className="muted" style={{ marginBottom: 'var(--space-5)' }}>
-        Join classrooms via invite links shared by your teacher.
-      </p>
-      <h3>Your classrooms</h3>
-      {loading ? (
-        <p className="muted">Loading classrooms…</p>
-      ) : error ? (
-        <p className="error">{error}</p>
-      ) : classrooms.length === 0 ? (
-        <p className="muted">No classrooms yet — ask your teacher for an invite link.</p>
-      ) : (
-        <ul className="list">
-          {classrooms.map((room) => (
-            <li key={room.class_id}>
-              <Link to={`/classrooms/${room.class_id}`} style={{ fontWeight: 600, color: 'var(--text-link)' }}>
-                {room.name}
-              </Link>
-              <span className="muted">{room.class_id}</span>
-            </li>
-          ))}
-        </ul>
-      )}
-    </section>
+    <div className="stack">
+      <section className="card">
+        <h2>Student portal</h2>
+        <p className="muted" style={{ marginBottom: 'var(--space-5)' }}>
+          Join classrooms via invite links shared by your teacher.
+        </p>
+        <h3>Your classrooms</h3>
+        {loading ? (
+          <p className="muted">Loading classrooms…</p>
+        ) : error ? (
+          <p className="error">{error}</p>
+        ) : classrooms.length === 0 ? (
+          <p className="muted">No classrooms yet — ask your teacher for an invite link.</p>
+        ) : (
+          <ul className="list">
+            {classrooms.map((room) => (
+              <li key={room.class_id}>
+                <Link to={`/classrooms/${room.class_id}`} style={{ fontWeight: 600, color: 'var(--text-link)' }}>
+                  {room.name}
+                </Link>
+                <span className="muted">{room.class_id}</span>
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
+
+      <StudentQuizPage studentName={studentName} sessionLabel="LessonLive" />
+    </div>
   )
 }
 

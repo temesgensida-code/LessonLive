@@ -54,7 +54,11 @@ function App() {
                   setAccessToken={setAccessToken}
                 />
               ) : (
-                <StudentDashboard accessToken={accessToken} setAccessToken={setAccessToken} />
+                <StudentDashboard
+                  accessToken={accessToken}
+                  setAccessToken={setAccessToken}
+                  studentName={me?.email?.split('@')[0] || 'Student'}
+                />
               )
             ) : (
               <AuthGateway
