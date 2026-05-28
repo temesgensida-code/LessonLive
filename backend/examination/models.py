@@ -59,3 +59,22 @@ class ExamAnswer(models.Model):
 
 	def __str__(self):
 		return f"ExamAnswer #{self.id} for Attempt #{self.attempt_id}"
+
+
+class ExamTimingSettings(models.Model):
+	MODE_PER_QUESTION = 'per_question'
+	MODE_TOTAL = 'total'
+	MODE_CHOICES = (
+		(MODE_PER_QUESTION, 'Per question'),
+		(MODE_TOTAL, 'Total'),
+	)
+
+	classroom = models.OneToOneField(Classroom, on_delete=models.CASCADE, related_name='exam_timing')
+	mode = models.CharField(max_length=20, choices=MODE_CHOICES)
+	per_question_seconds = models.PositiveIntegerField(null=True, blank=True)
+	total_seconds = models.PositiveIntegerField(null=True, blank=True)
+	updated_by = models.ForeignKey(User, on_delete=models.CASCADE, related_name='exam_timing_updates')
+	updated_at = models.DateTimeField(auto_now=True)
+
+	def __str__(self):
+		return f"ExamTimingSettings ({self.classroom.class_id})"
