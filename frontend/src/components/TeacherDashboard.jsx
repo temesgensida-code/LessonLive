@@ -21,12 +21,10 @@ function TeacherDashboard({ refreshMe, accessToken, setAccessToken }) {
     }
   }
 
-  useEffect(() => {
-    fetchClassrooms()
-  }, [])
+  useEffect(() => { fetchClassrooms() }, [])
 
-  const handleCreate = async (event) => {
-    event.preventDefault()
+  const handleCreate = async (e) => {
+    e.preventDefault()
     setError('')
     try {
       const data = await apiFetch('/classrooms/create/', {
@@ -54,7 +52,12 @@ function TeacherDashboard({ refreshMe, accessToken, setAccessToken }) {
         <form className="form" onSubmit={handleCreate}>
           <label>
             Class name
-            <input value={className} onChange={(event) => setClassName(event.target.value)} required />
+            <input
+              value={className}
+              onChange={(e) => setClassName(e.target.value)}
+              placeholder="e.g. Biology 101"
+              required
+            />
           </label>
           {error && <p className="error">{error}</p>}
           <button type="submit" className="primary">Create classroom</button>
@@ -64,14 +67,16 @@ function TeacherDashboard({ refreshMe, accessToken, setAccessToken }) {
       <section className="card">
         <h2>Your classrooms</h2>
         {loading ? (
-          <p>Loading classrooms…</p>
+          <p className="muted">Loading classrooms…</p>
         ) : classrooms.length === 0 ? (
-          <p>No classrooms yet. Create one to start inviting students.</p>
+          <p className="muted">No classrooms yet. Create one to start inviting students.</p>
         ) : (
           <ul className="list">
             {classrooms.map((room) => (
               <li key={room.class_id}>
-                <Link to={`/classrooms/${room.class_id}`}>{room.name}</Link>
+                <Link to={`/classrooms/${room.class_id}`} style={{ fontWeight: 600, color: 'var(--text-link)' }}>
+                  {room.name}
+                </Link>
                 <span className="muted">{room.class_id}</span>
               </li>
             ))}

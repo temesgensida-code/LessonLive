@@ -4,27 +4,34 @@ function LiveAudioButton({ owned }) {
   const { localParticipant, isMicrophoneEnabled, isScreenShareEnabled } = useLocalParticipant()
 
   const handleToggleMic = async () => {
-    if (!localParticipant) {
-      return
-    }
+    if (!localParticipant) return
     await localParticipant.setMicrophoneEnabled(!isMicrophoneEnabled)
   }
 
   const handleToggleScreenShare = async () => {
-    if (!localParticipant) {
-      return
-    }
+    if (!localParticipant) return
     await localParticipant.setScreenShareEnabled(!isScreenShareEnabled)
   }
 
   return (
-    <div style={{ display: 'flex', gap: '0.5rem' }}>
-      <button type="button" className="primary live-audio-btn" onClick={handleToggleMic}>
-        {isMicrophoneEnabled ? 'Mute audio' : 'Unmute audio'}
+    <div className="live-audio-btn-row">
+      <button
+        type="button"
+        className={isMicrophoneEnabled ? 'ghost' : 'primary'}
+        onClick={handleToggleMic}
+        style={{ flex: 1 }}
+      >
+        {isMicrophoneEnabled ? '🎙 Mute' : '🎙 Unmute'}
       </button>
+
       {owned && (
-        <button type="button" className="primary live-audio-btn" onClick={handleToggleScreenShare}>
-          {isScreenShareEnabled ? 'Stop sharing' : 'Share screen'}
+        <button
+          type="button"
+          className={isScreenShareEnabled ? 'ghost danger' : 'primary'}
+          onClick={handleToggleScreenShare}
+          style={{ flex: 1 }}
+        >
+          {isScreenShareEnabled ? '⏹ Stop share' : '📺 Share screen'}
         </button>
       )}
     </div>

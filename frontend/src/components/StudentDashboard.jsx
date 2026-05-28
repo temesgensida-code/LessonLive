@@ -8,7 +8,7 @@ function StudentDashboard({ accessToken, setAccessToken }) {
   const [error, setError] = useState('')
 
   useEffect(() => {
-    const fetchEnrolledClassrooms = async () => {
+    const fetchEnrolled = async () => {
       setLoading(true)
       setError('')
       try {
@@ -20,26 +20,29 @@ function StudentDashboard({ accessToken, setAccessToken }) {
         setLoading(false)
       }
     }
-
-    fetchEnrolledClassrooms()
+    fetchEnrolled()
   }, [accessToken])
 
   return (
     <section className="card">
       <h2>Student portal</h2>
-      <p className="muted">Students cannot create classrooms.</p>
-      <h3>Your invited classrooms</h3>
+      <p className="muted" style={{ marginBottom: 'var(--space-5)' }}>
+        Join classrooms via invite links shared by your teacher.
+      </p>
+      <h3>Your classrooms</h3>
       {loading ? (
-        <p>Loading classrooms…</p>
+        <p className="muted">Loading classrooms…</p>
       ) : error ? (
         <p className="error">{error}</p>
       ) : classrooms.length === 0 ? (
-        <p className="muted">No invited classrooms yet.</p>
+        <p className="muted">No classrooms yet — ask your teacher for an invite link.</p>
       ) : (
         <ul className="list">
           {classrooms.map((room) => (
             <li key={room.class_id}>
-              <Link to={`/classrooms/${room.class_id}`}>{room.name}</Link>
+              <Link to={`/classrooms/${room.class_id}`} style={{ fontWeight: 600, color: 'var(--text-link)' }}>
+                {room.name}
+              </Link>
               <span className="muted">{room.class_id}</span>
             </li>
           ))}

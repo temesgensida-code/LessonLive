@@ -3,22 +3,17 @@ import { apiFetch } from './apiClient'
 
 function TeacherAuth({ onSuccess }) {
   const [mode, setMode] = useState('login')
-  const [form, setForm] = useState({
-    email: '',
-    password: '',
-    first_name: '',
-    last_name: '',
-  })
+  const [form, setForm] = useState({ email: '', password: '', first_name: '', last_name: '' })
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
 
-  const handleChange = (event) => {
-    const { name, value } = event.target
+  const handleChange = (e) => {
+    const { name, value } = e.target
     setForm((prev) => ({ ...prev, [name]: value }))
   }
 
-  const handleSubmit = async (event) => {
-    event.preventDefault()
+  const handleSubmit = async (e) => {
+    e.preventDefault()
     setError('')
     setLoading(true)
     try {
@@ -40,7 +35,7 @@ function TeacherAuth({ onSuccess }) {
     } catch (err) {
       if (mode === 'signup' && /already exists/i.test(err.message || '')) {
         setMode('login')
-        setError('Account already exists. Please log in with the same email/password.')
+        setError('Account already exists. Please log in.')
         return
       }
       setError(err.message)
@@ -50,52 +45,68 @@ function TeacherAuth({ onSuccess }) {
   }
 
   return (
-    <div className="card auth-card">
-      <h2>{mode === 'signup' ? 'Teacher Register' : 'Teacher Login'}</h2>
+    <form onSubmit={handleSubmit} className="form">
+      {mode === 'signup' && (
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-3)' }}>
+          <label>
+            First name
+            <input name="first_name" value={form.first_name} onChange={handleChange} placeholder="Jane" />
+          </label>
+          <label>
+            Last name
+            <input name="last_name" value={form.last_name} onChange={handleChange} placeholder="Smith" />
+          </label>
+        </div>
+      )}
 
-      <form onSubmit={handleSubmit} className="form" style={{ gap: '0.5rem' }}>
-        {mode === 'signup' && (
-          <>
-            <label className='forFirst'>
-              First name
-              <input name="first_name" value={form.first_name} onChange={handleChange} />
-            </label>
-            <label className='forLast'>
-              Last name
-              <input name="last_name" value={form.last_name} onChange={handleChange} />
-            </label>
-          </>
-        )}
-        <label className='forEmail'>
-          Email:
-          <input name="email" className='inputEmail' type="email" value={form.email} onChange={handleChange} required />
-        </label>
-        <label className='forPassword'>
-          Password:
+      <label>
+        Email address
+        <div className="input-icon-wrap">
+          <span className="input-icon" aria-hidden="true">✉</span>
+          <input
+            name="email"
+            type="email"
+            value={form.email}
+            onChange={handleChange}
+            placeholder="teacher@school.edu"
+            required
+            autoComplete="email"
+          />
+        </div>
+      </label>
+
+      <label>
+        Password
+        <div className="input-icon-wrap">
+          <span className="input-icon" aria-hidden="true">🔒</span>
           <input
             name="password"
             type="password"
             value={form.password}
             onChange={handleChange}
+            placeholder="••••••••"
             required
-            className='inputPass'
+            autoComplete={mode === 'signup' ? 'new-password' : 'current-password'}
           />
-        </label>
-        {error && <p className="error">{error}</p>}
-        <button type="submit" className="primary" disabled={loading}>
-          {loading ? 'Please wait…' : mode === 'signup' ? 'Create teacher account' : 'Log in'}
+        </div>
+      </label>
+
+      {error && <p className="error">{error}</p>}
+
+      <button type="submit" className="primary" disabled={loading} style={{ marginTop: 'var(--space-2)' }}>
+        {loading ? 'Please wait…' : mode === 'signup' ? 'Create account →' : 'Sign in →'}
+      </button>
+
+      {mode === 'login' ? (
+        <button type="button" className="link-button" onClick={() => setMode('signup')} style={{ textAlign: 'center' }}>
+          No account yet? Register as teacher
         </button>
-        {mode === 'login' ? (
-          <button type="button" className="link-button" onClick={() => setMode('signup')}>
-            Don&apos;t have account yet? Register
-          </button>
-        ) : (
-          <button type="button" className="link-button" onClick={() => setMode('login')}>
-            Already have an account? Log in
-          </button>
-        )}
-      </form>
-    </div>
+      ) : (
+        <button type="button" className="link-button" onClick={() => setMode('login')} style={{ textAlign: 'center' }}>
+          Already registered? Sign in
+        </button>
+      )}
+    </form>
   )
 }
 

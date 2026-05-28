@@ -1,38 +1,133 @@
-:root {
-  --color-1: #001B48;
-  --color-2: #02457A;
-  --color-3: #018ABE;
-  --color-4: #97CADB;
-  --color-5: #D6E8EE;
+/* ============================================================
+   LessonLive Design System — Dark Theme
+   Hanken Grotesk · Corporate Modern · Deep Navy
+   ============================================================ */
 
-  font-family: 'Inter', system-ui, -apple-system, sans-serif;
-  line-height: 1.5;
+@import url('https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500;600;700;800&display=swap');
+
+/* ────────────────────────────────────────────────────────────
+   DESIGN TOKENS
+   ──────────────────────────────────────────────────────────── */
+:root {
+  /* --- Background layers --- */
+  --bg-base:          #06090f;
+  --bg-surface:       #0b1120;
+  --bg-card:          #0f1728;
+  --bg-card-high:     #131e31;
+  --bg-input:         #0d1525;
+  --bg-overlay:       rgba(6, 9, 15, 0.75);
+
+  /* --- Primary palette (bright blue) --- */
+  --primary:          #3b82f6;
+  --primary-hover:    #2563eb;
+  --primary-active:   #1d4ed8;
+  --primary-dim:      #1e3a5f;
+  --primary-glow:     rgba(59, 130, 246, 0.18);
+  --on-primary:       #ffffff;
+
+  /* --- Secondary (sky accent) --- */
+  --secondary:        #0ea5e9;
+  --secondary-dim:    #082d48;
+  --on-secondary:     #ffffff;
+
+  /* --- Text --- */
+  --text-primary:     #dde8f5;
+  --text-secondary:   #7a97b8;
+  --text-muted:       #3e5370;
+  --text-link:        #60a5fa;
+  --text-on-dark:     #ffffff;
+
+  /* --- Borders --- */
+  --border:           #162033;
+  --border-bright:    #1e3048;
+  --border-focus:     #3b82f6;
+
+  /* --- Semantic states --- */
+  --error:            #f87171;
+  --error-bg:         #2d1414;
+  --error-border:     #7f1d1d;
+  --success:          #4ade80;
+  --success-bg:       #0d2b1a;
+  --success-border:   #166534;
+
+  /* --- Teacher tag --- */
+  --tag-teacher-bg:   #291e06;
+  --tag-teacher-border: #a07020;
+  --tag-teacher-text: #fbbf24;
+
+  /* --- Nav --- */
+  --nav-bg:           #07090e;
+  --nav-border:       #111827;
+
+  /* --- Radii --- */
+  --radius-xs:  0.25rem;
+  --radius-sm:  0.375rem;
+  --radius-md:  0.5rem;
+  --radius-lg:  0.75rem;
+  --radius-xl:  1rem;
+  --radius-2xl: 1.5rem;
+  --radius-full:9999px;
+
+  /* --- Spacing scale --- */
+  --space-1:  0.25rem;
+  --space-2:  0.5rem;
+  --space-3:  0.75rem;
+  --space-4:  1rem;
+  --space-5:  1.25rem;
+  --space-6:  1.5rem;
+  --space-8:  2rem;
+  --space-10: 2.5rem;
+  --space-12: 3rem;
+
+  /* --- Typography --- */
+  --font-family:    'Hanken Grotesk', system-ui, -apple-system, sans-serif;
+  --font-size-xs:   0.72rem;
+  --font-size-sm:   0.8125rem;
+  --font-size-base: 0.9375rem;
+  --font-size-md:   1rem;
+  --font-size-lg:   1.125rem;
+  --font-size-xl:   1.25rem;
+  --font-size-2xl:  1.5rem;
+  --font-size-3xl:  2rem;
+
+  /* --- Shadows --- */
+  --shadow-xs:   0 1px 3px rgba(0,0,0,0.5);
+  --shadow-sm:   0 2px 8px rgba(0,0,0,0.5);
+  --shadow-md:   0 4px 20px rgba(0,0,0,0.55);
+  --shadow-lg:   0 8px 36px rgba(0,0,0,0.65);
+  --shadow-glow: 0 0 24px rgba(59,130,246,0.15);
+  --shadow-card: 0 4px 24px rgba(0,64,113,0.18), 0 1px 4px rgba(0,0,0,0.4);
+
+  /* --- Transitions --- */
+  --ease-fast:  150ms cubic-bezier(0.4, 0, 0.2, 1);
+  --ease-base:  240ms cubic-bezier(0.4, 0, 0.2, 1);
+  --ease-slow:  380ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* ────────────────────────────────────────────────────────────
+   BASE RESET
+   ──────────────────────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html {
+  font-size: 16px;
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  font-family: var(--font-family);
+  background: var(--bg-base);
+  color: var(--text-primary);
+  line-height: 1.55;
   font-weight: 400;
-  color: var(--color-1);
-  background-color: var(--color-4);
+  min-height: 100vh;
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
 }
 
-* {
-  box-sizing: border-box;
-}
+a { text-decoration: none; color: inherit; }
 
-body {
-  margin: 0;
-  min-height: 100vh;
-  background: var(--color-4);
-  color: var(--color-1);
-}
+button, input, textarea, select { font: inherit; }
 
-a {
-  text-decoration: none;
-  color: inherit;
-}
-
-button,
-input,
-textarea {
-  font: inherit;
-}
+img { display: block; max-width: 100%; }

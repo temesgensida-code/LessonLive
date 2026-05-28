@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { useRoomContext } from '@livekit/components-react'
 import { DataPacket_Kind, RoomEvent } from 'livekit-client'
-import { FiSend } from "react-icons/fi";
+import { FiSend } from 'react-icons/fi'
 
 const CHAT_TOPIC = 'lessonlive-chat'
 const EMOJI_CHOICES = ['😀', '😂', '😍', '😎', '🤔', '👍', '👏', '🙏', '🎉', '🔥', '❤️', '✅']
@@ -9,40 +9,20 @@ const CHAT_HISTORY_LIMIT = 50
 const CHAT_STORAGE_PREFIX = 'lessonlive-chat-history'
 
 function getParticipantName(participant) {
-  if (!participant) {
-    return 'Unknown'
-  }
-
+  if (!participant) return 'Unknown'
   const name = (participant.name || '').trim()
-  if (name) {
-    return name
-  }
-
+  if (name) return name
   const identity = (participant.identity || '').trim()
-  if (!identity) {
-    return 'Unknown'
-  }
-
-  if (identity.includes('@')) {
-    return identity.split('@')[0]
-  }
-
-  return identity
+  if (!identity) return 'Unknown'
+  return identity.includes('@') ? identity.split('@')[0] : identity
 }
 
 function getParticipantRole(participant) {
   const metadata = participant?.metadata
-  if (!metadata) {
-    return null
-  }
-
-  if (metadata === 'teacher' || metadata === 'student') {
-    return metadata
-  }
-
+  if (!metadata) return null
+  if (metadata === 'teacher' || metadata === 'student') return metadata
   try {
-    const parsed = JSON.parse(metadata)
-    return parsed?.role || null
+    return JSON.parse(metadata)?.role || null
   } catch {
     return null
   }
@@ -64,28 +44,19 @@ export default function UsernameChat({ isTeacher = false, chatStorageKey = '' })
   const [isEmojiPickerOpen, setIsEmojiPickerOpen] = useState(false)
   const [historyReady, setHistoryReady] = useState(false)
   const emojiPickerRef = useRef(null)
+  const listRef = useRef(null)
   const localIdentity = room?.localParticipant?.identity || ''
   const localName = getParticipantName(room?.localParticipant)
   const resolvedStorageKey = getResolvedStorageKey(chatStorageKey, room)
 
+  // Load history
   useEffect(() => {
     setHistoryReady(false)
-
     try {
       const raw = window.localStorage.getItem(resolvedStorageKey)
-      if (!raw) {
-        setMessages([])
-        setHistoryReady(true)
-        return
-      }
-
+      if (!raw) { setMessages([]); setHistoryReady(true); return }
       const parsed = JSON.parse(raw)
-      if (!Array.isArray(parsed)) {
-        setMessages([])
-        setHistoryReady(true)
-        return
-      }
-
+      if (!Array.isArray(parsed)) { setMessages([]); setHistoryReady(true); return }
       const normalized = parsed
         .filter((item) => item && item.id && item.text)
         .map((item) => ({
@@ -95,7 +66,6 @@ export default function UsernameChat({ isTeacher = false, chatStorageKey = '' })
           senderRole: item.senderRole || null,
           text: item.text,
         }))
-
       setMessages(keepRecentMessages(normalized))
     } catch {
       setMessages([])
@@ -104,56 +74,45 @@ export default function UsernameChat({ isTeacher = false, chatStorageKey = '' })
     }
   }, [resolvedStorageKey])
 
+  // Persist history
   useEffect(() => {
-    if (!historyReady) {
-      return
-    }
-
+    if (!historyReady) return
     try {
       window.localStorage.setItem(resolvedStorageKey, JSON.stringify(keepRecentMessages(messages)))
-    } catch {
-      return
-    }
+    } catch { /* ignore */ }
   }, [historyReady, messages, resolvedStorageKey])
 
+  // Auto-scroll to latest message
   useEffect(() => {
-    if (!isEmojiPickerOpen) {
-      return undefined
+    if (listRef.current) {
+      listRef.current.scrollTop = listRef.current.scrollHeight
     }
+  }, [messages])
 
-    const handleOutsideClick = (event) => {
-      if (!emojiPickerRef.current?.contains(event.target)) {
+  // Close emoji picker on outside click
+  useEffect(() => {
+    if (!isEmojiPickerOpen) return undefined
+    const handleOutside = (e) => {
+      if (!emojiPickerRef.current?.contains(e.target)) {
         setIsEmojiPickerOpen(false)
       }
     }
-
-    document.addEventListener('pointerdown', handleOutsideClick)
-    return () => {
-      document.removeEventListener('pointerdown', handleOutsideClick)
-    }
+    document.addEventListener('pointerdown', handleOutside)
+    return () => document.removeEventListener('pointerdown', handleOutside)
   }, [isEmojiPickerOpen])
 
+  // Receive messages
   useEffect(() => {
-    if (!room) {
-      return undefined
-    }
+    if (!room) return undefined
 
     const handleData = (payload, participant, kind, topic) => {
-      if (kind !== DataPacket_Kind.RELIABLE || topic !== CHAT_TOPIC) {
-        return
-      }
-
+      if (kind !== DataPacket_Kind.RELIABLE || topic !== CHAT_TOPIC) return
       try {
         const raw = new TextDecoder().decode(payload)
         const parsed = JSON.parse(raw)
-        if (!parsed?.id || !parsed?.text) {
-          return
-        }
-
+        if (!parsed?.id || !parsed?.text) return
         setMessages((prev) => {
-          if (prev.some((item) => item.id === parsed.id)) {
-            return prev
-          }
+          if (prev.some((item) => item.id === parsed.id)) return prev
           return keepRecentMessages([
             ...prev,
             {
@@ -167,23 +126,17 @@ export default function UsernameChat({ isTeacher = false, chatStorageKey = '' })
             },
           ])
         })
-      } catch {
-        return
-      }
+      } catch { /* ignore */ }
     }
 
     room.on(RoomEvent.DataReceived, handleData)
-    return () => {
-      room.off(RoomEvent.DataReceived, handleData)
-    }
+    return () => room.off(RoomEvent.DataReceived, handleData)
   }, [room])
 
-  const handleSend = async (event) => {
-    event.preventDefault()
+  const handleSend = async (e) => {
+    e.preventDefault()
     const text = draft.trim()
-    if (!text || !room?.localParticipant) {
-      return
-    }
+    if (!text || !room?.localParticipant) return
 
     const outgoing = {
       id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
@@ -196,29 +149,25 @@ export default function UsernameChat({ isTeacher = false, chatStorageKey = '' })
     try {
       await room.localParticipant.publishData(
         new TextEncoder().encode(JSON.stringify(outgoing)),
-        {
-          reliable: true,
-          topic: CHAT_TOPIC,
-        }
+        { reliable: true, topic: CHAT_TOPIC }
       )
-
       setMessages((prev) => keepRecentMessages([...prev, outgoing]))
       setDraft('')
       setIsEmojiPickerOpen(false)
-    } catch {
-      return
-    }
+    } catch { /* ignore */ }
   }
 
   const handleInsertEmoji = (emoji) => {
     setDraft((prev) => `${prev}${emoji}`)
+    setIsEmojiPickerOpen(false)
   }
 
   return (
     <div className="username-chat">
-      <div className="username-chat-list">
+      {/* Message list */}
+      <div className="username-chat-list" ref={listRef}>
         {messages.length === 0 ? (
-          <p className="muted">No messages yet.</p>
+          <p className="muted">No messages yet — say hello!</p>
         ) : (
           messages.map((message) => {
             const isSelf = message.senderIdentity
@@ -230,26 +179,35 @@ export default function UsernameChat({ isTeacher = false, chatStorageKey = '' })
                 key={message.id}
                 className={`username-chat-row ${isSelf ? 'is-self' : 'is-other'}`}
               >
-                <div className="username-chat-item">
                 <div className="username-chat-meta">
-                  <span className="username-chat-sender">{message.sender}</span>
-                  {message.senderRole === 'teacher' ? (
-                    <span className="username-chat-teacher-tag">TCHR</span>
-                  ) : null}
+                  {!isSelf && (
+                    <>
+                      <span className="username-chat-sender">{message.sender}</span>
+                      {message.senderRole === 'teacher' && (
+                        <span className="username-chat-teacher-tag">TCHR</span>
+                      )}
+                    </>
+                  )}
+                  {isSelf && (
+                    <span className="username-chat-sender">You</span>
+                  )}
                 </div>
-                <p className="username-chat-text">{message.text}</p>
-              </div>
+                <div className="username-chat-item">
+                  <p className="username-chat-text">{message.text}</p>
+                </div>
               </div>
             )
           })
         )}
       </div>
 
+      {/* Input area */}
       <form className="username-chat-form" onSubmit={handleSend}>
         <input
           value={draft}
-          onChange={(event) => setDraft(event.target.value)}
-          placeholder="Type a message"
+          onChange={(e) => setDraft(e.target.value)}
+          placeholder="Type a message…"
+          autoComplete="off"
         />
         <div className="username-chat-actions" ref={emojiPickerRef}>
           <button
@@ -257,11 +215,12 @@ export default function UsernameChat({ isTeacher = false, chatStorageKey = '' })
             className="chatEmojiButton"
             onClick={() => setIsEmojiPickerOpen((prev) => !prev)}
             aria-label="Open emoji picker"
+            aria-expanded={isEmojiPickerOpen}
           >
             😊
           </button>
 
-          {isEmojiPickerOpen ? (
+          {isEmojiPickerOpen && (
             <div className="chat-emoji-picker" role="listbox" aria-label="Emoji picker">
               {EMOJI_CHOICES.map((emoji) => (
                 <button
@@ -275,10 +234,15 @@ export default function UsernameChat({ isTeacher = false, chatStorageKey = '' })
                 </button>
               ))}
             </div>
-          ) : null}
+          )}
 
-          <button type="submit" className="chatSendButton" aria-label="Send message">
-            <FiSend size={20} />
+          <button
+            type="submit"
+            className="chatSendButton"
+            aria-label="Send message"
+            disabled={!draft.trim()}
+          >
+            <FiSend size={15} />
           </button>
         </div>
       </form>

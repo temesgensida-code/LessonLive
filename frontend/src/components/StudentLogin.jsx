@@ -2,20 +2,17 @@ import { useState } from 'react'
 import { apiFetch } from './apiClient'
 
 function StudentLogin({ onSuccess }) {
-  const [form, setForm] = useState({
-    email: '',
-    password: '',
-  })
+  const [form, setForm] = useState({ email: '', password: '' })
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
 
-  const handleChange = (event) => {
-    const { name, value } = event.target
+  const handleChange = (e) => {
+    const { name, value } = e.target
     setForm((prev) => ({ ...prev, [name]: value }))
   }
 
-  const handleSubmit = async (event) => {
-    event.preventDefault()
+  const handleSubmit = async (e) => {
+    e.preventDefault()
     setError('')
     setLoading(true)
     try {
@@ -24,7 +21,6 @@ function StudentLogin({ onSuccess }) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email: form.email, password: form.password }),
       }, { skipAuthRefresh: true })
-
       onSuccess(data?.access || '')
     } catch (err) {
       setError(err.message)
@@ -34,29 +30,45 @@ function StudentLogin({ onSuccess }) {
   }
 
   return (
-    <div className="card auth-card">
-      <h2>Student Login</h2>
-      <form onSubmit={handleSubmit} className="form">
-        <label>
-          Email
-          <input name="email" type="email" value={form.email} onChange={handleChange} required />
-        </label>
-        <label>
-          Password
+    <form onSubmit={handleSubmit} className="form">
+      <label>
+        Email address
+        <div className="input-icon-wrap">
+          <span className="input-icon" aria-hidden="true">✉</span>
+          <input
+            name="email"
+            type="email"
+            value={form.email}
+            onChange={handleChange}
+            placeholder="you@school.edu"
+            required
+            autoComplete="email"
+          />
+        </div>
+      </label>
+
+      <label>
+        Password
+        <div className="input-icon-wrap">
+          <span className="input-icon" aria-hidden="true">🔒</span>
           <input
             name="password"
             type="password"
             value={form.password}
             onChange={handleChange}
+            placeholder="••••••••"
             required
+            autoComplete="current-password"
           />
-        </label>
-        {error && <p className="error">{error}</p>}
-        <button type="submit" className="primary" disabled={loading}>
-          {loading ? 'Please wait…' : 'Log in'}
-        </button>
-      </form>
-    </div>
+        </div>
+      </label>
+
+      {error && <p className="error">{error}</p>}
+
+      <button type="submit" className="primary" disabled={loading} style={{ marginTop: 'var(--space-2)' }}>
+        {loading ? 'Signing in…' : 'Sign in →'}
+      </button>
+    </form>
   )
 }
 
