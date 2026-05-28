@@ -468,3 +468,11 @@ def classroom_participants_count(request, class_id):
 	)
 
 	return JsonResponse({'class_id': class_id, 'participants_count': participants_count})
+
+
+#------------------------------------------------------
+#endponts added(count participants who attempted exam in a classroom) to support dashboard analytics in frontend
+#endpoint for teacher to provide exam timing settings (per question or total) and duration, which will be used by frontend to enforce timing during exam attempts
+#endpont for teacher to provide question answers with flexible format (either as list of strings or list of objects with text and is_correct), and also support correct answer index for convenience
+#endpoint for students to view their own exam attempts and details, and teachers to view all attempts in their classroom with details, but students cannot view other students' attempts
+#-------------------------------------------------------------------
