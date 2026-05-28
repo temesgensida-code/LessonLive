@@ -29,3 +29,33 @@ class QuestionAnswer(models.Model):
 
 	def __str__(self):
 		return f"Answer #{self.position} for Question #{self.question_id}"
+
+
+class ExamAttempt(models.Model):
+	classroom = models.ForeignKey(Classroom, on_delete=models.CASCADE, related_name='exam_attempts')
+	student = models.ForeignKey(User, on_delete=models.CASCADE, related_name='exam_attempts')
+	total_questions = models.PositiveIntegerField(default=0)
+	answered_count = models.PositiveIntegerField(default=0)
+	correct_count = models.PositiveIntegerField(default=0)
+	created_at = models.DateTimeField(auto_now_add=True)
+
+	class Meta:
+		ordering = ['-created_at', '-id']
+
+	def __str__(self):
+		return f"ExamAttempt #{self.id} ({self.classroom.class_id})"
+
+
+class ExamAnswer(models.Model):
+	attempt = models.ForeignKey(ExamAttempt, on_delete=models.CASCADE, related_name='answers')
+	question = models.ForeignKey(ClassroomQuestion, on_delete=models.CASCADE, related_name='exam_answers')
+	selected_answer = models.ForeignKey(QuestionAnswer, on_delete=models.CASCADE, related_name='exam_answers')
+	is_correct = models.BooleanField(default=False)
+	answered_at = models.DateTimeField(auto_now_add=True)
+
+	class Meta:
+		ordering = ['answered_at', 'id']
+		unique_together = ('attempt', 'question')
+
+	def __str__(self):
+		return f"ExamAnswer #{self.id} for Attempt #{self.attempt_id}"
