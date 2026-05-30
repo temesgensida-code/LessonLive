@@ -47,14 +47,14 @@ function TeacherAuth({ onSuccess }) {
   return (
     <form onSubmit={handleSubmit} className="form">
       {mode === 'signup' && (
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-3)' }}>
+        <div className="form-name-row">
           <label>
             First name
-            <input name="first_name" value={form.first_name} onChange={handleChange} placeholder="Jane" />
+            <input name="first_name" value={form.first_name} onChange={handleChange} placeholder="Jane" required />
           </label>
           <label>
             Last name
-            <input name="last_name" value={form.last_name} onChange={handleChange} placeholder="Smith" />
+            <input name="last_name" value={form.last_name} onChange={handleChange} placeholder="Smith" required />
           </label>
         </div>
       )}
@@ -93,19 +93,21 @@ function TeacherAuth({ onSuccess }) {
 
       {error && <p className="error">{error}</p>}
 
-      <button type="submit" className="primary" disabled={loading} style={{ marginTop: 'var(--space-2)' }}>
+      <button type="submit" className="primary btn-full" disabled={loading}>
         {loading ? 'Please wait…' : mode === 'signup' ? 'Create account →' : 'Sign in →'}
       </button>
 
-      {mode === 'login' ? (
-        <button type="button" className="link-button" onClick={() => setMode('signup')} style={{ textAlign: 'center' }}>
-          No account yet? Register as teacher
-        </button>
-      ) : (
-        <button type="button" className="link-button" onClick={() => setMode('login')} style={{ textAlign: 'center' }}>
-          Already registered? Sign in
-        </button>
-      )}
+      <div className="form-footer-link">
+        {mode === 'login' ? (
+          <button type="button" className="link-button" onClick={() => setMode('signup')}>
+            No account yet? Register as teacher
+          </button>
+        ) : (
+          <button type="button" className="link-button" onClick={() => setMode('login')}>
+            Already registered? Sign in
+          </button>
+        )}
+      </div>
     </form>
   )
 }

@@ -87,29 +87,49 @@ function InvitePage({ accessToken, setAccessToken }) {
     }
   }
 
-  if (error) {
+  if (error && !status) {
     return (
-      <div className="stack auth-stack">
-        <section className="card auth-card auth-box">
-          <h2>Invitation</h2>
+      <div className="stack" style={{ maxWidth: 480, margin: '0 auto', paddingTop: 'var(--space-8)' }}>
+        <section className="card">
+          <div className="card-header">
+            <span className="card-icon">🔗</span>
+            <div>
+              <h2>Invitation</h2>
+              <p className="muted card-sub">Something went wrong</p>
+            </div>
+          </div>
           <p className="error">{error}</p>
+          <Link to="/" className="ghost" style={{ marginTop: 'var(--space-4)', display: 'inline-flex' }}>
+            ← Back to home
+          </Link>
         </section>
       </div>
     )
   }
 
   if (!status) {
-    return <p>Loading invitation…</p>
+    return (
+      <div className="loading-screen">
+        <div className="loading-spinner" aria-label="Loading invitation" />
+      </div>
+    )
   }
 
   if (status.auto_enrolled) {
     return (
-      <div className="stack auth-stack">
-        <section className="card auth-card auth-box">
-          <h2>Welcome to {status.classroom_name}</h2>
-          <p className="success">You have been enrolled automatically.</p>
-          <Link className="primary" to={`/classrooms/${status.class_id}`}>
-            Go to classroom
+      <div className="stack" style={{ maxWidth: 480, margin: '0 auto', paddingTop: 'var(--space-8)' }}>
+        <section className="card">
+          <div className="card-header">
+            <span className="card-icon">🎉</span>
+            <div>
+              <h2>Welcome to {status.classroom_name}</h2>
+            </div>
+          </div>
+          <p className="success" style={{ marginBottom: 'var(--space-4)' }}>
+            You have been enrolled automatically.
+          </p>
+          <Link className="primary btn-full" to={`/classrooms/${status.class_id}`}>
+            Go to classroom →
           </Link>
         </section>
       </div>
@@ -117,31 +137,34 @@ function InvitePage({ accessToken, setAccessToken }) {
   }
 
   return (
-    <div className="stack auth-stack">
-      <section className="card auth-card auth-box">
-        <div className="auth-switch">
+    <div className="stack" style={{ maxWidth: 480, margin: '0 auto', paddingTop: 'var(--space-8)' }}>
+      <section className="card">
+        <div className="card-header">
+          <span className="card-icon">📩</span>
+          <div>
+            <h2>Join {status.classroom_name}</h2>
+            <p className="muted card-sub">Invitation for {status.email}</p>
+          </div>
+        </div>
+
+        {status.requires_registration && (
           <div className="tabs">
             <button
               type="button"
               className={mode === 'login' ? 'tab active' : 'tab'}
               onClick={() => setMode('login')}
             >
-              Login
+              Sign in
             </button>
-            {status.requires_registration && (
-              <button
-                type="button"
-                className={mode === 'register' ? 'tab active' : 'tab'}
-                onClick={() => setMode('register')}
-              >
-                Register
-              </button>
-            )}
+            <button
+              type="button"
+              className={mode === 'register' ? 'tab active' : 'tab'}
+              onClick={() => setMode('register')}
+            >
+              Register
+            </button>
           </div>
-        </div>
-
-        <h2>Join {status.classroom_name}</h2>
-        <p className="muted">Invitation for {status.email}</p>
+        )}
 
         {mode === 'login' ? (
           <form onSubmit={handleLogin} className="form">
@@ -151,16 +174,21 @@ function InvitePage({ accessToken, setAccessToken }) {
             </label>
             <label>
               Password
-              <input
-                name="password"
-                type="password"
-                value={form.password}
-                onChange={handleChange}
-                required
-              />
+              <div className="input-icon-wrap">
+                <span className="input-icon" aria-hidden="true">🔒</span>
+                <input
+                  name="password"
+                  type="password"
+                  value={form.password}
+                  onChange={handleChange}
+                  placeholder="••••••••"
+                  required
+                  autoComplete="current-password"
+                />
+              </div>
             </label>
             {error && <p className="error">{error}</p>}
-            <button type="submit" className="primary">Log in & join</button>
+            <button type="submit" className="primary btn-full">Log in &amp; join classroom →</button>
           </form>
         ) : (
           <form onSubmit={handleRegister} className="form">
@@ -168,28 +196,33 @@ function InvitePage({ accessToken, setAccessToken }) {
               Email
               <input value={status.email} disabled />
             </label>
-            <div className="grid">
+            <div className="form-name-row">
               <label>
                 First name
-                <input name="first_name" value={form.first_name} onChange={handleChange} />
+                <input name="first_name" value={form.first_name} onChange={handleChange} required />
               </label>
               <label>
                 Last name
-                <input name="last_name" value={form.last_name} onChange={handleChange} />
+                <input name="last_name" value={form.last_name} onChange={handleChange} required />
               </label>
             </div>
             <label>
               Password
-              <input
-                name="password"
-                type="password"
-                value={form.password}
-                onChange={handleChange}
-                required
-              />
+              <div className="input-icon-wrap">
+                <span className="input-icon" aria-hidden="true">🔒</span>
+                <input
+                  name="password"
+                  type="password"
+                  value={form.password}
+                  onChange={handleChange}
+                  placeholder="••••••••"
+                  required
+                  autoComplete="new-password"
+                />
+              </div>
             </label>
             {error && <p className="error">{error}</p>}
-            <button type="submit" className="primary">Create account & join</button>
+            <button type="submit" className="primary btn-full">Create account &amp; join →</button>
           </form>
         )}
       </section>

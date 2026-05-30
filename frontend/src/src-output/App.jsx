@@ -6,6 +6,7 @@ import './App.css'
 import AuthGateway from './components/AuthGateway'
 import ClassroomPage from './components/ClassroomPage'
 import InvitePage from './components/InvitePage'
+import LandingPage from './components/LandingPage'
 import Layout from './components/Layout'
 import StudentDashboard from './components/StudentDashboard'
 import TeacherDashboard from './components/TeacherDashboard'
@@ -45,7 +46,9 @@ function App() {
           path="/"
           element={
             loading ? (
-              <p>Loading profile…</p>
+              <div className="loading-screen">
+                <div className="loading-spinner" aria-label="Loading" />
+              </div>
             ) : me?.authenticated ? (
               me?.role === 'teacher' ? (
                 <TeacherDashboard
@@ -61,14 +64,21 @@ function App() {
                 />
               )
             ) : (
-              <AuthGateway
-                onSuccess={async (newAccessToken) => {
-                  setAccessToken(newAccessToken)
-                  setSessionHint(Boolean(newAccessToken))
-                  await refresh()
-                }}
-              />
+              <LandingPage />
             )
+          }
+        />
+        <Route
+          path="/auth"
+          element={
+            <AuthGateway
+              onSuccess={async (newAccessToken) => {
+                setAccessToken(newAccessToken)
+                setSessionHint(Boolean(newAccessToken))
+                await refresh()
+                navigate('/')
+              }}
+            />
           }
         />
         <Route

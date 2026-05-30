@@ -65,7 +65,7 @@ function StudentLogin({ onSuccess }) {
 
       {error && <p className="error">{error}</p>}
 
-      <button type="submit" className="primary" disabled={loading} style={{ marginTop: 'var(--space-2)' }}>
+      <button type="submit" className="primary btn-full" disabled={loading}>
         {loading ? 'Signing in…' : 'Sign in →'}
       </button>
     </form>
