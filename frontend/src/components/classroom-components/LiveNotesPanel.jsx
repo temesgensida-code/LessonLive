@@ -1,20 +1,40 @@
 import LiveClassSidePanel from '../LiveClassSidePanel'
 
-function LiveNotesPanel({ owned, classId, liveLoading, handleToggleLiveClass, liveError, noteError, noteMessage }) {
+function LiveNotesPanel({
+  owned,
+  classId,
+  liveLoading,
+  handleToggleLiveClass,
+  liveError,
+  noteError,
+  noteMessage,
+  showQuizCard,
+  onToggleQuizCard,
+}) {
   return (
     <div className="notes-panel">
       {/* Header */}
       <div className="notes-panel-header">
         <h3>🔴 Live Class</h3>
         {owned && (
-          <button
-            type="button"
-            className="ghost"
-            onClick={handleToggleLiveClass}
-            disabled={liveLoading}
-          >
-            {liveLoading ? 'Loading…' : '⏹ End Live'}
-          </button>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)' }}>
+            <button
+              type="button"
+              className="ghost"
+              onClick={onToggleQuizCard}
+              aria-pressed={showQuizCard}
+            >
+              {showQuizCard ? 'Show notes' : 'Show quiz'}
+            </button>
+            <button
+              type="button"
+              className="ghost"
+              onClick={handleToggleLiveClass}
+              disabled={liveLoading}
+            >
+              {liveLoading ? 'Loading…' : '⏹ End Live'}
+            </button>
+          </div>
         )}
       </div>
 

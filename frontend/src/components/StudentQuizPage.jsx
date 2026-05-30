@@ -14,12 +14,17 @@
  * ──────
  *   studentName   {string}   displayed in header
  *   sessionLabel  {string}   e.g. "Philosophy 101"
+ *   classId       {string}   classroom id for examination endpoints
+ *   accessToken   {string}   JWT access token for API calls
+ *   setAccessToken {function} access token setter for refresh
+ *   onQuizVisibilityChange {function} called with true when quiz is active
  *
  * Usage:
  *   <StudentQuizPage studentName="Alex" sessionLabel="Biology 101" />
  */
 
 import { useCallback, useEffect, useReducer, useRef, useState } from 'react'
+import { apiFetch } from './apiClient'
 import './StudentQuizPage.css'
 
 /* ────────── constants ────────── */
@@ -64,6 +69,8 @@ const INIT = {
   revealTotal:    0,
   timeLeft:       DEFAULT_TIME,
   score:          0,           // correct answers tally
+  answersByQuestion: {},
+  correctByQuestion: {},
 }
 
 function reducer(state, action) {
@@ -76,6 +83,8 @@ function reducer(state, action) {
         quizMeta:  action.quizMeta || INIT.quizMeta,
         questions: action.questions || [],
         timeLeft:  (action.quizMeta?.timePerQuestion) || DEFAULT_TIME,
+        answersByQuestion: {},
+        correctByQuestion: {},
       }
 
     case 'NEXT_QUESTION':
@@ -94,21 +103,35 @@ function reducer(state, action) {
       if (state.submitted) return state
       return { ...state, selectedAnswer: action.index }
 
-    case 'SUBMIT':
-      return { ...state, submitted: true, phase: 'submitted' }
+    case 'SUBMIT': {
+      const nextAnswers = action.answerEntry
+        ? { ...state.answersByQuestion, [action.answerEntry.questionKey]: action.answerEntry }
+        : state.answersByQuestion
+      return { ...state, submitted: true, phase: 'submitted', answersByQuestion: nextAnswers }
+    }
 
     case 'TICK':
       return { ...state, timeLeft: Math.max(0, state.timeLeft - 1) }
 
     case 'REVEAL': {
       const q = state.questions[state.currentQIndex]
-      const wasCorrect = q && state.selectedAnswer === q.correct
+      const correctIndex = Number.isInteger(action.correctIndex)
+        ? action.correctIndex
+        : q?.correct
+      const wasCorrect = q && Number.isInteger(correctIndex)
+        ? state.selectedAnswer === correctIndex
+        : false
+      const questionKey = q?.id ?? state.currentQIndex
       return {
         ...state,
         phase:        'reveal',
         revealCounts: action.counts,
         revealTotal:  action.total,
         score:        wasCorrect ? state.score + 1 : state.score,
+        correctByQuestion: {
+          ...state.correctByQuestion,
+          [questionKey]: correctIndex,
+        },
       }
     }
 
@@ -126,12 +149,27 @@ function reducer(state, action) {
 /* ════════════════════════════════════════════════════════════
    StudentQuizPage
    ════════════════════════════════════════════════════════════ */
-export default function StudentQuizPage({ studentName = 'Student', sessionLabel = '' }) {
+export default function StudentQuizPage({
+  studentName = 'Student',
+  sessionLabel = '',
+  classId = '',
+  accessToken,
+  setAccessToken,
+  onQuizVisibilityChange,
+}) {
   const [state, dispatch]   = useReducer(reducer, INIT)
   const room                = useRoom()
   const timerRef            = useRef(null)
+  const attemptSubmittedRef = useRef(false)
+  const [attemptResult, setAttemptResult] = useState(null)
+  const [attemptError, setAttemptError] = useState('')
+  const [attemptSaving, setAttemptSaving] = useState(false)
 
   const currentQ     = state.questions[state.currentQIndex]
+  const currentQuestionKey = currentQ?.id ?? state.currentQIndex
+  const currentCorrectIndex = Number.isInteger(state.correctByQuestion[currentQuestionKey])
+    ? state.correctByQuestion[currentQuestionKey]
+    : currentQ?.correct
   const totalQs      = state.questions.length
   const progressPct  = totalQs > 0
     ? Math.round(((state.currentQIndex + (state.phase === 'ended' ? 1 : 0)) / totalQs) * 100)
@@ -150,6 +188,26 @@ export default function StudentQuizPage({ studentName = 'Student', sessionLabel 
     } catch { /* ignore */ }
   }, [room])
 
+  const loadQuestionsFromBackend = useCallback(async (quizMeta) => {
+    if (!classId) return
+    try {
+      const data = await apiFetch(`/examinations/classrooms/${classId}/questions/`, {}, {
+        accessToken,
+        setAccessToken,
+      })
+      const questions = (data?.questions || []).map((question) => ({
+        id: question.id,
+        text: question.prompt,
+        options: (question.answers || []).map((answer) => answer.text),
+        answerIds: (question.answers || []).map((answer) => answer.id),
+        contextNote: '',
+      }))
+      dispatch({ type: 'QUIZ_START', quizMeta, questions })
+    } catch {
+      return
+    }
+  }, [classId, accessToken, setAccessToken])
+
   /* ── receive messages from teacher ── */
   useEffect(() => {
     if (!room || !_RoomEvent) return
@@ -159,13 +217,20 @@ export default function StudentQuizPage({ studentName = 'Student', sessionLabel 
         const msg = JSON.parse(new TextDecoder().decode(payload))
 
         if (msg.type === 'QUIZ_START') {
-          dispatch({ type: 'QUIZ_START', quizMeta: msg.quizMeta, questions: msg.questions })
+          attemptSubmittedRef.current = false
+          setAttemptResult(null)
+          setAttemptError('')
+          if (Array.isArray(msg.questions) && msg.questions.length) {
+            dispatch({ type: 'QUIZ_START', quizMeta: msg.quizMeta, questions: msg.questions })
+          } else {
+            loadQuestionsFromBackend(msg.quizMeta)
+          }
         }
         if (msg.type === 'QUIZ_QUESTION') {
           dispatch({ type: 'NEXT_QUESTION', index: msg.questionIndex })
         }
         if (msg.type === 'QUIZ_REVEAL') {
-          dispatch({ type: 'REVEAL', counts: msg.counts, total: msg.total })
+          dispatch({ type: 'REVEAL', counts: msg.counts, total: msg.total, correctIndex: msg.correctIndex })
         }
         if (msg.type === 'QUIZ_END') {
           dispatch({ type: 'END' })
@@ -174,7 +239,7 @@ export default function StudentQuizPage({ studentName = 'Student', sessionLabel 
     }
     room.on(_RoomEvent.DataReceived, handle)
     return () => room.off(_RoomEvent.DataReceived, handle)
-  }, [room])
+  }, [room, loadQuestionsFromBackend])
 
   /* ── countdown timer ── */
   useEffect(() => {
@@ -193,15 +258,69 @@ export default function StudentQuizPage({ studentName = 'Student', sessionLabel 
 
   /* ── submit handler ── */
   const handleSubmit = () => {
-    dispatch({ type: 'SUBMIT' })
-    if (state.selectedAnswer !== null) {
+    const answerIndex = state.selectedAnswer
+    const questionId = Number.isFinite(Number(currentQ?.id)) ? Number(currentQ.id) : null
+    const answerId = Number.isFinite(Number(currentQ?.answerIds?.[answerIndex]))
+      ? Number(currentQ.answerIds[answerIndex])
+      : null
+    const answerEntry = {
+      questionKey: currentQuestionKey,
+      questionId,
+      answerId,
+      answerIndex,
+    }
+
+    dispatch({ type: 'SUBMIT', answerEntry })
+    if (answerIndex !== null) {
       publish({
         type:          'QUIZ_ANSWER',
         questionIndex: state.currentQIndex,
-        answerIndex:   state.selectedAnswer,
+        answerIndex,
       })
     }
   }
+
+  const submitAttempt = useCallback(async () => {
+    if (!classId || attemptSubmittedRef.current) return
+
+    const entries = Object.values(state.answersByQuestion)
+      .filter((entry) => Number.isFinite(entry.questionId) && Number.isFinite(entry.answerId))
+      .map((entry) => ({
+        question_id: entry.questionId,
+        answer_id: entry.answerId,
+      }))
+
+    if (!entries.length) return
+
+    setAttemptSaving(true)
+    setAttemptError('')
+    try {
+      const data = await apiFetch(`/examinations/classrooms/${classId}/attempts/`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ answers: entries }),
+      }, { accessToken, setAccessToken })
+
+      attemptSubmittedRef.current = true
+      setAttemptResult(data)
+    } catch (err) {
+      setAttemptError(err.message)
+    } finally {
+      setAttemptSaving(false)
+    }
+  }, [classId, accessToken, setAccessToken, state.answersByQuestion])
+
+  useEffect(() => {
+    if (state.phase === 'ended') {
+      submitAttempt()
+    }
+  }, [state.phase, submitAttempt])
+
+  useEffect(() => {
+    if (typeof onQuizVisibilityChange === 'function') {
+      onQuizVisibilityChange(state.phase !== 'waiting')
+    }
+  }, [state.phase, onQuizVisibilityChange])
 
   /* ════════ RENDER ════════ */
 
@@ -294,10 +413,10 @@ export default function StudentQuizPage({ studentName = 'Student', sessionLabel 
             )}
 
             {isReveal && (
-              <div className={`sq-reveal-badge ${state.selectedAnswer === currentQ?.correct ? 'correct' : 'incorrect'}`}>
-                {state.selectedAnswer === currentQ?.correct
+              <div className={`sq-reveal-badge ${state.selectedAnswer === currentCorrectIndex ? 'correct' : 'incorrect'}`}>
+                {state.selectedAnswer === currentCorrectIndex
                   ? '🎉 Correct!'
-                  : `✗ The answer was ${LETTERS[currentQ?.correct ?? 0]}`}
+                  : `✗ The answer was ${LETTERS[currentCorrectIndex ?? 0]}`}
               </div>
             )}
           </div>
@@ -321,7 +440,7 @@ export default function StudentQuizPage({ studentName = 'Student', sessionLabel 
             {currentQ?.options.map((opt, oi) => {
               const letter     = LETTERS[oi]
               const isSelected = state.selectedAnswer === oi
-              const isCorrect  = oi === currentQ.correct
+              const isCorrect  = oi === currentCorrectIndex
               const count      = counts[letter] || 0
               const pct        = total > 0 ? Math.round((count / total) * 100) : 0
 
@@ -394,6 +513,8 @@ export default function StudentQuizPage({ studentName = 'Student', sessionLabel 
   /* ── ENDED phase ── */
   if (state.phase === 'ended') {
     const scorePercent = totalQs > 0 ? Math.round((state.score / totalQs) * 100) : 0
+    const attempt = attemptResult?.attempt
+    const attemptAnswers = Array.isArray(attemptResult?.answers) ? attemptResult.answers : []
     const grade =
       scorePercent >= 90 ? { label: 'Outstanding', emoji: '🏆', cls: 'gold' } :
       scorePercent >= 75 ? { label: 'Great job!',  emoji: '🌟', cls: 'blue' } :
@@ -442,11 +563,57 @@ export default function StudentQuizPage({ studentName = 'Student', sessionLabel 
             </div>
           </div>
 
+          {attemptSaving && <p className="muted">Saving your attempt…</p>}
+          {attemptError && <p className="error">{attemptError}</p>}
+          {attempt && (
+            <div className="sq-end-stats">
+              <div className="sq-end-stat">
+                <span className="sq-end-stat-label">Attempt</span>
+                <span className="sq-end-stat-value">#{attempt.id}</span>
+              </div>
+              <div className="sq-end-stat">
+                <span className="sq-end-stat-label">Answered</span>
+                <span className="sq-end-stat-value">{attempt.answered_count}</span>
+              </div>
+              <div className="sq-end-stat">
+                <span className="sq-end-stat-label">Score</span>
+                <span className="sq-end-stat-value">{attempt.score_percent}%</span>
+              </div>
+            </div>
+          )}
+
           {/* Per-question review */}
           <div className="sq-review-section">
             <p className="sq-review-heading">Question review</p>
-            {state.questions.map((q, qi) => {
-              const isCorrect = true // in real use you'd store per-Q answers
+            {(attemptAnswers.length ? attemptAnswers : state.questions).map((item, qi) => {
+              const isAttemptAnswer = Boolean(item.question_id || item.question_prompt)
+              if (isAttemptAnswer) {
+                const answerIndex = state.answersByQuestion[item.question_id]?.answerIndex
+                const letter = Number.isInteger(answerIndex) ? LETTERS[answerIndex] : '-'
+                return (
+                  <div key={item.id || item.question_id || qi} className="sq-review-card">
+                    <div className="sq-review-card-header">
+                      <span className="sq-review-label">Q{qi + 1}</span>
+                      <span className="sq-review-qtext">{item.question_prompt}</span>
+                    </div>
+                    <div className="sq-review-answer">
+                      <span className="sq-review-answer-letter">{letter}</span>
+                      <span className="sq-review-answer-text">{item.selected_answer_text}</span>
+                      <span className={`sq-review-tag ${item.is_correct ? 'correct' : 'incorrect'}`}>
+                        {item.is_correct ? 'Correct' : 'Incorrect'}
+                      </span>
+                    </div>
+                  </div>
+                )
+              }
+
+              const q = item
+              const correctIndex = Number.isInteger(state.correctByQuestion[q.id ?? qi])
+                ? state.correctByQuestion[q.id ?? qi]
+                : q.correct
+              const isCorrect = Number.isInteger(correctIndex)
+              const answerText = isCorrect ? q.options[correctIndex] : 'Answer unavailable'
+
               return (
                 <div key={q.id || qi} className="sq-review-card">
                   <div className="sq-review-card-header">
@@ -454,9 +621,13 @@ export default function StudentQuizPage({ studentName = 'Student', sessionLabel 
                     <span className="sq-review-qtext">{q.text}</span>
                   </div>
                   <div className="sq-review-answer">
-                    <span className="sq-review-answer-letter">{LETTERS[q.correct]}</span>
-                    <span className="sq-review-answer-text">{q.options[q.correct]}</span>
-                    <span className="sq-review-tag correct">Correct answer</span>
+                    <span className="sq-review-answer-letter">
+                      {isCorrect ? LETTERS[correctIndex] : '-'}
+                    </span>
+                    <span className="sq-review-answer-text">{answerText}</span>
+                    <span className={`sq-review-tag ${isCorrect ? 'correct' : 'incorrect'}`}>
+                      {isCorrect ? 'Correct answer' : 'Correct answer unavailable'}
+                    </span>
                   </div>
                 </div>
               )

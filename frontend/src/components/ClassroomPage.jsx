@@ -4,6 +4,7 @@ import { LiveKitRoom } from '@livekit/components-react'
 import { LIVEKIT_SERVER_URL } from './apiClient'
 import useClassroomPageController from './classroom-components/useClassroomPageController'
 import LiveQuizCard from './LiveQuizCard';
+import StudentQuizPage from './StudentQuizPage'
 
 const ClassroomSidebarPortal = lazy(() => import('./classroom-components/ClassroomSidebarPortal'))
 const DisplayedNotesCanvas = lazy(() => import('./classroom-components/DisplayedNotesCanvas'))
@@ -26,6 +27,7 @@ function ClassroomPage({ accessToken, setAccessToken }) {
   const [mobileSplitTop, setMobileSplitTop] = useState(56)
   const [isDraggingMobileSplit, setIsDraggingMobileSplit] = useState(false)
   const [showQuizCard, setShowQuizCard] = useState(false)
+  const [showStudentQuiz, setShowStudentQuiz] = useState(false)
   const mobileSplitLayoutRef = useRef(null)
 
   const updateMobileSplit = (clientY) => {
@@ -149,14 +151,50 @@ function ClassroomPage({ accessToken, setAccessToken }) {
                   '--mobile-live-ratio': `${100 - mobileSplitTop}%`,
                 }}
               >
-                <DisplayedNotesCanvas
-                  classroom={classroom}
-                  displayedNotes={displayedNotes}
-                  owned={owned}
-                  formatDate={formatDate}
-                  onRemoveDisplayed={handleRemoveDisplayed}
-                  showScreenShare
-                />
+                {owned ? (
+                  showQuizCard ? (
+                    <div className="notes-canvas-slot">
+                      <LiveQuizCard
+                        owned={owned}
+                        classId={classId}
+                        sessionLabel={classroom?.name || 'LessonLive'}
+                        accessToken={accessToken}
+                        setAccessToken={setAccessToken}
+                      />
+                    </div>
+                  ) : (
+                    <DisplayedNotesCanvas
+                      classroom={classroom}
+                      displayedNotes={displayedNotes}
+                      owned={owned}
+                      formatDate={formatDate}
+                      onRemoveDisplayed={handleRemoveDisplayed}
+                      showScreenShare
+                    />
+                  )
+                ) : (
+                  <div className="notes-canvas-slot">
+                    <div style={{ display: showStudentQuiz ? 'none' : 'flex', height: '100%' }}>
+                      <DisplayedNotesCanvas
+                        classroom={classroom}
+                        displayedNotes={displayedNotes}
+                        owned={owned}
+                        formatDate={formatDate}
+                        onRemoveDisplayed={handleRemoveDisplayed}
+                        showScreenShare
+                      />
+                    </div>
+                    <div style={{ display: showStudentQuiz ? 'flex' : 'none', height: '100%' }}>
+                      <StudentQuizPage
+                        classId={classId}
+                        sessionLabel={classroom?.name || 'LessonLive'}
+                        accessToken={accessToken}
+                        setAccessToken={setAccessToken}
+                        onQuizVisibilityChange={setShowStudentQuiz}
+                      />
+                    </div>
+                  </div>
+                )}
 
                 <div
                   className={`mobile-splitter ${isDraggingMobileSplit ? 'is-dragging' : ''}`}
@@ -179,6 +217,8 @@ function ClassroomPage({ accessToken, setAccessToken }) {
                   liveError={liveError}
                   noteError={noteError}
                   noteMessage={noteMessage}
+                  showQuizCard={showQuizCard}
+                  onToggleQuizCard={handleToggleQuizCard}
                 />
               </div>
             </section>

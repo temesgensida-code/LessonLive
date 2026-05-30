@@ -77,10 +77,15 @@ function normalizeServerQuestion(serverQuestion, fallback) {
 }
 
 function toBroadcastQuestion(question) {
+  const answerIds = Array.isArray(question.serverAnswerIds)
+    && question.serverAnswerIds.length === question.options.length
+    ? question.serverAnswerIds
+    : []
   return {
     id: question.serverId ?? question.id,
     text: question.text,
     options: question.options,
+    answerIds,
     correct: question.correct,
     contextNote: question.contextNote,
   }
@@ -426,7 +431,7 @@ export default function LiveQuizCard({
     const counts = state.responseCounts[q.id] || { A: 0, B: 0, C: 0, D: 0 }
     const total  = Object.values(counts).reduce((a, b) => a + b, 0)
     dispatch({ type: 'REVEAL', counts, total })
-    publish({ type: 'QUIZ_REVEAL', counts, total })
+    publish({ type: 'QUIZ_REVEAL', counts, total, correctIndex: q?.correct ?? 0 })
   }
 
   /* ── student: submit ── */
