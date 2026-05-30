@@ -188,7 +188,13 @@ function ClassroomPage({ accessToken, setAccessToken }) {
             <div className="notes-layout">
               {owned && showQuizCard ? (
                 <div className="notes-canvas-slot">
-                  <LiveQuizCard owned={owned} classId={classId} sessionLabel="Your Course" />
+                  <LiveQuizCard
+                    owned={owned}
+                    classId={classId}
+                    sessionLabel="Your Course"
+                    accessToken={accessToken}
+                    setAccessToken={setAccessToken}
+                  />
                 </div>
               ) : (
                 <DisplayedNotesCanvas

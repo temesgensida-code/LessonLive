@@ -427,7 +427,7 @@
 /* ── Stats row ── */
 .quiz-stats-row {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
   gap: var(--space-3);
 }
 
@@ -515,7 +515,7 @@
   .quiz-question-text { font-size: var(--font-size-base); padding: var(--space-4); }
   .quiz-options { padding: 0 var(--space-4) var(--space-4); }
   .quiz-body { padding: var(--space-3) var(--space-3); gap: var(--space-3); }
-  .quiz-stats-row { grid-template-columns: 1fr 1fr; }
+  .quiz-stats-row { grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); }
   .quiz-progress-bar { width: 80px; }
   .quiz-header-title { font-size: var(--font-size-sm); }
 }

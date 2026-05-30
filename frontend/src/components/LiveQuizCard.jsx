@@ -12,16 +12,19 @@
  *
  * Props
  * ──────
- *   owned        {boolean}  true = teacher view
- *   classId      {string}   used to namespace nothing currently, reserved
- *   sessionLabel {string}   e.g. "Philosophy 101"  (optional)
- *   studentCount {number}   total participants shown in header badge
+ *   owned          {boolean}  true = teacher view
+ *   classId        {string}   classroom id used for examination endpoints
+ *   sessionLabel   {string}   e.g. "Philosophy 101"  (optional)
+ *   studentCount   {number}   total participants shown in header badge
+ *   accessToken    {string}   JWT access token for API calls
+ *   setAccessToken {function} access token setter for refresh
  *
  * Usage inside ClassroomPage (left canvas):
  *   <LiveQuizCard owned={owned} classId={classId} sessionLabel="Biology 101" studentCount={participants.length} />
  */
 
 import { useCallback, useEffect, useReducer, useRef, useState } from 'react'
+import { apiFetch } from './apiClient'
 import './LiveQuizCard.css'
 
 /* ────────── constants ────────── */
@@ -37,10 +40,49 @@ function clamp(v, lo, hi) { return Math.min(hi, Math.max(lo, v)) }
 function blankQuestion() {
   return {
     id: `q-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+    serverId: null,
+    serverAnswerIds: [],
     text: '',
     options: ['', '', '', ''],
     correct: 0,            // index 0-3
     contextNote: '',       // hint shown during the question
+  }
+}
+
+function buildQuestionPayload(question) {
+  return {
+    prompt: question.text.trim(),
+    answers: question.options.map((opt) => opt.trim()),
+    correct_index: question.correct,
+  }
+}
+
+function normalizeServerQuestion(serverQuestion, fallback) {
+  if (!serverQuestion) {
+    return fallback
+  }
+
+  const answers = Array.isArray(serverQuestion.answers) ? serverQuestion.answers : []
+  const options = answers.map((answer) => answer.text)
+  const correctIndex = answers.findIndex((answer) => answer.is_correct)
+
+  return {
+    ...fallback,
+    serverId: serverQuestion.id,
+    serverAnswerIds: answers.map((answer) => answer.id),
+    text: serverQuestion.prompt || fallback.text,
+    options: options.length ? options : fallback.options,
+    correct: correctIndex >= 0 ? correctIndex : fallback.correct,
+  }
+}
+
+function toBroadcastQuestion(question) {
+  return {
+    id: question.serverId ?? question.id,
+    text: question.text,
+    options: question.options,
+    correct: question.correct,
+    contextNote: question.contextNote,
   }
 }
 
@@ -206,8 +248,18 @@ function reducer(state, action) {
 /* ════════════════════════════════════════════════════════════
    LiveQuizCard
    ════════════════════════════════════════════════════════════ */
-export default function LiveQuizCard({ owned = false, classId = '', sessionLabel = '', studentCount }) {
+export default function LiveQuizCard({
+  owned = false,
+  classId = '',
+  sessionLabel = '',
+  studentCount,
+  accessToken,
+  setAccessToken,
+}) {
   const [state, dispatch] = useReducer(reducer, INIT)
+  const [backendError, setBackendError] = useState('')
+  const [savingQuestions, setSavingQuestions] = useState(false)
+  const [participantsCount, setParticipantsCount] = useState(null)
   const room       = useRoom()
   const lkCount    = useParticipantCount()
   const timerRef   = useRef(null)
@@ -271,6 +323,34 @@ export default function LiveQuizCard({ owned = false, classId = '', sessionLabel
     return () => clearInterval(timerRef.current)
   }, [state.phase, state.currentQIndex, state.submitted])
 
+  /* ── backend participants count (teacher) ── */
+  useEffect(() => {
+    if (!owned || !classId) return undefined
+
+    let isActive = true
+
+    const loadParticipants = async () => {
+      try {
+        const data = await apiFetch(`/examinations/classrooms/${classId}/participants/`, {}, {
+          accessToken,
+          setAccessToken,
+        })
+        if (!isActive) return
+        const count = Number.isFinite(data?.participants_count) ? data.participants_count : 0
+        setParticipantsCount(count)
+      } catch {
+        if (!isActive) return
+      }
+    }
+
+    loadParticipants()
+    const intervalId = window.setInterval(loadParticipants, 15000)
+    return () => {
+      isActive = false
+      window.clearInterval(intervalId)
+    }
+  }, [owned, classId, accessToken, setAccessToken])
+
   /* ── auto-submit on timeout ── */
   useEffect(() => {
     if (state.phase === 'live' && state.timeLeft === 0 && !state.submitted && !owned) {
@@ -279,15 +359,53 @@ export default function LiveQuizCard({ owned = false, classId = '', sessionLabel
   }, [state.timeLeft, state.phase, state.submitted, owned])
 
   /* ── teacher: launch quiz ── */
-  const handleLaunch = () => {
+  const handleLaunch = async () => {
+    if (savingQuestions) return
+    setBackendError('')
     // validate
     if (!state.quizMeta.title.trim()) return
     const valid = state.questions.every(q =>
       q.text.trim() && q.options.every(o => o.trim())
     )
     if (!valid) return
+
+    let launchQuestions = state.questions
+
+    if (owned && classId) {
+      setSavingQuestions(true)
+      try {
+        const savedQuestions = []
+        for (const [index, question] of state.questions.entries()) {
+          const payload = buildQuestionPayload(question)
+          const data = await apiFetch(`/examinations/classrooms/${classId}/questions/`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload),
+          }, {
+            accessToken,
+            setAccessToken,
+          })
+
+          const normalized = normalizeServerQuestion(data?.question, question)
+          savedQuestions.push(normalized)
+          dispatch({ type: 'SET_QUESTION', index, payload: normalized })
+        }
+
+        launchQuestions = savedQuestions
+      } catch (err) {
+        setBackendError(err.message || 'Failed to save quiz questions.')
+        setSavingQuestions(false)
+        return
+      }
+      setSavingQuestions(false)
+    }
+
     dispatch({ type: 'LAUNCH' })
-    publish({ type: 'QUIZ_START', quizMeta: state.quizMeta })
+    publish({
+      type: 'QUIZ_START',
+      quizMeta: state.quizMeta,
+      questions: launchQuestions.map(toBroadcastQuestion),
+    })
   }
 
   /* ── teacher: next question ── */
@@ -391,7 +509,14 @@ export default function LiveQuizCard({ owned = false, classId = '', sessionLabel
               : 'The teacher hasn\'t started a quiz yet.'}
           </p>
           {owned && (
-            <button className="primary" onClick={() => dispatch({ type: 'BEGIN_SETUP' })} style={{ marginTop: 'var(--space-2)' }}>
+            <button
+              className="primary"
+              onClick={() => {
+                setBackendError('')
+                dispatch({ type: 'BEGIN_SETUP' })
+              }}
+              style={{ marginTop: 'var(--space-2)' }}
+            >
               + Create quiz
             </button>
           )}
@@ -547,13 +672,22 @@ export default function LiveQuizCard({ owned = false, classId = '', sessionLabel
               + Add question
             </button>
           </div>
+
+          {backendError && (
+            <p className="error" style={{ marginTop: 'var(--space-2)' }}>
+              {backendError}
+            </p>
+          )}
         </div>
 
         <div className="quiz-footer">
           <button
             type="button"
             className="ghost"
-            onClick={() => dispatch({ type: 'RESET' })}
+            onClick={() => {
+              setBackendError('')
+              dispatch({ type: 'RESET' })
+            }}
           >
             Cancel
           </button>
@@ -562,11 +696,14 @@ export default function LiveQuizCard({ owned = false, classId = '', sessionLabel
             className="primary"
             onClick={handleLaunch}
             disabled={
+              savingQuestions ||
               !state.quizMeta.title.trim() ||
               state.questions.some(q => !q.text.trim() || q.options.some(o => !o.trim()))
             }
           >
-            🚀 Launch quiz ({state.questions.length} Q{state.questions.length !== 1 ? 's' : ''})
+            {savingQuestions
+              ? 'Saving...'
+              : `Launch quiz (${state.questions.length} Q${state.questions.length !== 1 ? 's' : ''})`}
           </button>
         </div>
       </div>
@@ -614,6 +751,12 @@ export default function LiveQuizCard({ owned = false, classId = '', sessionLabel
               <div className="quiz-stat-cell">
                 <span className="quiz-stat-label">Students live</span>
                 <span className="quiz-stat-value accent">{liveCount}</span>
+              </div>
+              <div className="quiz-stat-cell">
+                <span className="quiz-stat-label">Involved</span>
+                <span className="quiz-stat-value">
+                  {participantsCount === null ? '-' : participantsCount}
+                </span>
               </div>
               <div className="quiz-stat-cell">
                 <span className="quiz-stat-label">Responded</span>
