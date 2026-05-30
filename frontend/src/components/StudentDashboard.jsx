@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { apiFetch } from './apiClient'
-import StudentQuizPage from './StudentQuizPage'
 
 function StudentDashboard({ accessToken, setAccessToken, studentName = 'Student' }) {
   const [classrooms, setClassrooms] = useState([])
@@ -52,7 +51,6 @@ function StudentDashboard({ accessToken, setAccessToken, studentName = 'Student'
         )}
       </section>
 
-      <StudentQuizPage studentName={studentName} sessionLabel="LessonLive" />
     </div>
   )
 }
