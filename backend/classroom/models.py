@@ -104,3 +104,17 @@ class DisplayedClassroomNote(models.Model):
 
 	def __str__(self):
 		return f'Displayed #{self.id} for {self.classroom.class_id} (note #{self.note_id})'
+
+
+class ClassroomNotification(models.Model):
+	classroom = models.ForeignKey(Classroom, on_delete=models.CASCADE, related_name='notifications')
+	created_by = models.ForeignKey(User, on_delete=models.CASCADE, related_name='sent_notifications')
+	message = models.TextField()
+	countdown_seconds = models.PositiveIntegerField(help_text='Countdown duration in seconds')
+	created_at = models.DateTimeField(auto_now_add=True)
+
+	class Meta:
+		ordering = ['-created_at']
+
+	def __str__(self):
+		return f'Notification for {self.classroom.class_id}: {self.message[:50]}'

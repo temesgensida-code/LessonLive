@@ -1,4 +1,5 @@
 import LiveClassSidePanel from '../LiveClassSidePanel'
+import NotificationForm from '../NotificationForm'
 
 function LiveNotesPanel({
   owned,
@@ -10,6 +11,14 @@ function LiveNotesPanel({
   noteMessage,
   showQuizCard,
   onToggleQuizCard,
+  // Notification props
+  notifMessage,
+  setNotifMessage,
+  notifMinutes,
+  setNotifMinutes,
+  notifError,
+  notifSuccess,
+  handleSendNotification,
 }) {
   return (
     <div className="notes-panel">
@@ -45,6 +54,20 @@ function LiveNotesPanel({
       )}
 
       <LiveClassSidePanel owned={owned} chatStorageKey={`classroom-${classId}`} />
+
+      {owned && (
+        <div style={{ padding: '0 var(--space-4) var(--space-3)' }}>
+          <NotificationForm
+            notifMessage={notifMessage}
+            setNotifMessage={setNotifMessage}
+            notifMinutes={notifMinutes}
+            setNotifMinutes={setNotifMinutes}
+            notifError={notifError}
+            notifSuccess={notifSuccess}
+            onSubmit={handleSendNotification}
+          />
+        </div>
+      )}
 
       {(noteError || noteMessage) && (
         <div style={{ padding: 'var(--space-2) var(--space-4)' }}>

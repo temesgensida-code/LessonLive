@@ -1,10 +1,12 @@
-import { Suspense, lazy, useRef, useState } from 'react'
+import { Suspense, lazy, useEffect, useRef, useState } from 'react'
 import { useParams } from 'react-router-dom'
 import { LiveKitRoom } from '@livekit/components-react'
 import { LIVEKIT_SERVER_URL } from './apiClient'
 import useClassroomPageController from './classroom-components/useClassroomPageController'
 import LiveQuizCard from './LiveQuizCard';
 import StudentQuizPage from './StudentQuizPage'
+import CountdownOverlay from './CountdownOverlay'
+import { useNotificationContext } from './NotificationContext'
 
 const ClassroomSidebarPortal = lazy(() => import('./classroom-components/ClassroomSidebarPortal'))
 const DisplayedNotesCanvas = lazy(() => import('./classroom-components/DisplayedNotesCanvas'))
@@ -102,7 +104,44 @@ function ClassroomPage({ accessToken, setAccessToken }) {
     handleDeleteNote,
     handleRemoveDisplayed,
     handleToggleLiveClass,
+    // Notifications
+    notifications,
+    hasUnreadNotifications,
+    activeCountdown,
+    setActiveCountdown,
+    notifMessage,
+    setNotifMessage,
+    notifMinutes,
+    setNotifMinutes,
+    notifError,
+    notifSuccess,
+    handleSendNotification,
+    handleMarkNotificationsRead,
   } = useClassroomPageController({ classId, accessToken, setAccessToken })
+
+  const notificationProps = {
+    notifMessage,
+    setNotifMessage,
+    notifMinutes,
+    setNotifMinutes,
+    notifError,
+    notifSuccess,
+    handleSendNotification,
+  }
+
+  const notificationCtx = useNotificationContext()
+
+  // Sync notification state up to context so the Layout topbar bell can access it
+  useEffect(() => {
+    notificationCtx.setNotificationData(notifications, hasUnreadNotifications)
+  }, [notifications, hasUnreadNotifications])
+
+  // Sync activeCountdown from context (set by Layout bell click)
+  const resolvedActiveCountdown = notificationCtx.activeCountdown || activeCountdown
+  const closeCountdown = () => {
+    setActiveCountdown(null)
+    notificationCtx.setActiveCountdown(null)
+  }
 
   if (!classroom && !error) {
     return classroomLoadingFallback
@@ -111,6 +150,14 @@ function ClassroomPage({ accessToken, setAccessToken }) {
   return (
     <Suspense fallback={classroomLoadingFallback}>
       <div className="stack">
+        {/* Countdown overlay */}
+        {resolvedActiveCountdown && (
+          <CountdownOverlay
+            notification={resolvedActiveCountdown}
+            onClose={closeCountdown}
+          />
+        )}
+
         <ClassroomSidebarPortal
           owned={owned}
           sidebarPortalTarget={sidebarPortalTarget}
@@ -219,6 +266,7 @@ function ClassroomPage({ accessToken, setAccessToken }) {
                   noteMessage={noteMessage}
                   showQuizCard={showQuizCard}
                   onToggleQuizCard={handleToggleQuizCard}
+                  {...notificationProps}
                 />
               </div>
             </section>
@@ -266,6 +314,7 @@ function ClassroomPage({ accessToken, setAccessToken }) {
                 handleDisplayNote={handleDisplayNote}
                 noteError={noteError}
                 noteMessage={noteMessage}
+                {...notificationProps}
               />
             </div>
           </section>

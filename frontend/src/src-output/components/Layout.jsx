@@ -1,10 +1,16 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { GiHamburgerMenu } from 'react-icons/gi'
+import NotificationBell from './NotificationBell'
+import { useNotificationContext } from './NotificationContext'
 
 function Layout({ children, me, onLogout }) {
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const navigate = useNavigate()
+  const { notifications, hasUnread, markRead, setActiveCountdown } = useNotificationContext()
+
+  const isStudent = me?.authenticated && me?.role !== 'teacher'
+  const showBell = isStudent && notifications.length > 0
 
   return (
     <div className="page">
@@ -16,7 +22,17 @@ function Layout({ children, me, onLogout }) {
         <nav className="nav">
           {me?.authenticated ? (
             <>
-              <span className="nav-user">
+              {/* Notification bell for students — in the topbar */}
+              {showBell && (
+                <NotificationBell
+                  notifications={notifications}
+                  hasUnread={hasUnread}
+                  onMarkRead={markRead}
+                  onLaunch={(n) => setActiveCountdown(n)}
+                />
+              )}
+
+              <span className={`nav-user ${hasUnread && isStudent ? 'nav-user-glow' : ''}`}>
                 <span className="nav-user-dot" aria-hidden="true" />
                 {me.email}
               </span>

@@ -24,6 +24,15 @@ function useClassroomPageController({ classId, accessToken, setAccessToken }) {
   const [sidebarPortalTarget, setSidebarPortalTarget] = useState(null)
   const [sidebarTab, setSidebarTab] = useState(null)
 
+  // Notification state
+  const [notifications, setNotifications] = useState([])
+  const [hasUnreadNotifications, setHasUnreadNotifications] = useState(false)
+  const [activeCountdown, setActiveCountdown] = useState(null)
+  const [notifMessage, setNotifMessage] = useState('')
+  const [notifMinutes, setNotifMinutes] = useState(5)
+  const [notifError, setNotifError] = useState('')
+  const [notifSuccess, setNotifSuccess] = useState('')
+
   useEffect(() => {
     setSidebarPortalTarget(document.getElementById('sidebar-portal-target'))
   }, [])
@@ -126,9 +135,21 @@ function useClassroomPageController({ classId, accessToken, setAccessToken }) {
       }
     }
 
+    const loadNotifications = async () => {
+      try {
+        const data = await apiFetch(`/classrooms/${classId}/notifications/list/`, {}, { accessToken, setAccessToken })
+        if (!isCurrent) return
+        setNotifications(data.notifications || [])
+      } catch {
+        if (!isCurrent) return
+        setNotifications([])
+      }
+    }
+
     loadClassroom()
     loadSavedNotes()
     loadDisplayedNotes()
+    loadNotifications()
 
     return () => {
       isCurrent = false
@@ -158,6 +179,13 @@ function useClassroomPageController({ classId, accessToken, setAccessToken }) {
           }
           if (data.type === 'note_removed' && data.payload?.id) {
             removeDisplayedNoteFromState(data.payload.id)
+          }
+          if (data.type === 'notification_sent' && data.payload) {
+            setNotifications((prev) => {
+              if (prev.some((n) => n.id === data.payload.id)) return prev
+              return [data.payload, ...prev]
+            })
+            setHasUnreadNotifications(true)
           }
         } catch {
           return
@@ -370,6 +398,29 @@ function useClassroomPageController({ classId, accessToken, setAccessToken }) {
 
   const notePendingDelete = savedNotes.find((note) => note.id === deleteConfirmNoteId) || null
 
+  const handleSendNotification = async (event) => {
+    event.preventDefault()
+    setNotifError('')
+    setNotifSuccess('')
+    try {
+      await apiFetch(`/classrooms/${classId}/notifications/`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message: notifMessage, countdown_minutes: notifMinutes }),
+      }, { accessToken, setAccessToken })
+      setNotifMessage('')
+      setNotifMinutes(5)
+      setNotifSuccess('Notification sent to students!')
+      setTimeout(() => setNotifSuccess(''), 4000)
+    } catch (err) {
+      setNotifError(err.message)
+    }
+  }
+
+  const handleMarkNotificationsRead = () => {
+    setHasUnreadNotifications(false)
+  }
+
   return {
     classroom,
     owned,
@@ -404,6 +455,19 @@ function useClassroomPageController({ classId, accessToken, setAccessToken }) {
     handleDeleteNote,
     handleRemoveDisplayed,
     handleToggleLiveClass,
+    // Notifications
+    notifications,
+    hasUnreadNotifications,
+    activeCountdown,
+    setActiveCountdown,
+    notifMessage,
+    setNotifMessage,
+    notifMinutes,
+    setNotifMinutes,
+    notifError,
+    notifSuccess,
+    handleSendNotification,
+    handleMarkNotificationsRead,
   }
 }
 

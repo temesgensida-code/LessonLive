@@ -21,7 +21,7 @@ from channels.layers import get_channel_layer
 
 from authentication.jwt_auth import get_user_from_request
 from authentication.models import UserProfile
-from classroom.models import Classroom, ClassroomInvitation, ClassroomNote, DisplayedClassroomNote, Enrollment
+from classroom.models import Classroom, ClassroomInvitation, ClassroomNote, ClassroomNotification, DisplayedClassroomNote, Enrollment
 
 
 logger = logging.getLogger(__name__)
@@ -129,6 +129,21 @@ def _serialize_displayed_note(displayed_note):
 
 def _note_group_name(class_id):
 	return f'classroom_{class_id}_notes'
+
+
+def _broadcast_notification_event(class_id, payload):
+	channel_layer = get_channel_layer()
+	if channel_layer is None:
+		return
+
+	async_to_sync(channel_layer.group_send)(
+		_note_group_name(class_id),
+		{
+			'type': 'note.event',
+			'event_type': 'notification_sent',
+			'payload': payload,
+		},
+	)
 
 
 def _broadcast_note_event(class_id, event_type, payload):
@@ -604,3 +619,80 @@ def get_livekit_token(request, class_id):
 		return JsonResponse({'token': token.to_jwt(), 'livekit_enabled': True})
 	except Exception as e:
 		return JsonResponse({'detail': f'LiveKit token generation failed: {str(e)}'}, status=500)
+
+
+@csrf_exempt
+def send_notification(request, class_id):
+	if request.method != 'POST':
+		return JsonResponse({'detail': 'Method not allowed'}, status=405)
+
+	user, teacher_error = _require_teacher(request)
+	if teacher_error:
+		return teacher_error
+
+	try:
+		classroom = Classroom.objects.get(class_id=class_id, owner=user)
+	except Classroom.DoesNotExist:
+		return JsonResponse({'detail': 'Classroom not found'}, status=404)
+
+	data = _json_body(request)
+	message = (data.get('message') or '').strip()
+	if not message:
+		return JsonResponse({'detail': 'Notification message is required'}, status=400)
+
+	try:
+		countdown_minutes = int(data.get('countdown_minutes', 0))
+	except (TypeError, ValueError):
+		return JsonResponse({'detail': 'countdown_minutes must be an integer'}, status=400)
+
+	if countdown_minutes <= 0:
+		return JsonResponse({'detail': 'countdown_minutes must be greater than 0'}, status=400)
+
+	countdown_seconds = countdown_minutes * 60
+
+	notification = ClassroomNotification.objects.create(
+		classroom=classroom,
+		created_by=user,
+		message=message,
+		countdown_seconds=countdown_seconds,
+	)
+
+	payload = {
+		'id': notification.id,
+		'message': notification.message,
+		'countdown_seconds': notification.countdown_seconds,
+		'created_at': notification.created_at.isoformat(),
+		'created_by': user.email,
+	}
+
+	_broadcast_notification_event(class_id, payload)
+
+	return JsonResponse({'notification': payload}, status=201)
+
+
+def list_notifications(request, class_id):
+	_, classroom, _, error_response = _require_class_member(request, class_id)
+	if error_response:
+		return error_response
+
+	if request.method != 'GET':
+		return JsonResponse({'detail': 'Method not allowed'}, status=405)
+
+	notifications = ClassroomNotification.objects.filter(
+		classroom=classroom,
+	).select_related('created_by').order_by('-created_at')[:20]
+
+	result = []
+	now = timezone.now()
+	for n in notifications:
+		ends_at = n.created_at + timedelta(seconds=n.countdown_seconds)
+		if ends_at > now:
+			result.append({
+				'id': n.id,
+				'message': n.message,
+				'countdown_seconds': n.countdown_seconds,
+				'created_at': n.created_at.isoformat(),
+				'created_by': n.created_by.email,
+			})
+
+	return JsonResponse({'notifications': result})

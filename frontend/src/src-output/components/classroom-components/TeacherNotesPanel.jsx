@@ -1,3 +1,5 @@
+import NotificationForm from '../NotificationForm'
+
 function TeacherNotesPanel({
   owned,
   liveLoading,
@@ -17,6 +19,14 @@ function TeacherNotesPanel({
   handleDisplayNote,
   noteError,
   noteMessage,
+  // Notification props
+  notifMessage,
+  setNotifMessage,
+  notifMinutes,
+  setNotifMinutes,
+  notifError,
+  notifSuccess,
+  handleSendNotification,
 }) {
   return (
     <div className="notes-panel">
@@ -126,6 +136,18 @@ function TeacherNotesPanel({
 
         {noteError && <p className="error">{noteError}</p>}
         {noteMessage && <p className="success">{noteMessage}</p>}
+
+        {owned && (
+          <NotificationForm
+            notifMessage={notifMessage}
+            setNotifMessage={setNotifMessage}
+            notifMinutes={notifMinutes}
+            setNotifMinutes={setNotifMinutes}
+            notifError={notifError}
+            notifSuccess={notifSuccess}
+            onSubmit={handleSendNotification}
+          />
+        )}
       </div>
     </div>
   )
