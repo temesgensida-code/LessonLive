@@ -9,4 +9,6 @@ urlpatterns = [
     path('token/refresh/', views.refresh_token, name='refresh-token'),
     path('logout/', views.logout_view, name='logout'),
     path('me/', views.me, name='me'),
+    path('verify-email/', views.verify_email, name='verify-email'),
+    path('resend-verification/', views.resend_verification, name='resend-verification'),
 ]

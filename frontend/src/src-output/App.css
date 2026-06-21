@@ -114,6 +114,29 @@
   flex-shrink: 0;
 }
 
+/* Blue glow on account area when new notifications arrive */
+.nav-user-glow {
+  color: #60a5fa;
+  text-shadow: 0 0 12px rgba(59, 130, 246, 0.5);
+  animation: navUserBlink 1.5s ease-in-out infinite;
+}
+
+.nav-user-glow .nav-user-dot {
+  background: #3b82f6;
+  box-shadow: 0 0 8px rgba(59, 130, 246, 0.7);
+}
+
+@keyframes navUserBlink {
+  0%, 100% {
+    color: #60a5fa;
+    text-shadow: 0 0 12px rgba(59, 130, 246, 0.5);
+  }
+  50% {
+    color: #93c5fd;
+    text-shadow: 0 0 20px rgba(59, 130, 246, 0.8);
+  }
+}
+
 .nav-signin-btn {
   font-size: var(--font-size-sm);
   padding: 0.45rem 1rem;
@@ -2168,4 +2191,466 @@ button:active:not(:disabled) {
   .features-grid { grid-template-columns: 1fr; }
   .hero-cta { flex-direction: column; align-items: stretch; }
   .cta-ghost { text-align: center; justify-content: center; }
+}
+
+/* ════════════════════════════════════════════════════════════
+   NOTIFICATION SYSTEM
+   ════════════════════════════════════════════════════════════ */
+
+/* ── Classroom notification bar ── */
+.classroom-notification-bar {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  padding: 0;
+}
+
+/* ── Notification bell ── */
+.notification-bell-wrap {
+  position: relative;
+  display: inline-flex;
+}
+
+.notification-bell-btn {
+  position: relative;
+  width: 42px;
+  height: 42px;
+  padding: 0;
+  border-radius: var(--radius-full);
+  border: 1px solid var(--border-bright);
+  background: var(--bg-card);
+  color: var(--text-secondary);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.notification-bell-btn:hover {
+  background: var(--bg-card-high);
+  border-color: var(--primary);
+  color: var(--primary);
+}
+
+.notification-bell-btn.has-unread {
+  color: #3b82f6;
+  border-color: #3b82f6;
+  animation: bellPulse 1.5s ease-in-out infinite;
+}
+
+.notification-bell-badge {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: #3b82f6;
+  box-shadow: 0 0 8px rgba(59, 130, 246, 0.6);
+}
+
+@keyframes bellPulse {
+  0%, 100% {
+    box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.4);
+  }
+  50% {
+    box-shadow: 0 0 0 10px rgba(59, 130, 246, 0);
+  }
+}
+
+/* ── Notification dropdown ── */
+.notification-dropdown {
+  position: absolute;
+  top: calc(100% + var(--space-2));
+  right: 0;
+  width: 340px;
+  max-height: 420px;
+  overflow-y: auto;
+  background: rgba(15, 23, 42, 0.95);
+  backdrop-filter: blur(20px);
+  border: 1px solid var(--border-bright);
+  border-radius: var(--radius-xl);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5), 0 0 40px rgba(59, 130, 246, 0.08);
+  z-index: 200;
+  animation: dropdownSlide 0.2s ease;
+}
+
+@keyframes dropdownSlide {
+  from {
+    opacity: 0;
+    transform: translateY(-8px) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.notification-dropdown-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-3) var(--space-4);
+  border-bottom: 1px solid var(--border);
+}
+
+.notification-dropdown-title {
+  font-size: var(--font-size-sm);
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.notification-dropdown-count {
+  font-size: var(--font-size-xs);
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+
+.notification-dropdown-empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-8) var(--space-4);
+  color: var(--text-muted);
+  font-size: var(--font-size-sm);
+}
+
+.notification-dropdown-list {
+  padding: var(--space-2);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+/* ── Notification card ── */
+.notification-card {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3);
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  transition: border-color 0.15s ease;
+}
+
+.notification-card:hover {
+  border-color: var(--border-bright);
+}
+
+.notification-card-body {
+  flex: 1;
+  min-width: 0;
+}
+
+.notification-card-message {
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0 0 var(--space-1) 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.notification-card-timer {
+  font-size: var(--font-size-xs);
+  color: var(--text-link);
+  font-weight: 500;
+}
+
+.notification-launch-btn {
+  flex-shrink: 0;
+  padding: 0.4rem 0.85rem;
+  border-radius: var(--radius-md);
+  border: none;
+  background: linear-gradient(135deg, #3b82f6, #2563eb);
+  color: #fff;
+  font-size: var(--font-size-xs);
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.35);
+  white-space: nowrap;
+}
+
+.notification-launch-btn:hover {
+  background: linear-gradient(135deg, #2563eb, #1d4ed8);
+  box-shadow: 0 4px 16px rgba(59, 130, 246, 0.5);
+  transform: translateY(-1px);
+}
+
+/* ════════════════════════════════════════════════════════════
+   COUNTDOWN OVERLAY
+   ════════════════════════════════════════════════════════════ */
+.countdown-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: overlayFadeIn 0.3s ease;
+}
+
+@keyframes overlayFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.countdown-overlay-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(2, 6, 23, 0.85);
+  backdrop-filter: blur(16px);
+}
+
+.countdown-overlay-content {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-5);
+  padding: var(--space-10) var(--space-8);
+  background: rgba(15, 23, 42, 0.9);
+  backdrop-filter: blur(24px);
+  border: 1px solid var(--border-bright);
+  border-radius: var(--radius-2xl);
+  box-shadow:
+    0 25px 80px rgba(0, 0, 0, 0.6),
+    0 0 80px rgba(59, 130, 246, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  min-width: 340px;
+  max-width: 440px;
+  text-align: center;
+  animation: contentSlideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes contentSlideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.countdown-close-btn {
+  position: absolute;
+  top: var(--space-3);
+  right: var(--space-3);
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border-radius: var(--radius-full);
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 0.85rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s ease;
+}
+
+.countdown-close-btn:hover {
+  background: var(--bg-card-high);
+  border-color: var(--border-bright);
+  color: var(--text-primary);
+}
+
+.countdown-message {
+  font-size: var(--font-size-xl);
+  font-weight: 700;
+  color: var(--text-primary);
+  letter-spacing: -0.02em;
+  margin: 0;
+  line-height: 1.3;
+}
+
+.countdown-from {
+  font-size: var(--font-size-sm);
+  color: var(--text-secondary);
+  margin: 0;
+}
+
+/* ── Circular progress ring ── */
+.countdown-ring-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.countdown-ring-svg {
+  transform: scaleX(-1);
+}
+
+.countdown-ring-progress {
+  transition: stroke-dashoffset 1s linear, stroke 0.3s ease;
+}
+
+.countdown-ring-inner {
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-1);
+}
+
+.countdown-digits {
+  font-size: 3rem;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.04em;
+  color: var(--text-primary);
+  line-height: 1;
+  transition: color 0.3s ease;
+}
+
+.countdown-digits.urgent {
+  color: #ef4444;
+  animation: urgentFlash 1s ease-in-out infinite;
+}
+
+@keyframes urgentFlash {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.6; }
+}
+
+.countdown-label {
+  font-size: var(--font-size-sm);
+  color: var(--text-secondary);
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.countdown-finished-text {
+  font-size: var(--font-size-2xl);
+  font-weight: 800;
+  color: #22c55e;
+  letter-spacing: -0.02em;
+}
+
+.countdown-overlay.finished .countdown-overlay-content {
+  border-color: rgba(34, 197, 94, 0.3);
+  box-shadow:
+    0 25px 80px rgba(0, 0, 0, 0.6),
+    0 0 80px rgba(34, 197, 94, 0.12);
+}
+
+.countdown-done-btn {
+  margin-top: var(--space-2);
+}
+
+/* ════════════════════════════════════════════════════════════
+   NOTIFICATION FORM (Teacher panel)
+   ════════════════════════════════════════════════════════════ */
+.notification-form-section {
+  margin-top: var(--space-4);
+  padding-top: var(--space-4);
+  border-top: 1px solid var(--border);
+}
+
+.notification-form-title {
+  font-size: var(--font-size-sm);
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: var(--space-3);
+}
+
+.notification-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.notification-form label {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  font-size: var(--font-size-xs);
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.notification-form input[type="text"],
+.notification-form input[type="number"] {
+  width: 100%;
+  padding: 0.5rem 0.75rem;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-bright);
+  background: var(--bg-input);
+  color: var(--text-primary);
+  font-size: var(--font-size-sm);
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.notification-form input[type="text"]:focus,
+.notification-form input[type="number"]:focus {
+  outline: none;
+  border-color: var(--border-focus);
+  box-shadow: 0 0 0 3px var(--primary-glow);
+}
+
+.notification-form input::placeholder {
+  color: var(--text-muted);
+}
+
+.notification-send-btn {
+  font-size: var(--font-size-xs) !important;
+  padding: 0.5rem 0.9rem !important;
+}
+
+/* ── Mobile responsive for notifications ── */
+@media (max-width: 600px) {
+  .notification-dropdown {
+    width: 290px;
+    right: -8px;
+  }
+
+  .countdown-overlay-content {
+    min-width: 280px;
+    padding: var(--space-8) var(--space-5);
+  }
+
+  .countdown-digits {
+    font-size: 2.5rem;
+  }
+}
+
+/* ==========================================================================
+   Email Verification Styles
+   ========================================================================== */
+
+.verification-pending {
+  padding: var(--space-4) 0;
+}
+
+.verification-pending p {
+  margin-bottom: var(--space-3);
+  color: var(--text-secondary);
+}
+
+.verification-result {
+  min-height: 400px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.verification-result h2 {
+  margin-bottom: var(--space-3);
+  color: var(--text-primary);
+}
+
+.verification-result p {
+  margin-bottom: var(--space-6);
 }

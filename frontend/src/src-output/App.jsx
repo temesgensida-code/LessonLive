@@ -10,8 +10,10 @@ import LandingPage from './components/LandingPage'
 import Layout from './components/Layout'
 import StudentDashboard from './components/StudentDashboard'
 import TeacherDashboard from './components/TeacherDashboard'
+import EmailVerified from './components/EmailVerified'
 import { apiFetch, setSessionHint } from './components/apiClient'
 import useMe from './components/useMe'
+import { NotificationProvider } from './components/NotificationContext'
 
 function App() {
   const [accessToken, setAccessToken] = useState('')
@@ -39,6 +41,7 @@ function App() {
   )
 
   return (
+    <NotificationProvider>
     <Layout {...layoutProps}>
       {logoutError && <p className="error">{logoutError}</p>}
       <Routes>
@@ -93,8 +96,13 @@ function App() {
           path="/invite/:token"
           element={<InvitePage accessToken={accessToken} setAccessToken={setAccessToken} />}
         />
+        <Route
+          path="/verify-email"
+          element={<EmailVerified />}
+        />
       </Routes>
     </Layout>
+    </NotificationProvider>
   )
 }
 

@@ -7,9 +7,26 @@ function TeacherAuth({ onSuccess }) {
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
 
+  const [pendingVerification, setPendingVerification] = useState(false)
+  const [resendStatus, setResendStatus] = useState('')
+
   const handleChange = (e) => {
     const { name, value } = e.target
     setForm((prev) => ({ ...prev, [name]: value }))
+  }
+
+  const handleResend = async () => {
+    setResendStatus('Sending...')
+    try {
+      await apiFetch('/auth/resend-verification/', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: form.email }),
+      }, { skipAuthRefresh: true })
+      setResendStatus('Email sent!')
+    } catch (err) {
+      setResendStatus(err.message || 'Failed to send')
+    }
   }
 
   const handleSubmit = async (e) => {
@@ -24,6 +41,10 @@ function TeacherAuth({ onSuccess }) {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(form),
         }, { skipAuthRefresh: true })
+        if (data.email_verified === false) {
+          setPendingVerification(true)
+          return
+        }
       } else {
         data = await apiFetch('/auth/login/', {
           method: 'POST',
@@ -33,6 +54,10 @@ function TeacherAuth({ onSuccess }) {
       }
       onSuccess(data?.access || '')
     } catch (err) {
+      if (err.data?.email_verified === false) {
+        setPendingVerification(true)
+        return
+      }
       if (mode === 'signup' && /already exists/i.test(err.message || '')) {
         setMode('login')
         setError('Account already exists. Please log in.')
@@ -42,6 +67,42 @@ function TeacherAuth({ onSuccess }) {
     } finally {
       setLoading(false)
     }
+  }
+
+  if (pendingVerification) {
+    return (
+      <div className="verification-pending text-center">
+        <div style={{ fontSize: '48px', marginBottom: '15px' }}>✉️</div>
+        <h3>Check your email</h3>
+        <p>We've sent a verification link to <strong>{form.email}</strong>.</p>
+        <p className="muted" style={{ fontSize: '14px', marginBottom: '25px' }}>
+          Please click the link to activate your teacher account.
+        </p>
+        
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+          <button 
+            type="button" 
+            className="primary btn-full" 
+            onClick={handleResend}
+            disabled={resendStatus === 'Sending...' || resendStatus === 'Email sent!'}
+          >
+            {resendStatus || 'Resend verification email'}
+          </button>
+          
+          <button 
+            type="button" 
+            className="link-button" 
+            onClick={() => {
+              setPendingVerification(false)
+              setResendStatus('')
+              setMode('login')
+            }}
+          >
+            Back to sign in
+          </button>
+        </div>
+      </div>
+    )
   }
 
   return (
