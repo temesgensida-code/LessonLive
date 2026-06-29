@@ -1,8 +1,5 @@
-import os
 import resend
-
-resend.api_key = os.environ.get('RESEND_API_KEY')
-from_email = os.environ.get('RESEND_FROM_EMAIL', 'onboarding@resend.dev')
+from django.conf import settings
 
 def send_verification_email(user, token, frontend_base_url):
     verify_url = f"{frontend_base_url}/verify-email?token={token}"
@@ -81,6 +78,8 @@ def send_verification_email(user, token, frontend_base_url):
     """
     
     try:
+        resend.api_key = settings.RESEND_API_KEY
+        from_email = settings.RESEND_FROM_EMAIL
         params = {
             "from": from_email,
             "to": [user.email],
