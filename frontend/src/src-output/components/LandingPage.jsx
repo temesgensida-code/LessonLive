@@ -527,11 +527,10 @@ export default function LandingPage() {
               </div>
             </div>
 
-            {/* Mock dashboard canvas */}
             <div className="ll-dashboard-mockup" style={{
               height: '280px',
               background: 'linear-gradient(135deg, #0d1520 0%, #101820 40%, #0a1020 100%)',
-              display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '1px',
+              display: 'grid', gridTemplateColumns: '1fr 1fr 1fr',
               padding: '1.5rem', gap: '1rem',
             }}>
               {/* Chart 1 — bar */}
