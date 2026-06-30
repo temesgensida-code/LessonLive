@@ -28,6 +28,8 @@ services:
         value: "https://lessonlive.netlify.app"
       - key: CSRF_TRUSTED_ORIGINS
         value: "https://lessonlive.netlify.app"
+      - key: FRONTEND_BASE_URL
+        value: "https://lessonlive.netlify.app"
 
   - type: redis
     name: lessonlive-redis
