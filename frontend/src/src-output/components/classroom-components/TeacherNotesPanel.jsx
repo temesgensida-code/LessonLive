@@ -1,4 +1,6 @@
+import { useState } from 'react'
 import NotificationForm from '../NotificationForm'
+import OptionsMenu from './OptionsMenu'
 
 function TeacherNotesPanel({
   owned,
@@ -28,6 +30,7 @@ function TeacherNotesPanel({
   notifSuccess,
   handleSendNotification,
 }) {
+  const [isModalOpen, setIsModalOpen] = useState(false)
   return (
     <div className="notes-panel">
       {/* Header */}
@@ -35,17 +38,14 @@ function TeacherNotesPanel({
         <h3>{owned ? 'Teacher Notes' : 'Notes'}</h3>
         {owned && (
           <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)' }}>
-            <button
-              type="button"
-              className="ghost"
-              onClick={handleToggleQuizCard}
-              aria-pressed={showQuizCard}
-            >
-              {showQuizCard ? 'Show notes' : 'Show quiz'}
-            </button>
             <button type="button" className="primary" onClick={handleToggleLiveClass} disabled={liveLoading}>
               {liveLoading ? 'Loading…' : '▶ Go Live'}
             </button>
+            <OptionsMenu
+              onToggleQuiz={handleToggleQuizCard}
+              onOpenNotification={() => setIsModalOpen(true)}
+              showQuizCard={showQuizCard}
+            />
           </div>
         )}
       </div>
@@ -137,18 +137,25 @@ function TeacherNotesPanel({
         {noteError && <p className="error">{noteError}</p>}
         {noteMessage && <p className="success">{noteMessage}</p>}
 
-        {owned && (
-          <NotificationForm
-            notifMessage={notifMessage}
-            setNotifMessage={setNotifMessage}
-            notifMinutes={notifMinutes}
-            setNotifMinutes={setNotifMinutes}
-            notifError={notifError}
-            notifSuccess={notifSuccess}
-            onSubmit={handleSendNotification}
-          />
-        )}
+
       </div>
+
+      {owned && isModalOpen && (
+        <div className="custom-modal-overlay" onClick={() => setIsModalOpen(false)}>
+          <div className="custom-modal-content" onClick={(e) => e.stopPropagation()}>
+            <button type="button" className="custom-modal-close" onClick={() => setIsModalOpen(false)}>✕</button>
+            <NotificationForm
+              notifMessage={notifMessage}
+              setNotifMessage={setNotifMessage}
+              notifMinutes={notifMinutes}
+              setNotifMinutes={setNotifMinutes}
+              notifError={notifError}
+              notifSuccess={notifSuccess}
+              onSubmit={handleSendNotification}
+            />
+          </div>
+        </div>
+      )}
     </div>
   )
 }
