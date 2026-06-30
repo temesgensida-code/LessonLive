@@ -11,7 +11,7 @@ function DisplayedNotesCanvas({
   return (
     <div
       className="notes-canvas"
-      style={{ display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden' }}
+      style={{ display: 'flex', flexDirection: 'column', height: '100%', width: '100%', overflow: 'hidden' }}
     >
       {/* Header row */}
       <div className="notes-canvas-title-row">

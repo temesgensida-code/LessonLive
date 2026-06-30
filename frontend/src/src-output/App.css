@@ -2064,27 +2064,22 @@ button:active:not(:disabled) {
   }
 
   .notes-layout.mobile-resizable {
-    height: calc(100dvh - 56px);
-    min-height: 400px;
-    overflow: hidden;
-    gap: 0;
+    height: auto;
+    overflow: visible;
+    gap: var(--space-4);
   }
 
   .notes-layout.mobile-resizable .notes-canvas,
   .notes-layout.mobile-resizable .notes-canvas-slot {
-    flex: 0 0 var(--mobile-notes-ratio, 55%);
-    min-height: 120px;
-    border-radius: var(--radius-lg) var(--radius-lg) 0 0;
-    border-bottom: none;
-    transition: flex-basis 120ms ease;
+    flex: none;
+    height: 400px;
+    border-radius: var(--radius-lg);
   }
 
   .notes-layout.mobile-resizable .notes-panel {
-    flex: 0 0 var(--mobile-live-ratio, 45%);
-    min-height: 120px;
-    border-radius: 0 0 var(--radius-lg) var(--radius-lg);
-    border-top: none;
-    transition: flex-basis 120ms ease;
+    flex: none;
+    height: 400px;
+    border-radius: var(--radius-lg);
     overflow: hidden;
   }
 
@@ -2133,7 +2128,7 @@ button:active:not(:disabled) {
     min-height: 240px;
   }
 
-  .mobile-splitter { display: flex; }
+  .mobile-splitter { display: none; }
 
   .notes-canvas-title-row { display: none; }
   .notes-panel-header h3 { display: none; }
@@ -2184,6 +2179,7 @@ button:active:not(:disabled) {
   .classroom-name { font-size: var(--font-size-sm); }
   .classroom-list-item { padding: var(--space-3); }
 }
+
 
 /* ── Extra small screens ─ */
 @media (max-width: 400px) {

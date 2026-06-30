@@ -221,7 +221,7 @@ function ClassroomPage({ accessToken, setAccessToken }) {
                   )
                 ) : (
                   <div className="notes-canvas-slot">
-                    <div style={{ display: showStudentQuiz ? 'none' : 'flex', height: '100%' }}>
+                    <div style={{ display: showStudentQuiz ? 'none' : 'flex', height: '100%', width: '100%' }}>
                       <DisplayedNotesCanvas
                         classroom={classroom}
                         displayedNotes={displayedNotes}
@@ -231,7 +231,7 @@ function ClassroomPage({ accessToken, setAccessToken }) {
                         showScreenShare
                       />
                     </div>
-                    <div style={{ display: showStudentQuiz ? 'flex' : 'none', height: '100%' }}>
+                    <div style={{ display: showStudentQuiz ? 'flex' : 'none', height: '100%', width: '100%' }}>
                       <StudentQuizPage
                         classId={classId}
                         sessionLabel={classroom?.name || 'LessonLive'}
@@ -295,27 +295,29 @@ function ClassroomPage({ accessToken, setAccessToken }) {
                 />
               )}
 
-              <TeacherNotesPanel
-                owned={owned}
-                liveLoading={liveLoading}
-                handleToggleLiveClass={handleToggleLiveClass}
-                liveError={liveError}
-                showQuizCard={showQuizCard}
-                handleToggleQuizCard={handleToggleQuizCard}
-                handleSaveNote={handleSaveNote}
-                noteTitle={noteTitle}
-                setNoteTitle={setNoteTitle}
-                noteContent={noteContent}
-                setNoteContent={setNoteContent}
-                notePendingDelete={notePendingDelete}
-                setDeleteConfirmNoteId={setDeleteConfirmNoteId}
-                handleDeleteNote={handleDeleteNote}
-                savedNotes={savedNotes}
-                handleDisplayNote={handleDisplayNote}
-                noteError={noteError}
-                noteMessage={noteMessage}
-                {...notificationProps}
-              />
+              {owned && (
+                <TeacherNotesPanel
+                  owned={owned}
+                  liveLoading={liveLoading}
+                  handleToggleLiveClass={handleToggleLiveClass}
+                  liveError={liveError}
+                  showQuizCard={showQuizCard}
+                  handleToggleQuizCard={handleToggleQuizCard}
+                  handleSaveNote={handleSaveNote}
+                  noteTitle={noteTitle}
+                  setNoteTitle={setNoteTitle}
+                  noteContent={noteContent}
+                  setNoteContent={setNoteContent}
+                  notePendingDelete={notePendingDelete}
+                  setDeleteConfirmNoteId={setDeleteConfirmNoteId}
+                  handleDeleteNote={handleDeleteNote}
+                  savedNotes={savedNotes}
+                  handleDisplayNote={handleDisplayNote}
+                  noteError={noteError}
+                  noteMessage={noteMessage}
+                  {...notificationProps}
+                />
+              )}
             </div>
           </section>
         )}
