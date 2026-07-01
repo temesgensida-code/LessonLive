@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { GiHamburgerMenu } from 'react-icons/gi'
+import { Menu } from 'lucide-react'
 import NotificationBell from './NotificationBell'
 import { useNotificationContext } from './NotificationContext'
 
@@ -43,7 +43,7 @@ function Layout({ children, me, onLogout }) {
                 aria-label="Open menu"
                 aria-expanded={sidebarOpen}
               >
-                <GiHamburgerMenu size={16} aria-hidden="true" />
+                <Menu size={16} aria-hidden="true" />
               </button>
             </>
           ) : (
