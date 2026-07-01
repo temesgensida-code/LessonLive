@@ -8,7 +8,7 @@ function AuthGateway({ onSuccess }) {
 
   return (
     <div className="auth-page">
-      <div className="auth-left">
+      {/* <div className="auth-left">
         <Link to="/" className="auth-back-link">← Back to home</Link>
         <div className="auth-left-inner">
           <span className="auth-logo-mark">⬡</span>
@@ -23,7 +23,7 @@ function AuthGateway({ onSuccess }) {
             <li><span>✓</span> Student invite links</li>
           </ul>
         </div>
-      </div>
+      </div> */}
 
       <div className="auth-right">
         <section className="card auth-card auth-box">
