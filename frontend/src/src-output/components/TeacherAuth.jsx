@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { apiFetch } from './apiClient'
+import { Mail, LockKeyhole } from 'lucide-react'
 
 function TeacherAuth({ onSuccess }) {
   const [mode, setMode] = useState('login')
@@ -123,7 +124,7 @@ function TeacherAuth({ onSuccess }) {
       <label>
         Email address
         <div className="input-icon-wrap">
-          <span className="input-icon" aria-hidden="true">✉</span>
+          <Mail className="input-icon" aria-hidden="true" size={18} />
           <input
             name="email"
             type="email"
@@ -139,7 +140,7 @@ function TeacherAuth({ onSuccess }) {
       <label>
         Password
         <div className="input-icon-wrap">
-          <span className="input-icon" aria-hidden="true">🔒</span>
+          <LockKeyhole className="input-icon" aria-hidden="true" size={18} />
           <input
             name="password"
             type="password"

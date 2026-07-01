@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { apiFetch, setSessionHint } from './apiClient'
+import { LockKeyhole } from 'lucide-react'
 
 function InvitePage({ accessToken, setAccessToken }) {
   const { token } = useParams()
@@ -175,7 +176,7 @@ function InvitePage({ accessToken, setAccessToken }) {
             <label>
               Password
               <div className="input-icon-wrap">
-                <span className="input-icon" aria-hidden="true">🔒</span>
+                <LockKeyhole className="input-icon" aria-hidden="true" size={18} />
                 <input
                   name="password"
                   type="password"
@@ -209,7 +210,7 @@ function InvitePage({ accessToken, setAccessToken }) {
             <label>
               Password
               <div className="input-icon-wrap">
-                <span className="input-icon" aria-hidden="true">🔒</span>
+                <LockKeyhole className="input-icon" aria-hidden="true" size={18} />
                 <input
                   name="password"
                   type="password"

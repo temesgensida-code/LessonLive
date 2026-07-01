@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { apiFetch } from './apiClient'
+import { Mail, LockKeyhole } from 'lucide-react'
 
 function StudentLogin({ onSuccess }) {
   const [form, setForm] = useState({ email: '', password: '' })
@@ -34,7 +35,7 @@ function StudentLogin({ onSuccess }) {
       <label>
         Email address
         <div className="input-icon-wrap">
-          <span className="input-icon" aria-hidden="true">✉</span>
+          <Mail className="input-icon" aria-hidden="true" size={18} />
           <input
             name="email"
             type="email"
@@ -50,7 +51,7 @@ function StudentLogin({ onSuccess }) {
       <label>
         Password
         <div className="input-icon-wrap">
-          <span className="input-icon" aria-hidden="true">🔒</span>
+          <LockKeyhole className="input-icon" aria-hidden="true" size={18} />
           <input
             name="password"
             type="password"

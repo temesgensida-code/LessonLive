@@ -26,7 +26,7 @@
 import { useCallback, useEffect, useReducer, useRef, useState } from 'react'
 import { apiFetch } from './apiClient'
 import './StudentQuizPage.css'
-import { FileQuestionMark, Star } from 'lucide-react';
+import { FileQuestionMark } from 'lucide-react';
 import { PartyPopper } from 'lucide-react';
 import { Lightbulb } from 'lucide-react';
 import { Trophy } from 'lucide-react';
