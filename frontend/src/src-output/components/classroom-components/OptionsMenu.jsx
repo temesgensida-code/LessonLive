@@ -1,5 +1,7 @@
 import { useState, useRef, useEffect } from 'react'
 import { FiMoreVertical } from 'react-icons/fi'
+import { NotepadText } from 'lucide-react';
+import { Megaphone } from 'lucide-react';
 
 function OptionsMenu({ onToggleQuiz, onOpenNotification, showQuizCard }) {
   const [isOpen, setIsOpen] = useState(false)
@@ -36,7 +38,7 @@ function OptionsMenu({ onToggleQuiz, onOpenNotification, showQuizCard }) {
               setIsOpen(false)
             }}
           >
-            <span className="icon">📝</span> {showQuizCard ? 'Show Notes' : 'Show Quiz'}
+            <span className="icon"><NotepadText /></span> {showQuizCard ? 'Show Notes' : 'Show Quiz'}
           </button>
           <button
             type="button"
@@ -46,7 +48,7 @@ function OptionsMenu({ onToggleQuiz, onOpenNotification, showQuizCard }) {
               setIsOpen(false)
             }}
           >
-            <span className="icon">📢</span> Notify Students
+            <span className="icon"><Megaphone /></span> Notify Students
           </button>
         </div>
       )}

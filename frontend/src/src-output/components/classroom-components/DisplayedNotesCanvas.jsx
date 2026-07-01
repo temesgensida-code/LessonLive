@@ -1,4 +1,5 @@
 import ScreenShareView from '../ScreenShareView'
+import { X } from 'lucide-react';
 
 function DisplayedNotesCanvas({
   classroom,
@@ -59,7 +60,7 @@ function DisplayedNotesCanvas({
                     title="Remove displayed note"
                     style={{ flexShrink: 0 }}
                   >
-                    🗑
+                    <X />
                   </button>
                 )}
               </div>

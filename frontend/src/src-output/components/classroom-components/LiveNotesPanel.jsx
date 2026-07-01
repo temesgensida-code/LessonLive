@@ -3,6 +3,8 @@ import LiveClassSidePanel from '../LiveClassSidePanel'
 import NotificationForm from '../NotificationForm'
 import OptionsMenu from './OptionsMenu'
 
+import { Radio } from 'lucide-react';
+
 function LiveNotesPanel({
   owned,
   classId,
@@ -27,7 +29,7 @@ function LiveNotesPanel({
     <div className="notes-panel">
       {/* Header */}
       <div className="notes-panel-header">
-        <h3>🔴 Live Class</h3>
+        <h3><Radio /> Live Class</h3>
         {owned && (
           <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)' }}>
             <button

@@ -26,10 +26,17 @@
 import { useCallback, useEffect, useReducer, useRef, useState } from 'react'
 import { apiFetch } from './apiClient'
 import './StudentQuizPage.css'
+import { FileQuestionMark, Star } from 'lucide-react';
+import { PartyPopper } from 'lucide-react';
+import { Lightbulb } from 'lucide-react';
+import { Trophy } from 'lucide-react';
+import { Star } from 'lucide-react';
+import { ThumbsUp } from 'lucide-react';
+import { LibraryBig } from 'lucide-react';
 
 /* ────────── constants ────────── */
-const QUIZ_TOPIC   = 'lessonlive-quiz'
-const LETTERS      = ['A', 'B', 'C', 'D']
+const QUIZ_TOPIC = 'lessonlive-quiz'
+const LETTERS = ['A', 'B', 'C', 'D']
 const DEFAULT_TIME = 60
 
 /* ────────── helpers ────────── */
@@ -38,15 +45,15 @@ function fmt(secs) { return `${pad(Math.floor(secs / 60))}:${pad(secs % 60)}` }
 
 /* ────────── LiveKit soft-import ────────── */
 let _DataPacket_Kind = null
-let _RoomEvent       = null
-let _useRoomContext  = null
+let _RoomEvent = null
+let _useRoomContext = null
 
 try {
-  const lk   = await import('livekit-client')
-  const lkr  = await import('@livekit/components-react')
+  const lk = await import('livekit-client')
+  const lkr = await import('@livekit/components-react')
   _DataPacket_Kind = lk.DataPacket_Kind
-  _RoomEvent       = lk.RoomEvent
-  _useRoomContext  = lkr.useRoomContext
+  _RoomEvent = lk.RoomEvent
+  _useRoomContext = lkr.useRoomContext
 } catch { /* preview mode */ }
 
 function useRoom() {
@@ -55,20 +62,20 @@ function useRoom() {
 
 /* ────────── State reducer ────────── */
 const INIT = {
-  phase:          'waiting',   // waiting | answering | submitted | reveal | ended
+  phase: 'waiting',   // waiting | answering | submitted | reveal | ended
   quizMeta: {
-    title:           '',
-    subject:         '',
+    title: '',
+    subject: '',
     timePerQuestion: DEFAULT_TIME,
   },
-  questions:      [],          // hydrated from QUIZ_START broadcast
-  currentQIndex:  0,
+  questions: [],          // hydrated from QUIZ_START broadcast
+  currentQIndex: 0,
   selectedAnswer: null,        // index 0-3
-  submitted:      false,
-  revealCounts:   null,        // { A, B, C, D } from teacher
-  revealTotal:    0,
-  timeLeft:       DEFAULT_TIME,
-  score:          0,           // correct answers tally
+  submitted: false,
+  revealCounts: null,        // { A, B, C, D } from teacher
+  revealTotal: 0,
+  timeLeft: DEFAULT_TIME,
+  score: 0,           // correct answers tally
   answersByQuestion: {},
   correctByQuestion: {},
 }
@@ -79,10 +86,10 @@ function reducer(state, action) {
     case 'QUIZ_START':
       return {
         ...INIT,
-        phase:     'answering',
-        quizMeta:  action.quizMeta || INIT.quizMeta,
+        phase: 'answering',
+        quizMeta: action.quizMeta || INIT.quizMeta,
         questions: action.questions || [],
-        timeLeft:  (action.quizMeta?.timePerQuestion) || DEFAULT_TIME,
+        timeLeft: (action.quizMeta?.timePerQuestion) || DEFAULT_TIME,
         answersByQuestion: {},
         correctByQuestion: {},
       }
@@ -90,13 +97,13 @@ function reducer(state, action) {
     case 'NEXT_QUESTION':
       return {
         ...state,
-        phase:          'answering',
-        currentQIndex:  action.index,
+        phase: 'answering',
+        currentQIndex: action.index,
         selectedAnswer: null,
-        submitted:      false,
-        revealCounts:   null,
-        revealTotal:    0,
-        timeLeft:       state.quizMeta.timePerQuestion || DEFAULT_TIME,
+        submitted: false,
+        revealCounts: null,
+        revealTotal: 0,
+        timeLeft: state.quizMeta.timePerQuestion || DEFAULT_TIME,
       }
 
     case 'SELECT_ANSWER':
@@ -124,10 +131,10 @@ function reducer(state, action) {
       const questionKey = q?.id ?? state.currentQIndex
       return {
         ...state,
-        phase:        'reveal',
+        phase: 'reveal',
         revealCounts: action.counts,
-        revealTotal:  action.total,
-        score:        wasCorrect ? state.score + 1 : state.score,
+        revealTotal: action.total,
+        score: wasCorrect ? state.score + 1 : state.score,
         correctByQuestion: {
           ...state.correctByQuestion,
           [questionKey]: correctIndex,
@@ -157,25 +164,25 @@ export default function StudentQuizPage({
   setAccessToken,
   onQuizVisibilityChange,
 }) {
-  const [state, dispatch]   = useReducer(reducer, INIT)
-  const room                = useRoom()
-  const timerRef            = useRef(null)
+  const [state, dispatch] = useReducer(reducer, INIT)
+  const room = useRoom()
+  const timerRef = useRef(null)
   const attemptSubmittedRef = useRef(false)
   const [attemptResult, setAttemptResult] = useState(null)
   const [attemptError, setAttemptError] = useState('')
   const [attemptSaving, setAttemptSaving] = useState(false)
 
-  const currentQ     = state.questions[state.currentQIndex]
+  const currentQ = state.questions[state.currentQIndex]
   const currentQuestionKey = currentQ?.id ?? state.currentQIndex
   const currentCorrectIndex = Number.isInteger(state.correctByQuestion[currentQuestionKey])
     ? state.correctByQuestion[currentQuestionKey]
     : currentQ?.correct
-  const totalQs      = state.questions.length
-  const progressPct  = totalQs > 0
+  const totalQs = state.questions.length
+  const progressPct = totalQs > 0
     ? Math.round(((state.currentQIndex + (state.phase === 'ended' ? 1 : 0)) / totalQs) * 100)
     : 0
-  const timerWarn    = state.timeLeft > 0 && state.timeLeft <= 10
-  const timerStr     = fmt(state.timeLeft)
+  const timerWarn = state.timeLeft > 0 && state.timeLeft <= 10
+  const timerStr = fmt(state.timeLeft)
 
   /* ── publish helper ── */
   const publish = useCallback(async (payload) => {
@@ -273,7 +280,7 @@ export default function StudentQuizPage({
     dispatch({ type: 'SUBMIT', answerEntry })
     if (answerIndex !== null) {
       publish({
-        type:          'QUIZ_ANSWER',
+        type: 'QUIZ_ANSWER',
         questionIndex: state.currentQIndex,
         answerIndex,
       })
@@ -367,7 +374,7 @@ export default function StudentQuizPage({
         <main className="sq-main">
           <div className="sq-waiting">
             <div className="sq-waiting-pulse" aria-hidden="true">
-              <div className="sq-waiting-icon">📋</div>
+              <div className="sq-waiting-icon"><FileQuestionMark /></div>
             </div>
             <h2 className="sq-waiting-title">Waiting for quiz to start…</h2>
             <p className="sq-waiting-sub">
@@ -384,8 +391,8 @@ export default function StudentQuizPage({
 
   /* ── ANSWERING / SUBMITTED / REVEAL phase ── */
   if (['answering', 'submitted', 'reveal'].includes(state.phase)) {
-    const counts   = state.revealCounts || {}
-    const total    = state.revealTotal  || 0
+    const counts = state.revealCounts || {}
+    const total = state.revealTotal || 0
     const isReveal = state.phase === 'reveal'
 
     return (
@@ -415,7 +422,7 @@ export default function StudentQuizPage({
             {isReveal && (
               <div className={`sq-reveal-badge ${state.selectedAnswer === currentCorrectIndex ? 'correct' : 'incorrect'}`}>
                 {state.selectedAnswer === currentCorrectIndex
-                  ? '🎉 Correct!'
+                  ? <><PartyPopper />Correct</>
                   : `✗ The answer was ${LETTERS[currentCorrectIndex ?? 0]}`}
               </div>
             )}
@@ -427,7 +434,7 @@ export default function StudentQuizPage({
               <span className="sq-question-label">Question {state.currentQIndex + 1}</span>
               {currentQ?.contextNote && (
                 <div className="sq-context-inline">
-                  <span aria-hidden="true">💡</span>
+                  <span aria-hidden="true"><LightBulb /></span>
                   <span>{currentQ.contextNote}</span>
                 </div>
               )}
@@ -438,18 +445,18 @@ export default function StudentQuizPage({
           {/* Options */}
           <div className="sq-options" role="radiogroup" aria-label="Answer options">
             {currentQ?.options.map((opt, oi) => {
-              const letter     = LETTERS[oi]
+              const letter = LETTERS[oi]
               const isSelected = state.selectedAnswer === oi
-              const isCorrect  = oi === currentCorrectIndex
-              const count      = counts[letter] || 0
-              const pct        = total > 0 ? Math.round((count / total) * 100) : 0
+              const isCorrect = oi === currentCorrectIndex
+              const count = counts[letter] || 0
+              const pct = total > 0 ? Math.round((count / total) * 100) : 0
 
               let cls = 'sq-option'
               if (isReveal) {
-                if (isCorrect)           cls += ' correct'
-                else if (isSelected)     cls += ' incorrect'
+                if (isCorrect) cls += ' correct'
+                else if (isSelected) cls += ' incorrect'
               } else {
-                if (isSelected)          cls += ' selected'
+                if (isSelected) cls += ' selected'
               }
 
               return (
@@ -516,10 +523,10 @@ export default function StudentQuizPage({
     const attempt = attemptResult?.attempt
     const attemptAnswers = Array.isArray(attemptResult?.answers) ? attemptResult.answers : []
     const grade =
-      scorePercent >= 90 ? { label: 'Outstanding', emoji: '🏆', cls: 'gold' } :
-      scorePercent >= 75 ? { label: 'Great job!',  emoji: '🌟', cls: 'blue' } :
-      scorePercent >= 50 ? { label: 'Good effort', emoji: '👍', cls: 'green'} :
-                           { label: 'Keep practising', emoji: '📚', cls: 'muted' }
+      scorePercent >= 90 ? { label: 'Outstanding', emoji: <Trophy />, cls: 'gold' } :
+        scorePercent >= 75 ? { label: 'Great job!', emoji: <Star />, cls: 'blue' } :
+          scorePercent >= 50 ? { label: 'Good effort', emoji: <ThumbsUp />, cls: 'green' } :
+            { label: 'Keep practising', emoji: <LibraryBig />, cls: 'muted' }
 
     return (
       <div className="sq-page">

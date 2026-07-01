@@ -26,10 +26,13 @@
 import { useCallback, useEffect, useReducer, useRef, useState } from 'react'
 import { apiFetch } from './apiClient'
 import './LiveQuizCard.css'
+import { Users } from 'lucide-react';
+import { FileQuestionMark } from 'lucide-react';
+import { Lightbulb } from 'lucide-react';
 
 /* ────────── constants ────────── */
-const QUIZ_TOPIC   = 'lessonlive-quiz'
-const LETTERS      = ['A', 'B', 'C', 'D']
+const QUIZ_TOPIC = 'lessonlive-quiz'
+const LETTERS = ['A', 'B', 'C', 'D']
 const DEFAULT_TIME = 60   // seconds
 
 /* ────────── helpers ────────── */
@@ -93,15 +96,15 @@ function toBroadcastQuestion(question) {
 
 /* ────────── LiveKit data helpers (soft-import) ────────── */
 let _DataPacket_Kind = null
-let _RoomEvent      = null
-let _useRoomContext  = null
+let _RoomEvent = null
+let _useRoomContext = null
 
 try {
-  const lk    = await import('livekit-client')
-  const lkr   = await import('@livekit/components-react')
+  const lk = await import('livekit-client')
+  const lkr = await import('@livekit/components-react')
   _DataPacket_Kind = lk.DataPacket_Kind
-  _RoomEvent       = lk.RoomEvent
-  _useRoomContext  = lkr.useRoomContext
+  _RoomEvent = lk.RoomEvent
+  _useRoomContext = lkr.useRoomContext
 } catch {
   /* not inside a LiveKitRoom — preview mode */
 }
@@ -133,20 +136,20 @@ function useParticipantCount() {
 
 /* ────────── Quiz state reducer ────────── */
 const INIT = {
-  phase:           'idle',      // idle | setup | live | result | ended
+  phase: 'idle',      // idle | setup | live | result | ended
   quizMeta: {
-    title:           '',
-    subject:         '',
+    title: '',
+    subject: '',
     timePerQuestion: DEFAULT_TIME,
   },
-  questions:       [blankQuestion()],
-  currentQIndex:   0,
-  selectedAnswer:  null,        // student's chosen option index
-  submitted:       false,
-  revealCorrect:   false,
-  responseCounts:  {},          // { qId: { A:0, B:0, C:0, D:0 } }
-  responseCount:   0,           // total respondents for current Q
-  timeLeft:        DEFAULT_TIME,
+  questions: [blankQuestion()],
+  currentQIndex: 0,
+  selectedAnswer: null,        // student's chosen option index
+  submitted: false,
+  revealCorrect: false,
+  responseCounts: {},          // { qId: { A:0, B:0, C:0, D:0 } }
+  responseCount: 0,           // total respondents for current Q
+  timeLeft: DEFAULT_TIME,
 }
 
 function reducer(state, action) {
@@ -184,25 +187,25 @@ function reducer(state, action) {
     case 'LAUNCH':
       return {
         ...state,
-        phase:          'live',
-        currentQIndex:  0,
+        phase: 'live',
+        currentQIndex: 0,
         selectedAnswer: null,
-        submitted:      false,
-        revealCorrect:  false,
-        timeLeft:       state.quizMeta.timePerQuestion,
+        submitted: false,
+        revealCorrect: false,
+        timeLeft: state.quizMeta.timePerQuestion,
         responseCounts: {},
-        responseCount:  0,
+        responseCount: 0,
       }
 
     case 'NEXT_QUESTION':
       return {
         ...state,
-        currentQIndex:  action.index,
+        currentQIndex: action.index,
         selectedAnswer: null,
-        submitted:      false,
-        revealCorrect:  false,
-        timeLeft:       state.quizMeta.timePerQuestion,
-        responseCount:  0,
+        submitted: false,
+        revealCorrect: false,
+        timeLeft: state.quizMeta.timePerQuestion,
+        responseCount: 0,
       }
 
     case 'SELECT_ANSWER':
@@ -265,10 +268,10 @@ export default function LiveQuizCard({
   const [backendError, setBackendError] = useState('')
   const [savingQuestions, setSavingQuestions] = useState(false)
   const [participantsCount, setParticipantsCount] = useState(null)
-  const room       = useRoom()
-  const lkCount    = useParticipantCount()
-  const timerRef   = useRef(null)
-  const liveCount  = studentCount ?? lkCount
+  const room = useRoom()
+  const lkCount = useParticipantCount()
+  const timerRef = useRef(null)
+  const liveCount = studentCount ?? lkCount
 
   const currentQ = state.questions[state.currentQIndex]
 
@@ -294,7 +297,7 @@ export default function LiveQuizCard({
         if (msg.type === 'QUIZ_START' && !owned) {
           dispatch({ type: 'LAUNCH' })
           // hydrate questions from broadcast
-          if (msg.quizMeta)  dispatch({ type: 'SET_META',  payload: msg.quizMeta })
+          if (msg.quizMeta) dispatch({ type: 'SET_META', payload: msg.quizMeta })
         }
 
         if (msg.type === 'QUIZ_QUESTION' && !owned) {
@@ -427,9 +430,9 @@ export default function LiveQuizCard({
 
   /* ── teacher: reveal results ── */
   const handleReveal = () => {
-    const q     = currentQ
+    const q = currentQ
     const counts = state.responseCounts[q.id] || { A: 0, B: 0, C: 0, D: 0 }
-    const total  = Object.values(counts).reduce((a, b) => a + b, 0)
+    const total = Object.values(counts).reduce((a, b) => a + b, 0)
     dispatch({ type: 'REVEAL', counts, total })
     publish({ type: 'QUIZ_REVEAL', counts, total, correctIndex: q?.correct ?? 0 })
   }
@@ -439,9 +442,9 @@ export default function LiveQuizCard({
     if (state.selectedAnswer === null) return
     dispatch({ type: 'SUBMIT' })
     publish({
-      type:        'QUIZ_ANSWER',
+      type: 'QUIZ_ANSWER',
       questionIndex: state.currentQIndex,
-      answerIndex:   state.selectedAnswer,
+      answerIndex: state.selectedAnswer,
     })
   }
 
@@ -452,7 +455,7 @@ export default function LiveQuizCard({
 
   /* ── timer state ── */
   const timerWarn = state.timeLeft > 0 && state.timeLeft <= 10
-  const timerStr  = fmt(state.timeLeft)
+  const timerStr = fmt(state.timeLeft)
 
   /* ════════ RENDER HELPERS ════════ */
 
@@ -463,10 +466,10 @@ export default function LiveQuizCard({
         <div className="quiz-header-left">
           {state.phase === 'live' && <div className="quiz-live-dot" aria-label="Live" />}
           <span className="quiz-header-title">
-            {state.phase === 'idle'   ? 'Quiz'           : null}
-            {state.phase === 'setup'  ? 'Quiz Setup'      : null}
-            {state.phase === 'live'   ? (state.quizMeta.title || 'Quiz') : null}
-            {state.phase === 'ended'  ? 'Quiz — Results'  : null}
+            {state.phase === 'idle' ? 'Quiz' : null}
+            {state.phase === 'setup' ? 'Quiz Setup' : null}
+            {state.phase === 'live' ? (state.quizMeta.title || 'Quiz') : null}
+            {state.phase === 'ended' ? 'Quiz — Results' : null}
           </span>
           {sessionLabel && state.phase !== 'setup' && (
             <span style={{
@@ -489,7 +492,7 @@ export default function LiveQuizCard({
           )}
 
           <div className="quiz-students-badge" aria-label={`${liveCount} students live`}>
-            <span aria-hidden="true">👥</span>
+            <span aria-hidden="true"><Users /></span>
             <span>{liveCount}</span>
             <span style={{ opacity: 0.65, fontFamily: 'var(--font-family)' }}>live</span>
           </div>
@@ -504,7 +507,7 @@ export default function LiveQuizCard({
       <div className="quiz-card">
         {renderHeader()}
         <div className="quiz-empty">
-          <div className="quiz-empty-icon" aria-hidden="true">📋</div>
+          <div className="quiz-empty-icon" aria-hidden="true"><FileQuestionMark /></div>
           <p style={{ fontSize: 'var(--font-size-base)', color: 'var(--text-secondary)', fontWeight: 600 }}>
             No active quiz
           </p>
@@ -719,7 +722,7 @@ export default function LiveQuizCard({
   if (state.phase === 'live') {
     const totalResponses = state.responseCount
     const responseCounts = state.responseCounts[currentQ?.id] || {}
-    const maxCount       = Math.max(1, ...Object.values(responseCounts))
+    const maxCount = Math.max(1, ...Object.values(responseCounts))
 
     return (
       <div className="quiz-card">
@@ -791,7 +794,7 @@ export default function LiveQuizCard({
             {/* Options */}
             <div className="quiz-options">
               {currentQ?.options.map((opt, oi) => {
-                const letter    = LETTERS[oi]
+                const letter = LETTERS[oi]
                 const isCorrect = oi === currentQ.correct
                 const isSelected = state.selectedAnswer === oi
 
@@ -799,7 +802,7 @@ export default function LiveQuizCard({
                 // teacher: show result bars after reveal
                 if (owned && state.revealCorrect) {
                   const count = responseCounts[letter] || 0
-                  const pct   = totalResponses > 0 ? Math.round((count / totalResponses) * 100) : 0
+                  const pct = totalResponses > 0 ? Math.round((count / totalResponses) * 100) : 0
                   return (
                     <div
                       key={oi}
@@ -814,8 +817,8 @@ export default function LiveQuizCard({
                         className="quiz-option-letter"
                         style={{
                           borderColor: isCorrect ? 'var(--success)' : 'var(--border-bright)',
-                          background:  isCorrect ? 'var(--success-bg)' : 'var(--bg-card)',
-                          color:       isCorrect ? 'var(--success)' : 'var(--text-secondary)',
+                          background: isCorrect ? 'var(--success-bg)' : 'var(--bg-card)',
+                          color: isCorrect ? 'var(--success)' : 'var(--text-secondary)',
                           flexShrink: 0,
                         }}
                       >
@@ -841,7 +844,7 @@ export default function LiveQuizCard({
                 let optClass = 'quiz-option'
                 if (!owned) {
                   if (state.revealCorrect) {
-                    if (isCorrect)  optClass += ' correct'
+                    if (isCorrect) optClass += ' correct'
                     else if (isSelected) optClass += ' incorrect'
                   } else {
                     if (isSelected) optClass += ' selected'
@@ -871,7 +874,7 @@ export default function LiveQuizCard({
           {/* Context note */}
           {currentQ?.contextNote && (
             <div className="quiz-context">
-              <span className="quiz-context-icon" aria-hidden="true">💡</span>
+              <span className="quiz-context-icon" aria-hidden="true"><Lightbulb /></span>
               <p className="quiz-context-text">{currentQ.contextNote}</p>
             </div>
           )}
@@ -940,7 +943,7 @@ export default function LiveQuizCard({
           {/* Per-question result summary */}
           {state.questions.map((q, qi) => {
             const counts = state.responseCounts[q.id] || {}
-            const total  = Object.values(counts).reduce((a, b) => a + b, 0)
+            const total = Object.values(counts).reduce((a, b) => a + b, 0)
             return (
               <div key={q.id} className="quiz-question-card">
                 <div className="quiz-question-card-header">
@@ -958,18 +961,18 @@ export default function LiveQuizCard({
                 </p>
                 <div className="quiz-options" style={{ paddingTop: 0 }}>
                   {q.options.map((opt, oi) => {
-                    const letter    = LETTERS[oi]
+                    const letter = LETTERS[oi]
                     const isCorrect = oi === q.correct
-                    const count     = counts[letter] || 0
-                    const pct       = total > 0 ? Math.round((count / total) * 100) : 0
+                    const count = counts[letter] || 0
+                    const pct = total > 0 ? Math.round((count / total) * 100) : 0
                     return (
                       <div key={oi} style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-3)', padding: 'var(--space-1) 0' }}>
                         <span
                           className="quiz-option-letter"
                           style={{
                             borderColor: isCorrect ? 'var(--success)' : 'var(--border-bright)',
-                            background:  isCorrect ? 'var(--success-bg)' : 'var(--bg-card)',
-                            color:       isCorrect ? 'var(--success)' : 'var(--text-secondary)',
+                            background: isCorrect ? 'var(--success-bg)' : 'var(--bg-card)',
+                            color: isCorrect ? 'var(--success)' : 'var(--text-secondary)',
                           }}
                         >
                           {letter}

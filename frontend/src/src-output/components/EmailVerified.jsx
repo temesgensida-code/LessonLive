@@ -2,10 +2,12 @@ import { useEffect, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { apiFetch } from './apiClient'
 
+import { Check } from 'lucide-react';
+
 function EmailVerified() {
   const [searchParams] = useSearchParams()
   const token = searchParams.get('token')
-  
+
   const [status, setStatus] = useState('verifying') // verifying, success, error
   const [message, setMessage] = useState('')
 
@@ -55,7 +57,7 @@ function EmailVerified() {
 
           {status === 'success' && (
             <div className="text-center">
-              <div className="success-icon" style={{ fontSize: '48px', marginBottom: '20px' }}>✅</div>
+              <div className="success-icon" style={{ fontSize: '48px', marginBottom: '20px' }}><Check /></div>
               <h2>Email Verified!</h2>
               <p className="muted">{message}</p>
               <div style={{ marginTop: '30px' }}>

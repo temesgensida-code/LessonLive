@@ -1,31 +1,36 @@
 import { Link } from 'react-router-dom'
+import { Radio } from 'lucide-react';
+import { ChartColumnIncreasing } from 'lucide-react';
+import { Lock } from 'lucide-react';
+import { Users } from 'lucide-react';
+import { Star } from 'lucide-react';
 
 /* ─── Design tokens (Stitch / Lumina Academic) ─── */
 const T = {
-  bg:          '#0b0f10',
-  bgCard:      'rgba(29, 32, 34, 0.70)',
-  bgCardHigh:  'rgba(39, 42, 44, 0.85)',
-  bgSurface:   '#191c1e',
-  primary:     '#4d8eff',
-  primaryDim:  'rgba(77,142,255,0.12)',
+  bg: '#0b0f10',
+  bgCard: 'rgba(29, 32, 34, 0.70)',
+  bgCardHigh: 'rgba(39, 42, 44, 0.85)',
+  bgSurface: '#191c1e',
+  primary: '#4d8eff',
+  primaryDim: 'rgba(77,142,255,0.12)',
   primaryGlow: 'rgba(77,142,255,0.35)',
-  onPrimary:   '#ffffff',
-  text:        '#e0e3e5',
-  textSub:     '#c2c6d6',
-  textMuted:   '#8c909f',
-  outline:     'rgba(255,255,255,0.08)',
-  outlineMd:   'rgba(255,255,255,0.12)',
-  radius:      '0.75rem',
-  radiusLg:    '1.25rem',
-  radiusFull:  '9999px',
+  onPrimary: '#ffffff',
+  text: '#e0e3e5',
+  textSub: '#c2c6d6',
+  textMuted: '#8c909f',
+  outline: 'rgba(255,255,255,0.08)',
+  outlineMd: 'rgba(255,255,255,0.12)',
+  radius: '0.75rem',
+  radiusLg: '1.25rem',
+  radiusFull: '9999px',
 }
 
 const features = [
   {
     icon: (
       <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={T.primary} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/>
-        <path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" />
+        <path d="M23 21v-2a4 4 0 0 0-3-3.87" /><path d="M16 3.13a4 4 0 0 1 0 7.75" />
       </svg>
     ),
     title: 'Live Classrooms',
@@ -34,9 +39,9 @@ const features = [
   {
     icon: (
       <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={T.primary} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-        <polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/>
-        <line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/>
+        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+        <polyline points="14 2 14 8 20 8" /><line x1="16" y1="13" x2="8" y2="13" />
+        <line x1="16" y1="17" x2="8" y2="17" /><polyline points="10 9 9 9 8 9" />
       </svg>
     ),
     title: 'Smart Notes',
@@ -45,7 +50,7 @@ const features = [
   {
     icon: (
       <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={T.primary} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
+        <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
       </svg>
     ),
     title: 'Live Quizzes',
@@ -54,8 +59,8 @@ const features = [
   {
     icon: (
       <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={T.primary} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/>
-        <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>
+        <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" />
+        <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" />
       </svg>
     ),
     title: 'Easy Invites',
@@ -292,7 +297,7 @@ export default function LandingPage() {
                   borderRadius: '4px', padding: '2px 6px', letterSpacing: '0.05em',
                   fontFamily: "'Geist', sans-serif",
                 }}>
-                  🔴 LIVE
+                  <Radio /> LIVE
                 </span>
               </div>
 
@@ -341,7 +346,7 @@ export default function LandingPage() {
                   fontFamily: "'Geist', sans-serif",
                   display: 'flex', alignItems: 'center', justifyContent: 'space-between',
                 }}>
-                  <span>📊 Quiz active — 18/24 answered</span>
+                  <span><ChartColumnIncreasing /> Quiz active — 18/24 answered</span>
                   <span style={{ fontSize: '0.65rem', color: T.textMuted }}>▸ ▸ ▪</span>
                 </div>
               </div>
@@ -479,9 +484,9 @@ export default function LandingPage() {
             {/* Trust chips */}
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '2rem', marginTop: '2rem' }}>
               {[
-                { icon: '🔒', label: 'Secure Portal' },
-                { icon: '👥', label: '50k+ Active Teachers' },
-                { icon: '⭐', label: 'Top Rated EdTech' },
+                { icon: <Lock />, label: 'Secure Portal' },
+                { icon: <Users />, label: 'Teachers are joining' },
+                { icon: <Star />, label: 'Top Rated EdTech' },
               ].map(({ icon, label }) => (
                 <span key={label} style={{
                   display: 'flex', alignItems: 'center', gap: '6px',
@@ -564,12 +569,12 @@ export default function LandingPage() {
                   <svg viewBox="0 0 100 60" preserveAspectRatio="none" style={{ width: '100%', height: '100%' }}>
                     <defs>
                       <linearGradient id="areaGrad" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stopColor="#4d8eff" stopOpacity="0.35"/>
-                        <stop offset="100%" stopColor="#4d8eff" stopOpacity="0.02"/>
+                        <stop offset="0%" stopColor="#4d8eff" stopOpacity="0.35" />
+                        <stop offset="100%" stopColor="#4d8eff" stopOpacity="0.02" />
                       </linearGradient>
                     </defs>
-                    <path d="M0,55 C10,50 20,35 30,30 C40,25 50,40 60,28 C70,16 80,10 100,5 L100,60 Z" fill="url(#areaGrad)"/>
-                    <path d="M0,55 C10,50 20,35 30,30 C40,25 50,40 60,28 C70,16 80,10 100,5" fill="none" stroke="#4d8eff" strokeWidth="1.5"/>
+                    <path d="M0,55 C10,50 20,35 30,30 C40,25 50,40 60,28 C70,16 80,10 100,5 L100,60 Z" fill="url(#areaGrad)" />
+                    <path d="M0,55 C10,50 20,35 30,30 C40,25 50,40 60,28 C70,16 80,10 100,5" fill="none" stroke="#4d8eff" strokeWidth="1.5" />
                   </svg>
                 </div>
               </div>
@@ -695,7 +700,7 @@ export default function LandingPage() {
                 onMouseLeave={e => { e.currentTarget.style.transform = 'scale(1)'; e.currentTarget.style.boxShadow = '0 0 40px rgba(77,142,255,0.3)'; }}
               >
                 <svg width="22" height="22" viewBox="0 0 24 24" fill={T.primary}>
-                  <polygon points="5 3 19 12 5 21 5 3"/>
+                  <polygon points="5 3 19 12 5 21 5 3" />
                 </svg>
               </button>
               <p style={{

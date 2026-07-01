@@ -3,6 +3,10 @@ import { Link } from 'react-router-dom'
 import TeacherAuth from './TeacherAuth'
 import StudentLogin from './StudentLogin'
 
+import { GraduationCap } from 'lucide-react';
+import { FileChartColumnIncreasing } from 'lucide-react';
+
+
 function AuthGateway({ onSuccess }) {
   const [authType, setAuthType] = useState('student')
 
@@ -46,14 +50,14 @@ function AuthGateway({ onSuccess }) {
               className={authType === 'student' ? 'tab active' : 'tab'}
               onClick={() => setAuthType('student')}
             >
-              🎓 Student
+              <GraduationCap /> Student
             </button>
             <button
               type="button"
               className={authType === 'teacher' ? 'tab active' : 'tab'}
               onClick={() => setAuthType('teacher')}
             >
-              👨‍🏫 Teacher
+              <FileChartColumnIncreasing /> Teacher
             </button>
           </div>
 

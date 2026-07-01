@@ -1,6 +1,9 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { apiFetch } from './apiClient'
+import { GraduationCap } from 'lucide-react'
+import { FileChartColumnIncreasing } from 'lucide-react';
+import { PencilOff } from 'lucide-react';
 
 function StudentDashboard({ accessToken, setAccessToken, studentName = 'Student' }) {
   const [classrooms, setClassrooms] = useState([])
@@ -28,14 +31,14 @@ function StudentDashboard({ accessToken, setAccessToken, studentName = 'Student'
       {/* Welcome Banner */}
       <section className="dashboard-banner">
         <div className="dashboard-banner-text">
-          <h2>Welcome, {studentName} 🎓</h2>
+          <h2>Welcome, {studentName} <GraduationCap /></h2>
           <p className="muted">View your enrolled classrooms and join live sessions below.</p>
         </div>
       </section>
 
       <section className="card">
         <div className="card-header">
-          <span className="card-icon">📚</span>
+          <span className="card-icon"><FileChartColumnIncreasing /></span>
           <div>
             <h2>Your classrooms</h2>
             <p className="muted card-sub">Ask your teacher for an invite link to join new ones</p>
@@ -51,7 +54,7 @@ function StudentDashboard({ accessToken, setAccessToken, studentName = 'Student'
           <p className="error">{error}</p>
         ) : classrooms.length === 0 ? (
           <div className="empty-state">
-            <span className="empty-icon">📭</span>
+            <span className="empty-icon"><PencilOff /></span>
             <p>No classrooms yet.</p>
             <p className="muted">Ask your teacher for an invite link to get started.</p>
           </div>

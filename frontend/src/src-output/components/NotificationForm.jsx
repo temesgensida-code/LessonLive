@@ -1,3 +1,5 @@
+import { Megaphone } from 'lucide-react';
+
 function NotificationForm({
   notifMessage,
   setNotifMessage,
@@ -9,7 +11,7 @@ function NotificationForm({
 }) {
   return (
     <div className="notification-form-section">
-      <h4 className="notification-form-title">📢 Send Notification</h4>
+      <h4 className="notification-form-title"><Megaphone /> Send Notification</h4>
       <form className="notification-form" onSubmit={onSubmit}>
         <label>
           Message
@@ -35,7 +37,7 @@ function NotificationForm({
         {notifError && <p className="error">{notifError}</p>}
         {notifSuccess && <p className="success">{notifSuccess}</p>}
         <button type="submit" className="primary notification-send-btn">
-          📢 Send to Students
+          <Megaphone /> Send to Students
         </button>
       </form>
     </div>

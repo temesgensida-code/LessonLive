@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import NotificationForm from '../NotificationForm'
 import OptionsMenu from './OptionsMenu'
+import { X } from 'lucide-react';
 
 function TeacherNotesPanel({
   owned,
@@ -121,7 +122,7 @@ function TeacherNotesPanel({
                           onClick={() => setDeleteConfirmNoteId(note.id)}
                           title={`Delete note #${note.index}`}
                         >
-                          🗑
+                          <X />
                         </button>
                       </div>
                     </li>
