@@ -11,4 +11,6 @@ urlpatterns = [
     path('me/', views.me, name='me'),
     path('verify-email/', views.verify_email, name='verify-email'),
     path('resend-verification/', views.resend_verification, name='resend-verification'),
+    path('forgot-password/', views.forgot_password, name='forgot-password'),
+    path('reset-password/', views.reset_password, name='reset-password'),
 ]
