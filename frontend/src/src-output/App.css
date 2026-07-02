@@ -1158,7 +1158,8 @@ a.ghost:hover {
   gap: var(--space-3);
   flex: 1;
   min-height: 0;
-  overflow: hidden;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
   padding: var(--space-3) var(--space-4);
 }
 
@@ -2309,6 +2310,18 @@ a.ghost:hover {
 
   .notes-panel-header h3 {
     display: none;
+  }
+
+  /* Move the options menu to the right edge on mobile */
+  .notes-layout.mobile-resizable .notes-panel-header {
+    position: relative;
+  }
+
+  .notes-layout.mobile-resizable .notes-panel-header .options-menu-container {
+    position: absolute;
+    right: var(--space-3);
+    top: 50%;
+    transform: translateY(-50%);
   }
 
   .notes-panel-body {
