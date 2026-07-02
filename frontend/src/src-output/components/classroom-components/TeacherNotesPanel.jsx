@@ -116,14 +116,16 @@ function TeacherNotesPanel({
                         >
                           Display
                         </button>
-                        <button
-                          type="button"
-                          className="ghost danger"
-                          onClick={() => setDeleteConfirmNoteId(note.id)}
-                          title={`Delete note #${note.index}`}
-                        >
-                          <X />
+                        <button 
+                            type="button" 
+                            className="ghost" 
+                            onClick={() => setDeleteConfirmNoteId(note.id)} 
+                            title={`Delete note #${note.index}`} 
+                            style={{ background: 'transparent', border: 'none', outline: 'none' }} 
+                                > 
+                          <X /> 
                         </button>
+
                       </div>
                     </li>
                   ))}
@@ -144,7 +146,7 @@ function TeacherNotesPanel({
       {owned && isModalOpen && (
         <div className="custom-modal-overlay" onClick={() => setIsModalOpen(false)}>
           <div className="custom-modal-content" onClick={(e) => e.stopPropagation()}>
-            <button type="button" className="custom-modal-close" onClick={() => setIsModalOpen(false)}>✕</button>
+            <button type="button" style={{backgroundColor:'transparent'}} className="custom-modal-close" onClick={() => setIsModalOpen(false)}>✕</button>
             <NotificationForm
               notifMessage={notifMessage}
               setNotifMessage={setNotifMessage}

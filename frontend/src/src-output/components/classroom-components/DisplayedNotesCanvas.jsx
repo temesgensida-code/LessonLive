@@ -58,7 +58,7 @@ function DisplayedNotesCanvas({
                     className="ghost danger"
                     onClick={() => onRemoveDisplayed(item.id)}
                     title="Remove displayed note"
-                    style={{ flexShrink: 0 }}
+                    style={{ flexShrink: 0 ,outline: 'none', background: 'transparent', border: 'none'}}
                   >
                     <X />
                   </button>

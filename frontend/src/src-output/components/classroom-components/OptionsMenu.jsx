@@ -25,6 +25,7 @@ function OptionsMenu({ onToggleQuiz, onOpenNotification, showQuizCard }) {
         onClick={() => setIsOpen(!isOpen)}
         aria-label="Options"
         aria-expanded={isOpen}
+        style={{}}
       >
         <FiMoreVertical size={18} />
       </button>

@@ -2318,10 +2318,17 @@ a.ghost:hover {
   }
 
   .notes-layout.mobile-resizable .notes-panel-header .options-menu-container {
-    position: absolute;
-    right: var(--space-3);
-    top: 50%;
-    transform: translateY(-50%);
+    position: absolute !important;
+    right: var(--space-3) !important;
+    top: 50% !important;
+    transform: translateY(-50%) !important;
+    z-index: 60;
+  }
+
+  .notes-layout.mobile-resizable .notes-panel-header > div {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
   }
 
   .notes-panel-body {
