@@ -308,3 +308,85 @@ def resend_verification(request):
 	except User.DoesNotExist:
 		# Don't reveal if user exists or not
 		return JsonResponse({'detail': 'If an account exists, a verification email has been sent.'})
+
+
+@csrf_exempt
+def forgot_password(request):
+	if request.method != 'POST':
+		return JsonResponse({'detail': 'Method not allowed'}, status=405)
+
+	data = _json_body(request)
+	email = (data.get('email') or '').strip().lower()
+
+	if not email:
+		return JsonResponse({'detail': 'Email is required'}, status=400)
+
+	try:
+		user = User.objects.get(email__iexact=email)
+		# Get or create UserProfile if it doesn't exist for some reason
+		profile, created = UserProfile.objects.get_or_create(
+			user=user,
+			defaults={'role': UserProfile.ROLE_STUDENT}
+		)
+
+		# Check cooldown (1 minute)
+		if profile.password_reset_sent_at:
+			cooldown = profile.password_reset_sent_at + timedelta(minutes=1)
+			if timezone.now() < cooldown:
+				return JsonResponse({'detail': 'Please wait before requesting another reset email'}, status=429)
+
+		raw_token = str(uuid.uuid4())
+		token_hash = hashlib.sha256(raw_token.encode()).hexdigest()
+
+		with transaction.atomic():
+			profile.password_reset_token = token_hash
+			profile.password_reset_sent_at = timezone.now()
+			profile.save(update_fields=['password_reset_token', 'password_reset_sent_at'])
+
+		from authentication.email_service import send_password_reset_email
+		success, _ = send_password_reset_email(user, raw_token, settings.FRONTEND_BASE_URL)
+		if not success:
+			return JsonResponse({'detail': 'Failed to send reset email. Please try again later.'}, status=500)
+
+	except User.DoesNotExist:
+		# Don't reveal if user exists or not
+		pass
+
+	return JsonResponse({'detail': 'If an account with that email exists, a password reset link has been sent.'})
+
+
+@csrf_exempt
+def reset_password(request):
+	if request.method != 'POST':
+		return JsonResponse({'detail': 'Method not allowed'}, status=405)
+
+	data = _json_body(request)
+	token = (data.get('token') or '').strip()
+	new_password = data.get('password') or ''
+
+	if not token or not new_password:
+		return JsonResponse({'detail': 'Token and new password are required'}, status=400)
+
+	token_hash = hashlib.sha256(token.encode()).hexdigest()
+
+	try:
+		profile = UserProfile.objects.get(password_reset_token=token_hash)
+	except UserProfile.DoesNotExist:
+		return JsonResponse({'detail': 'Invalid or expired password reset link'}, status=400)
+
+	# Check if token is expired (1 hour)
+	if profile.password_reset_sent_at:
+		expiry_time = profile.password_reset_sent_at + timedelta(hours=1)
+		if timezone.now() > expiry_time:
+			return JsonResponse({'detail': 'Password reset link has expired'}, status=400)
+
+	with transaction.atomic():
+		user = profile.user
+		user.set_password(new_password)
+		user.save()
+
+		profile.password_reset_token = None
+		profile.save(update_fields=['password_reset_token'])
+
+	return JsonResponse({'detail': 'Password reset successful. You can now log in.'})
+
