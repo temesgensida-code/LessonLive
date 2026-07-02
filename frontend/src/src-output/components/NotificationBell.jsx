@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from 'react'
+import { Bell, Rocket, Clock3 } from 'lucide-react'
 
 function NotificationBell({ notifications, hasUnread, onMarkRead, onLaunch }) {
   const [open, setOpen] = useState(false)
@@ -71,7 +72,7 @@ function NotificationBell({ notifications, hasUnread, onMarkRead, onLaunch }) {
       {open && (
         <div ref={dropdownRef} className="notification-dropdown">
           <div className="notification-dropdown-header">
-            <span className="notification-dropdown-title">🔔 Notifications</span>
+            <span className="notification-dropdown-title"><Bell size={16} aria-hidden="true" /> Notifications</span>
             <span className="notification-dropdown-count">
               {activeNotifications.length} active
             </span>
@@ -88,7 +89,7 @@ function NotificationBell({ notifications, hasUnread, onMarkRead, onLaunch }) {
                   <div key={n.id} className="notification-card">
                     <div className="notification-card-body">
                       <p className="notification-card-message">{n.message}</p>
-                      <span className="notification-card-timer">⏱ {display} remaining</span>
+                      <span className="notification-card-timer"><Clock3 size={14} aria-hidden="true" /> {display} remaining</span>
                     </div>
                     <button
                       type="button"
@@ -98,7 +99,7 @@ function NotificationBell({ notifications, hasUnread, onMarkRead, onLaunch }) {
                         setOpen(false)
                       }}
                     >
-                      🚀 Launch
+                      <Rocket size={14} aria-hidden="true" /> Launch
                     </button>
                   </div>
                 )

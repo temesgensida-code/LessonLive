@@ -1,4 +1,5 @@
 import { useLocalParticipant } from '@livekit/components-react'
+import { Mic, MicOff, MonitorPlay, MonitorOff } from 'lucide-react'
 
 function LiveAudioButton({ owned }) {
   const { localParticipant, isMicrophoneEnabled, isScreenShareEnabled } = useLocalParticipant()
@@ -21,7 +22,11 @@ function LiveAudioButton({ owned }) {
         onClick={handleToggleMic}
         style={{ flex: 1 }}
       >
-        {isMicrophoneEnabled ? '🎙 Mute' : '🎙 Unmute'}
+        {isMicrophoneEnabled ? (
+          <><MicOff size={16} aria-hidden="true" /> Mute</>
+        ) : (
+          <><Mic size={16} aria-hidden="true" /> Unmute</>
+        )}
       </button>
 
       {owned && (
@@ -31,7 +36,11 @@ function LiveAudioButton({ owned }) {
           onClick={handleToggleScreenShare}
           style={{ flex: 1 }}
         >
-          {isScreenShareEnabled ? '⏹ Stop share' : '📺 Share screen'}
+          {isScreenShareEnabled ? (
+            <><MonitorOff size={16} aria-hidden="true" /> Stop share</>
+          ) : (
+            <><MonitorPlay size={16} aria-hidden="true" /> Share screen</>
+          )}
         </button>
       )}
     </div>

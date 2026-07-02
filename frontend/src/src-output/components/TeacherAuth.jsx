@@ -93,7 +93,7 @@ function TeacherAuth({ onSuccess }) {
   if (pendingVerification) {
     return (
       <div className="verification-pending text-center">
-        <div style={{ fontSize: '48px', marginBottom: '15px' }}>✉️</div>
+        <div style={{ fontSize: '48px', marginBottom: '15px' }}><Mail size={48} aria-hidden="true" /></div>
         <h3>Check your email</h3>
         <p>We've sent a verification link to <strong>{form.email}</strong>.</p>
         <p className="muted" style={{ fontSize: '14px', marginBottom: '25px' }}>

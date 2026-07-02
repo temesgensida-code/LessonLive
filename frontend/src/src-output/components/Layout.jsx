@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { Menu } from 'lucide-react'
+import { Menu, Hexagon, School, GraduationCap, X } from 'lucide-react'
 import NotificationBell from './NotificationBell'
 import { useNotificationContext } from './NotificationContext'
 
@@ -16,7 +16,7 @@ function Layout({ children, me, onLogout }) {
     <div className="page">
       <header className="topbar">
         <Link to="/" className="brand" aria-label="LessonLive home">
-          <span className="brand-icon" aria-hidden="true">⬡</span>
+          <Hexagon className="brand-icon" aria-hidden="true" size={24} />
           LessonLive
         </Link>
         <nav className="nav">
@@ -90,7 +90,13 @@ function Layout({ children, me, onLogout }) {
             </span>
             <div>
               <p className="sidebar-user-email">{me?.email}</p>
-              <p className="sidebar-user-role">{me?.role === 'teacher' ? '👨‍🏫 Teacher' : '🎓 Student'}</p>
+              <p className="sidebar-user-role">
+                {me?.role === 'teacher' ? (
+                  <><School size={16} aria-hidden="true" /> Teacher</>
+                ) : (
+                  <><GraduationCap size={16} aria-hidden="true" /> Student</>
+                )}
+              </p>
             </div>
           </div>
           <button
@@ -99,7 +105,7 @@ function Layout({ children, me, onLogout }) {
             onClick={() => setSidebarOpen(false)}
             aria-label="Close menu"
           >
-            ✕
+            <X size={16} aria-hidden="true" />
           </button>
         </div>
         <div className="sidebar-content" id="sidebar-portal-target">

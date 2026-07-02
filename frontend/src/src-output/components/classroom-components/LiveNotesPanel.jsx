@@ -3,7 +3,7 @@ import LiveClassSidePanel from '../LiveClassSidePanel'
 import NotificationForm from '../NotificationForm'
 import OptionsMenu from './OptionsMenu'
 
-import { Radio } from 'lucide-react';
+import { Radio, X, StopCircle } from 'lucide-react';
 
 function LiveNotesPanel({
   owned,
@@ -38,7 +38,7 @@ function LiveNotesPanel({
               onClick={handleToggleLiveClass}
               disabled={liveLoading}
             >
-              {liveLoading ? 'Loading…' : '⏹ End Live'}
+              {liveLoading ? 'Loading…' : <><StopCircle size={14} aria-hidden="true" /> End Live</>}
             </button>
             <OptionsMenu
               onToggleQuiz={onToggleQuizCard}
@@ -69,7 +69,7 @@ function LiveNotesPanel({
       {owned && isModalOpen && (
         <div className="custom-modal-overlay" onClick={() => setIsModalOpen(false)}>
           <div className="custom-modal-content" onClick={(e) => e.stopPropagation()}>
-            <button type="button" className="custom-modal-close" onClick={() => setIsModalOpen(false)}>✕</button>
+            <button type="button" className="custom-modal-close" onClick={() => setIsModalOpen(false)}><X size={16} aria-hidden="true" /></button>
             <NotificationForm
               notifMessage={notifMessage}
               setNotifMessage={setNotifMessage}

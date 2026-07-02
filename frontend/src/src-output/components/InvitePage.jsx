@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { apiFetch, setSessionHint } from './apiClient'
-import { LockKeyhole } from 'lucide-react'
+import { LockKeyhole, Link2, Sparkles, Mail } from 'lucide-react'
 
 function InvitePage({ accessToken, setAccessToken }) {
   const { token } = useParams()
@@ -93,7 +93,7 @@ function InvitePage({ accessToken, setAccessToken }) {
       <div className="stack" style={{ maxWidth: 480, margin: '0 auto', paddingTop: 'var(--space-8)' }}>
         <section className="card">
           <div className="card-header">
-            <span className="card-icon">🔗</span>
+            <Link2 className="card-icon" aria-hidden="true" />
             <div>
               <h2>Invitation</h2>
               <p className="muted card-sub">Something went wrong</p>
@@ -121,7 +121,7 @@ function InvitePage({ accessToken, setAccessToken }) {
       <div className="stack" style={{ maxWidth: 480, margin: '0 auto', paddingTop: 'var(--space-8)' }}>
         <section className="card">
           <div className="card-header">
-            <span className="card-icon">🎉</span>
+            <Sparkles className="card-icon" aria-hidden="true" />
             <div>
               <h2>Welcome to {status.classroom_name}</h2>
             </div>
@@ -141,7 +141,7 @@ function InvitePage({ accessToken, setAccessToken }) {
     <div className="stack" style={{ maxWidth: 480, margin: '0 auto', paddingTop: 'var(--space-8)' }}>
       <section className="card">
         <div className="card-header">
-          <span className="card-icon">📩</span>
+          <Mail className="card-icon" aria-hidden="true" />
           <div>
             <h2>Join {status.classroom_name}</h2>
             <p className="muted card-sub">Invitation for {status.email}</p>

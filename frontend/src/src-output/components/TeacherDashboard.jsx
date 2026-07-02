@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { apiFetch } from './apiClient'
+import {Plus, School } from 'lucide-react'
 
 function TeacherDashboard({ refreshMe, accessToken, setAccessToken }) {
   const [classrooms, setClassrooms] = useState([])
@@ -54,7 +55,7 @@ function TeacherDashboard({ refreshMe, accessToken, setAccessToken }) {
       {/* Welcome Banner */}
       <section className="dashboard-banner">
         <div className="dashboard-banner-text">
-          <h2>Welcome back, Teacher 👋</h2>
+          <h2> Welcome back, Teacher</h2>
           <p className="muted">Manage your classrooms and start live sessions below.</p>
         </div>
       </section>
@@ -63,7 +64,7 @@ function TeacherDashboard({ refreshMe, accessToken, setAccessToken }) {
         {/* Create classroom */}
         <section className="card create-card">
           <div className="card-header">
-            <span className="card-icon">➕</span>
+            <Plus className="card-icon" aria-hidden="true" />
             <div>
               <h2>New classroom</h2>
               <p className="muted card-sub">Create a new class and invite students</p>
@@ -89,7 +90,7 @@ function TeacherDashboard({ refreshMe, accessToken, setAccessToken }) {
         {/* Classrooms list */}
         <section className="card classrooms-card">
           <div className="card-header">
-            <span className="card-icon">🏫</span>
+            <School className="card-icon" aria-hidden="true" />
             <div>
               <h2>Your classrooms</h2>
               <p className="muted card-sub">{classrooms.length} classroom{classrooms.length !== 1 ? 's' : ''}</p>
@@ -102,7 +103,7 @@ function TeacherDashboard({ refreshMe, accessToken, setAccessToken }) {
             </div>
           ) : classrooms.length === 0 ? (
             <div className="empty-state">
-              <span className="empty-icon">🏫</span>
+              <School className="empty-icon" aria-hidden="true" />
               <p>No classrooms yet.</p>
               <p className="muted">Create one above to start inviting students.</p>
             </div>

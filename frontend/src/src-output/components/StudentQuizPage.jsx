@@ -26,13 +26,7 @@
 import { useCallback, useEffect, useReducer, useRef, useState } from 'react'
 import { apiFetch } from './apiClient'
 import './StudentQuizPage.css'
-import { FileQuestionMark } from 'lucide-react';
-import { PartyPopper } from 'lucide-react';
-import { Lightbulb } from 'lucide-react';
-import { Trophy } from 'lucide-react';
-import { Star } from 'lucide-react';
-import { ThumbsUp } from 'lucide-react';
-import { LibraryBig } from 'lucide-react';
+import { FileQuestionMark, PartyPopper, Lightbulb, Trophy, Star, ThumbsUp, LibraryBig, Clock3, GraduationCap } from 'lucide-react';
 
 /* ────────── constants ────────── */
 const QUIZ_TOPIC = 'lessonlive-quiz'
@@ -353,12 +347,12 @@ export default function StudentQuizPage({
         <div className="sq-header-right">
           {showTimer && (
             <div className={`sq-timer${timerWarn ? ' warn' : ''}`} aria-label={`${state.timeLeft} seconds remaining`}>
-              <span aria-hidden="true">⏱</span>
+              <Clock3 size={14} aria-hidden="true" />
               <span>{timerStr}</span>
             </div>
           )}
           <div className="sq-student-badge">
-            <span aria-hidden="true">🎓</span>
+            <GraduationCap size={14} aria-hidden="true" />
             <span>{studentName}</span>
           </div>
         </div>
