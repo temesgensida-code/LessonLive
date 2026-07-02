@@ -11,6 +11,7 @@ import Layout from './components/Layout'
 import StudentDashboard from './components/StudentDashboard'
 import TeacherDashboard from './components/TeacherDashboard'
 import EmailVerified from './components/EmailVerified'
+import ResetPassword from './components/ResetPassword'
 import { apiFetch, setSessionHint } from './components/apiClient'
 import useMe from './components/useMe'
 import { NotificationProvider } from './components/NotificationContext'
@@ -99,6 +100,10 @@ function App() {
         <Route
           path="/verify-email"
           element={<EmailVerified />}
+        />
+        <Route
+          path="/reset-password"
+          element={<ResetPassword />}
         />
       </Routes>
     </Layout>
