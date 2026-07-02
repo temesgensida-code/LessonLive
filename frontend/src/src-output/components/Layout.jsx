@@ -36,15 +36,28 @@ function Layout({ children, me, onLogout }) {
                 <span className="nav-user-dot" aria-hidden="true" />
                 {me.email}
               </span>
-              <button
+              {/* <button
                 type="button"
                 className="ghost menu-toggle"
                 onClick={() => setSidebarOpen(true)}
                 aria-label="Open menu"
                 aria-expanded={sidebarOpen}
               >
-                <Menu size={16} aria-hidden="true" />
+                <Menu size={32} aria-hidden="true" />
+              </button> */}
+
+              <button
+                aria-label="Menu"
+                style={{
+                  border: 'none',
+                  background: 'transparent',
+                  padding: 0,
+                  cursor: 'pointer'
+                }}
+              >
+                <Menu size={28} onClick={() => setSidebarOpen(true)} strokeWidth={2.5} aria-hidden="true" />
               </button>
+
             </>
           ) : (
             <div className="nav-actions">
