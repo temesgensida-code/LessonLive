@@ -103,3 +103,6 @@ Planned improvements include:
 ## Project Vision
 
 LessonLive is designed to become an end-to-end digital classroom system where teachers can teach live, assess students continuously, and use data-driven insights to improve learning outcomes.
+
+[https://lesson-live.vercel.app/](live)
+
