@@ -16,10 +16,31 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import include, path
+from django.shortcuts import redirect
+from django.conf import settings
+
+def redirect_verify_email(request):
+    token = request.GET.get('token', '')
+    return redirect(f"{settings.FRONTEND_BASE_URL}/verify-email?token={token}")
+
+def redirect_invite(request, token):
+    return redirect(f"{settings.FRONTEND_BASE_URL}/invite/{token}")
+
+def redirect_reset_password(request):
+    token = request.GET.get('token', '')
+    return redirect(f"{settings.FRONTEND_BASE_URL}/reset-password?token={token}")
 
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/auth/', include('authentication.urls')),
     path('api/classrooms/', include('classroom.urls')),
     path('api/examinations/', include('examination.urls')),
+    
+    # Frontend Redirection Fallbacks
+    path('verify-email/', redirect_verify_email),
+    path('verify-email', redirect_verify_email),
+    path('invite/<str:token>/', redirect_invite),
+    path('invite/<str:token>', redirect_invite),
+    path('reset-password/', redirect_reset_password),
+    path('reset-password', redirect_reset_password),
 ]
