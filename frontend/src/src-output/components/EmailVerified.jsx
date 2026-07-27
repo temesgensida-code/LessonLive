@@ -3,6 +3,7 @@ import { Link, useSearchParams } from 'react-router-dom'
 import { apiFetch } from './apiClient'
 
 import { Check } from 'lucide-react';
+import { X } from 'lucide-react';
 
 function EmailVerified() {
   const [searchParams] = useSearchParams()
@@ -70,7 +71,7 @@ function EmailVerified() {
 
           {status === 'error' && (
             <div className="text-center">
-              <div className="error-icon" style={{ fontSize: '48px', marginBottom: '20px' }}>❌</div>
+              <div className="error-icon" style={{ fontSize: '48px', marginBottom: '20px' }}><X /></div>
               <h2>Verification Failed</h2>
               <p className="error">{message}</p>
               <div style={{ marginTop: '30px', display: 'flex', flexDirection: 'column', gap: '15px' }}>
