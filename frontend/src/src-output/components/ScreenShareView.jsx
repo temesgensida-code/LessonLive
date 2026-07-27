@@ -14,9 +14,14 @@ function ScreenShareView() {
     <div
       className="screen-share-container"
       style={{
-        flex: '1 1 auto',
-        minHeight: 0,
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        zIndex: 10,
         width: '100%',
+        height: '100%',
         background: '#000',
         display: 'flex',
         flexDirection: 'column',

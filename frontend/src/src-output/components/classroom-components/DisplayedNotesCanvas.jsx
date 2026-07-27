@@ -23,52 +23,55 @@ function DisplayedNotesCanvas({
         </div>
       </div>
 
-      {/* Screen share fills remaining space */}
-      {showScreenShare && <ScreenShareView />}
+      {/* Body container with relative positioning for screen share overlay */}
+      <div className="notes-canvas-body" style={{ position: 'relative', flex: '1 1 auto', minHeight: 0, width: '100%', overflow: 'hidden' }}>
+        {showScreenShare && <ScreenShareView />}
 
-      {/* Displayed notes scrollable list */}
-      {displayedNotes.length === 0 ? (
-        <div
-          style={{
-            flex: '1 1 auto',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            padding: 'var(--space-6)',
-          }}
-        >
-          <p className="muted" style={{ textAlign: 'center' }}>
-            No notes displayed yet.
-          </p>
-        </div>
-      ) : (
-        <div className="displayed-list">
-          {displayedNotes.map((item) => (
-            <article key={item.id} className="displayed-item">
-              <div className="row" style={{ marginBottom: 'var(--space-2)' }}>
-                <div>
-                  <strong>#{item.index} — {item.title}</strong>
-                  <p className="muted" style={{ marginTop: 'var(--space-1)' }}>
-                    Saved: {formatDate(item.saved_date)}
-                  </p>
+        {/* Displayed notes scrollable list */}
+        {displayedNotes.length === 0 ? (
+          <div
+            style={{
+              height: '100%',
+              width: '100%',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              padding: 'var(--space-6)',
+            }}
+          >
+            <p className="muted" style={{ textAlign: 'center' }}>
+              No notes displayed yet.
+            </p>
+          </div>
+        ) : (
+          <div className="displayed-list" style={{ height: '100%', overflowY: 'auto' }}>
+            {displayedNotes.map((item) => (
+              <article key={item.id} className="displayed-item">
+                <div className="row" style={{ marginBottom: 'var(--space-2)' }}>
+                  <div>
+                    <strong>#{item.index} — {item.title}</strong>
+                    <p className="muted" style={{ marginTop: 'var(--space-1)' }}>
+                      Saved: {formatDate(item.saved_date)}
+                    </p>
+                  </div>
+                  {owned && (
+                    <button
+                      type="button"
+                      className="ghost danger"
+                      onClick={() => onRemoveDisplayed(item.id)}
+                      title="Remove displayed note"
+                      style={{ flexShrink: 0 ,outline: 'none', background: 'transparent', border: 'none'}}
+                    >
+                      <X />
+                    </button>
+                  )}
                 </div>
-                {owned && (
-                  <button
-                    type="button"
-                    className="ghost danger"
-                    onClick={() => onRemoveDisplayed(item.id)}
-                    title="Remove displayed note"
-                    style={{ flexShrink: 0 ,outline: 'none', background: 'transparent', border: 'none'}}
-                  >
-                    <X />
-                  </button>
-                )}
-              </div>
-              <p>{item.content}</p>
-            </article>
-          ))}
-        </div>
-      )}
+                <p>{item.content}</p>
+              </article>
+            ))}
+          </div>
+        )}
+      </div>
     </div>
   )
 }
