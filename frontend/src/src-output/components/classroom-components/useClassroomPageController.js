@@ -163,6 +163,7 @@ function useClassroomPageController({ classId, accessToken, setAccessToken }) {
 
     let socket
     let reconnectTimeoutId
+    let heartbeatInterval
     let shouldReconnect = true
     const reconnectDelayMs = 1500
 
@@ -170,6 +171,14 @@ function useClassroomPageController({ classId, accessToken, setAccessToken }) {
 
     const connect = () => {
       socket = new WebSocket(websocketUrl)
+
+      socket.onopen = () => {
+        heartbeatInterval = window.setInterval(() => {
+          if (socket && socket.readyState === WebSocket.OPEN) {
+            socket.send(JSON.stringify({ type: 'heartbeat' }))
+          }
+        }, 15000)
+      }
 
       socket.onmessage = (event) => {
         try {
@@ -193,6 +202,9 @@ function useClassroomPageController({ classId, accessToken, setAccessToken }) {
       }
 
       socket.onclose = (event) => {
+        if (heartbeatInterval) {
+          window.clearInterval(heartbeatInterval)
+        }
         if (event.code === 4001 || event.code === 4003) {
           shouldReconnect = false
           return
@@ -210,6 +222,9 @@ function useClassroomPageController({ classId, accessToken, setAccessToken }) {
       shouldReconnect = false
       if (reconnectTimeoutId) {
         window.clearTimeout(reconnectTimeoutId)
+      }
+      if (heartbeatInterval) {
+        window.clearInterval(heartbeatInterval)
       }
       if (socket && socket.readyState !== WebSocket.CLOSED) {
         socket.close()
