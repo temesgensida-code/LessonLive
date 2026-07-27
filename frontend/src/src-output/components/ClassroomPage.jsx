@@ -7,6 +7,8 @@ import LiveQuizCard from './LiveQuizCard';
 import StudentQuizPage from './StudentQuizPage'
 import CountdownOverlay from './CountdownOverlay'
 import { useNotificationContext } from './NotificationContext'
+import AttendanceDashboard from './classroom-components/AttendanceDashboard'
+import './classroom-components/AttendanceDashboard.css'
 
 const ClassroomSidebarPortal = lazy(() => import('./classroom-components/ClassroomSidebarPortal'))
 const DisplayedNotesCanvas = lazy(() => import('./classroom-components/DisplayedNotesCanvas'))
@@ -30,6 +32,7 @@ function ClassroomPage({ accessToken, setAccessToken }) {
   const [isDraggingMobileSplit, setIsDraggingMobileSplit] = useState(false)
   const [showQuizCard, setShowQuizCard] = useState(false)
   const [showStudentQuiz, setShowStudentQuiz] = useState(false)
+  const [showAttendanceModal, setShowAttendanceModal] = useState(false)
   const mobileSplitLayoutRef = useRef(null)
 
   const updateMobileSplit = (clientY) => {
@@ -266,6 +269,7 @@ function ClassroomPage({ accessToken, setAccessToken }) {
                   noteMessage={noteMessage}
                   showQuizCard={showQuizCard}
                   onToggleQuizCard={handleToggleQuizCard}
+                  onOpenAttendance={() => setShowAttendanceModal(true)}
                   {...notificationProps}
                 />
               </div>
@@ -315,11 +319,21 @@ function ClassroomPage({ accessToken, setAccessToken }) {
                   handleDisplayNote={handleDisplayNote}
                   noteError={noteError}
                   noteMessage={noteMessage}
+                  onOpenAttendance={() => setShowAttendanceModal(true)}
                   {...notificationProps}
                 />
               )}
             </div>
           </section>
+        )}
+
+        {showAttendanceModal && (
+          <AttendanceDashboard
+            classId={classId}
+            accessToken={accessToken}
+            setAccessToken={setAccessToken}
+            onClose={() => setShowAttendanceModal(false)}
+          />
         )}
       </div>
     </Suspense>
