@@ -23,6 +23,7 @@ function LiveNotesPanel({
   notifError,
   notifSuccess,
   handleSendNotification,
+  onOpenAttendance,
 }) {
   const [isModalOpen, setIsModalOpen] = useState(false)
   return (
@@ -43,6 +44,7 @@ function LiveNotesPanel({
             <OptionsMenu
               onToggleQuiz={onToggleQuizCard}
               onOpenNotification={() => setIsModalOpen(true)}
+              onOpenAttendance={onOpenAttendance}
               showQuizCard={showQuizCard}
             />
           </div>

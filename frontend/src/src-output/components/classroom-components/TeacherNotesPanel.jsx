@@ -30,6 +30,7 @@ function TeacherNotesPanel({
   notifError,
   notifSuccess,
   handleSendNotification,
+  onOpenAttendance,
 }) {
   const [isModalOpen, setIsModalOpen] = useState(false)
   return (
@@ -45,6 +46,7 @@ function TeacherNotesPanel({
             <OptionsMenu
               onToggleQuiz={handleToggleQuizCard}
               onOpenNotification={() => setIsModalOpen(true)}
+              onOpenAttendance={onOpenAttendance}
               showQuizCard={showQuizCard}
             />
           </div>
