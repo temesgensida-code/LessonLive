@@ -1,5 +1,19 @@
 import React, { useState, useEffect } from 'react'
 import { apiFetch, API_BASE } from '../apiClient'
+import {
+  BarChart3,
+  Download,
+  X,
+  Users,
+  UserCheck,
+  Zap,
+  Clock,
+  Search,
+  Flame,
+  AlertTriangle,
+  UserX,
+  AlertCircle,
+} from 'lucide-react'
 
 export default function AttendanceDashboard({ classId, accessToken, setAccessToken, onClose }) {
   const [loading, setLoading] = useState(true)
@@ -63,13 +77,29 @@ export default function AttendanceDashboard({ classId, accessToken, setAccessTok
   const getEngagementBadge = (engagement) => {
     switch (engagement) {
       case 'High':
-        return <span className="badge badge-high">🔥 High ({'>'}15m)</span>
+        return (
+          <span className="badge badge-high" style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+            <Flame size={12} /> High ({'>'}15m)
+          </span>
+        )
       case 'Moderate':
-        return <span className="badge badge-moderate">⚡ Moderate</span>
+        return (
+          <span className="badge badge-moderate" style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+            <Zap size={12} /> Moderate
+          </span>
+        )
       case 'Low':
-        return <span className="badge badge-low">⚠️ Low ({'<'}5m)</span>
+        return (
+          <span className="badge badge-low" style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+            <AlertTriangle size={12} /> Low ({'<'}5m)
+          </span>
+        )
       default:
-        return <span className="badge badge-none">❌ Absent</span>
+        return (
+          <span className="badge badge-none" style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+            <UserX size={12} /> Absent
+          </span>
+        )
     }
   }
 
@@ -99,30 +129,38 @@ export default function AttendanceDashboard({ classId, accessToken, setAccessTok
         {/* Header */}
         <div className="modal-header">
           <div className="title-group">
-            <div className="header-icon-box">📊</div>
+            <div className="header-icon-box">
+              <BarChart3 size={22} color="#ffffff" />
+            </div>
             <div>
               <h2>Classroom Attendance & Insights</h2>
               <p className="subtitle">Real-time student stay duration and participation stats</p>
             </div>
           </div>
           <div className="header-actions">
-            <button className="btn-export" onClick={handleExportCSV}>
-              📥 Export CSV
+            <button className="btn-export" onClick={handleExportCSV} style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+              <Download size={14} /> Export CSV
             </button>
-            <button className="btn-close" onClick={onClose}>
-              ✕
+            <button className="btn-close" onClick={onClose} aria-label="Close">
+              <X size={18} />
             </button>
           </div>
         </div>
 
         {/* Content Body */}
         <div className="modal-body">
-          {error && <div className="error-alert">⚠️ {error}</div>}
+          {error && (
+            <div className="error-alert" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <AlertCircle size={16} /> {error}
+            </div>
+          )}
 
           {/* Metric Cards Grid */}
           <div className="metrics-grid">
             <div className="metric-card card-enrolled">
-              <span className="metric-icon">👥</span>
+              <span className="metric-icon">
+                <Users size={22} color="#818cf8" />
+              </span>
               <div className="metric-info">
                 <span className="metric-value">{summary.total_enrolled}</span>
                 <span className="metric-label">Enrolled Students</span>
@@ -130,7 +168,9 @@ export default function AttendanceDashboard({ classId, accessToken, setAccessTok
             </div>
 
             <div className="metric-card card-attended">
-              <span className="metric-icon">✅</span>
+              <span className="metric-icon">
+                <UserCheck size={22} color="#34d399" />
+              </span>
               <div className="metric-info">
                 <span className="metric-value">
                   {summary.total_attended} <small>({summary.attendance_rate}%)</small>
@@ -140,7 +180,9 @@ export default function AttendanceDashboard({ classId, accessToken, setAccessTok
             </div>
 
             <div className="metric-card card-active">
-              <span className="metric-icon">⚡</span>
+              <span className="metric-icon">
+                <Zap size={22} color="#fbbf24" />
+              </span>
               <div className="metric-info">
                 <span className="metric-value live-count">
                   {summary.active_now} <span className="live-pill">LIVE</span>
@@ -150,7 +192,9 @@ export default function AttendanceDashboard({ classId, accessToken, setAccessTok
             </div>
 
             <div className="metric-card card-duration">
-              <span className="metric-icon">⏱️</span>
+              <span className="metric-icon">
+                <Clock size={22} color="#60a5fa" />
+              </span>
               <div className="metric-info">
                 <span className="metric-value">{summary.avg_duration_minutes} <small>mins</small></span>
                 <span className="metric-label">Avg. Stay Duration</span>
@@ -161,7 +205,7 @@ export default function AttendanceDashboard({ classId, accessToken, setAccessTok
           {/* Controls Bar */}
           <div className="controls-bar">
             <div className="search-box">
-              <span>🔍</span>
+              <Search size={16} color="#9ca3af" />
               <input
                 type="text"
                 placeholder="Search by student name or email..."
