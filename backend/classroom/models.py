@@ -118,3 +118,51 @@ class ClassroomNotification(models.Model):
 
 	def __str__(self):
 		return f'Notification for {self.classroom.class_id}: {self.message[:50]}'
+
+
+class ClassroomSession(models.Model):
+	classroom = models.ForeignKey(Classroom, on_delete=models.CASCADE, related_name='sessions')
+	title = models.CharField(max_length=255, default='Live Classroom Session')
+	started_at = models.DateTimeField(auto_now_add=True)
+	ended_at = models.DateTimeField(null=True, blank=True)
+	is_active = models.BooleanField(default=True)
+	created_by = models.ForeignKey(User, on_delete=models.CASCADE, related_name='created_sessions', null=True, blank=True)
+
+	class Meta:
+		ordering = ['-started_at']
+
+	def __str__(self):
+		return f'Session: {self.title} ({self.classroom.class_id})'
+
+
+class StudentAttendanceRecord(models.Model):
+	STATUS_ACTIVE = 'active'
+	STATUS_LEFT = 'left'
+	STATUS_CHOICES = (
+		(STATUS_ACTIVE, 'Active'),
+		(STATUS_LEFT, 'Left'),
+	)
+
+	classroom = models.ForeignKey(Classroom, on_delete=models.CASCADE, related_name='attendance_records')
+	session = models.ForeignKey(ClassroomSession, on_delete=models.CASCADE, related_name='attendance_records', null=True, blank=True)
+	student = models.ForeignKey(User, on_delete=models.CASCADE, related_name='attendance_records')
+	joined_at = models.DateTimeField(default=timezone.now)
+	left_at = models.DateTimeField(null=True, blank=True)
+	duration_seconds = models.PositiveIntegerField(default=0)
+	status = models.CharField(max_length=20, choices=STATUS_CHOICES, default=STATUS_ACTIVE)
+	joined_topic = models.CharField(max_length=255, default='Live Classroom')
+	created_at = models.DateTimeField(auto_now_add=True)
+
+	class Meta:
+		ordering = ['-joined_at']
+
+	def update_duration(self, current_time=None):
+		if current_time is None:
+			current_time = timezone.now()
+		if self.joined_at:
+			delta = (current_time - self.joined_at).total_seconds()
+			self.duration_seconds = max(0, int(delta))
+
+	def __str__(self):
+		return f'{self.student.username} - {self.classroom.class_id} ({self.status})'
+
