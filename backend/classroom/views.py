@@ -13,7 +13,7 @@ from django.core.validators import validate_email
 from django.core.exceptions import ValidationError
 from django.db import transaction
 from django.db.models import F
-from django.http import JsonResponse
+from django.http import HttpResponse, JsonResponse
 from django.utils import timezone
 from django.views.decorators.csrf import csrf_exempt
 from asgiref.sync import async_to_sync
@@ -21,7 +21,7 @@ from channels.layers import get_channel_layer
 
 from authentication.jwt_auth import get_user_from_request
 from authentication.models import UserProfile
-from classroom.models import Classroom, ClassroomInvitation, ClassroomNote, ClassroomNotification, DisplayedClassroomNote, Enrollment
+from classroom.models import Classroom, ClassroomInvitation, ClassroomNote, ClassroomNotification, DisplayedClassroomNote, Enrollment, ClassroomSession, StudentAttendanceRecord
 
 
 logger = logging.getLogger(__name__)
@@ -696,3 +696,160 @@ def list_notifications(request, class_id):
 			})
 
 	return JsonResponse({'notifications': result})
+
+
+def classroom_attendance_insights(request, class_id):
+	user, teacher_error = _require_teacher(request)
+	if teacher_error:
+		return teacher_error
+
+	try:
+		classroom = Classroom.objects.get(class_id=class_id, owner=user)
+	except Classroom.DoesNotExist:
+		return JsonResponse({'detail': 'Classroom not found'}, status=404)
+
+	session_id = request.GET.get('session_id')
+	records_qs = StudentAttendanceRecord.objects.filter(classroom=classroom)
+	if session_id:
+		records_qs = records_qs.filter(session_id=session_id)
+
+	enrolled_students = User.objects.filter(class_enrollments__classroom=classroom).distinct()
+	total_enrolled = enrolled_students.count()
+
+	student_records_map = {}
+	for rec in records_qs.select_related('student', 'session').order_by('-joined_at'):
+		rec_duration = rec.duration_seconds
+		if rec.status == StudentAttendanceRecord.STATUS_ACTIVE and rec.joined_at:
+			rec_duration = max(rec_duration, int((timezone.now() - rec.joined_at).total_seconds()))
+
+		if rec.student_id not in student_records_map:
+			student_records_map[rec.student_id] = {
+				'records': [],
+				'total_duration_seconds': 0,
+				'is_active': False,
+				'latest_joined_at': rec.joined_at,
+				'latest_left_at': rec.left_at,
+				'latest_topic': rec.joined_topic,
+			}
+
+		s_data = student_records_map[rec.student_id]
+		s_data['records'].append(rec)
+		s_data['total_duration_seconds'] += rec_duration
+		if rec.status == StudentAttendanceRecord.STATUS_ACTIVE:
+			s_data['is_active'] = True
+
+	student_insights = []
+	total_attended = len(student_records_map)
+	active_now_count = 0
+	sum_duration_secs = 0
+
+	for s in enrolled_students:
+		s_info = student_records_map.get(s.id)
+		if s_info:
+			duration_mins = round(s_info['total_duration_seconds'] / 60, 1)
+			sum_duration_secs += s_info['total_duration_seconds']
+			is_active = s_info['is_active']
+			if is_active:
+				active_now_count += 1
+				status_str = 'Active Now'
+			else:
+				status_str = 'Left'
+
+			if duration_mins >= 15:
+				engagement = 'High'
+			elif duration_mins >= 5:
+				engagement = 'Moderate'
+			else:
+				engagement = 'Low'
+
+			student_insights.append({
+				'student_id': s.id,
+				'username': s.username,
+				'email': s.email,
+				'full_name': s.get_full_name() or s.username,
+				'status': status_str,
+				'total_duration_minutes': duration_mins,
+				'joined_at': s_info['latest_joined_at'].isoformat() if s_info['latest_joined_at'] else None,
+				'left_at': s_info['latest_left_at'].isoformat() if s_info['latest_left_at'] else None,
+				'joined_topic': s_info['latest_topic'],
+				'engagement': engagement,
+				'sessions_attended_count': len(s_info['records']),
+			})
+		else:
+			student_insights.append({
+				'student_id': s.id,
+				'username': s.username,
+				'email': s.email,
+				'full_name': s.get_full_name() or s.username,
+				'status': 'Absent',
+				'total_duration_minutes': 0,
+				'joined_at': None,
+				'left_at': None,
+				'joined_topic': 'N/A',
+				'engagement': 'None',
+				'sessions_attended_count': 0,
+			})
+
+	student_insights.sort(key=lambda x: (x['status'] != 'Active Now', -x['total_duration_minutes']))
+
+	avg_duration_minutes = round((sum_duration_secs / total_attended / 60), 1) if total_attended > 0 else 0
+	attendance_rate = round((total_attended / total_enrolled * 100), 1) if total_enrolled > 0 else 0
+
+	sessions = list(
+		ClassroomSession.objects.filter(classroom=classroom).values('id', 'title', 'started_at', 'ended_at', 'is_active')
+	)
+
+	return JsonResponse({
+		'summary': {
+			'total_enrolled': total_enrolled,
+			'total_attended': total_attended,
+			'active_now': active_now_count,
+			'attendance_rate': attendance_rate,
+			'avg_duration_minutes': avg_duration_minutes,
+		},
+		'students': student_insights,
+		'sessions': [{
+			'id': s['id'],
+			'title': s['title'],
+			'started_at': s['started_at'].isoformat() if s['started_at'] else None,
+			'ended_at': s['ended_at'].isoformat() if s['ended_at'] else None,
+			'is_active': s['is_active'],
+		} for s in sessions],
+	})
+
+
+def export_attendance_csv(request, class_id):
+	user, teacher_error = _require_teacher(request)
+	if teacher_error:
+		return teacher_error
+
+	try:
+		classroom = Classroom.objects.get(class_id=class_id, owner=user)
+	except Classroom.DoesNotExist:
+		return JsonResponse({'detail': 'Classroom not found'}, status=404)
+
+	records = StudentAttendanceRecord.objects.filter(classroom=classroom).select_related('student', 'session').order_by('-joined_at')
+
+	response = HttpResponse(content_type='text/csv')
+	response['Content-Disposition'] = f'attachment; filename="attendance_{class_id}.csv"'
+
+	writer = csv.writer(response)
+	writer.writerow(['Student Username', 'Student Email', 'Session Title', 'Joined Topic', 'Joined At', 'Left At', 'Duration (Mins)', 'Status'])
+
+	for r in records:
+		joined = r.joined_at.strftime('%Y-%m-%d %H:%M:%S') if r.joined_at else ''
+		left = r.left_at.strftime('%Y-%m-%d %H:%M:%S') if r.left_at else ('Active' if r.status == 'active' else '')
+		duration_mins = round(r.duration_seconds / 60, 1)
+		writer.writerow([
+			r.student.username,
+			r.student.email,
+			r.session.title if r.session else 'General Session',
+			r.joined_topic,
+			joined,
+			left,
+			duration_mins,
+			r.status.capitalize()
+		])
+
+	return response
+

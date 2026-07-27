@@ -17,5 +17,7 @@ urlpatterns = [
     path('<str:class_id>/token/', views.get_livekit_token, name='get-livekit-token'),
     path('<str:class_id>/notifications/', views.send_notification, name='send-notification'),
     path('<str:class_id>/notifications/list/', views.list_notifications, name='list-notifications'),
+    path('<str:class_id>/attendance/', views.classroom_attendance_insights, name='classroom-attendance-insights'),
+    path('<str:class_id>/attendance/export/', views.export_attendance_csv, name='export-attendance-csv'),
 ]
 
