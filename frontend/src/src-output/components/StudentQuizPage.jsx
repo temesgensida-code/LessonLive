@@ -30,7 +30,7 @@ import { FileQuestionMark, PartyPopper, Lightbulb, Trophy, Star, ThumbsUp, Libra
 
 /* ────────── constants ────────── */
 const QUIZ_TOPIC = 'lessonlive-quiz'
-const LETTERS = ['A', 'B', 'C', 'D']
+const LETTERS = ['A', 'B', 'C', 'D', 'E', 'F']
 const DEFAULT_TIME = 60
 
 /* ────────── helpers ────────── */
@@ -136,6 +136,25 @@ function reducer(state, action) {
       }
     }
 
+    case 'QUIZ_SYNC_RESPONSE': {
+      if (!action.questions || !action.questions.length) return state
+      let newPhase = 'answering'
+      if (action.phase === 'reveal') newPhase = 'reveal'
+      else if (action.phase === 'ended') newPhase = 'ended'
+      else if (action.phase === 'submitted') newPhase = 'submitted'
+
+      return {
+        ...state,
+        phase: newPhase,
+        quizMeta: action.quizMeta || state.quizMeta,
+        questions: action.questions,
+        currentQIndex: Number.isInteger(action.currentQIndex) ? action.currentQIndex : state.currentQIndex,
+        timeLeft: Number.isInteger(action.timeLeft) ? action.timeLeft : state.timeLeft,
+        revealCounts: action.revealCounts || null,
+        revealTotal: action.revealTotal || 0,
+      }
+    }
+
     case 'END':
       return { ...state, phase: 'ended' }
 
@@ -233,14 +252,33 @@ export default function StudentQuizPage({
         if (msg.type === 'QUIZ_REVEAL') {
           dispatch({ type: 'REVEAL', counts: msg.counts, total: msg.total, correctIndex: msg.correctIndex })
         }
+        if (msg.type === 'QUIZ_SYNC_RESPONSE') {
+          dispatch({
+            type: 'QUIZ_SYNC_RESPONSE',
+            quizMeta: msg.quizMeta,
+            questions: msg.questions,
+            currentQIndex: msg.currentQIndex,
+            phase: msg.phase,
+            timeLeft: msg.timeLeft,
+            revealCounts: msg.revealCounts,
+            revealTotal: msg.revealTotal,
+            correctIndex: msg.correctIndex,
+          })
+        }
         if (msg.type === 'QUIZ_END') {
           dispatch({ type: 'END' })
         }
       } catch { /* ignore */ }
     }
     room.on(_RoomEvent.DataReceived, handle)
+
+    // Request sync from teacher if waiting
+    if (state.phase === 'waiting') {
+      publish({ type: 'QUIZ_SYNC_REQUEST' })
+    }
+
     return () => room.off(_RoomEvent.DataReceived, handle)
-  }, [room, loadQuestionsFromBackend])
+  }, [room, loadQuestionsFromBackend, state.phase, publish])
 
   /* ── countdown timer ── */
   useEffect(() => {
