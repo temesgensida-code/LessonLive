@@ -21,7 +21,7 @@ function EmailVerified() {
 
     const verifyToken = async () => {
       try {
-        const data = await apiFetch(`/auth/verify-email/?token=${token}`, { method: 'GET' }, { skipAuthRefresh: true })
+        const data = await apiFetch(`/auth/verify-email/?token=${encodeURIComponent(token)}`, { method: 'GET' }, { skipAuthRefresh: true })
         setStatus('success')
         setMessage(data.detail || 'Your email has been successfully verified.')
       } catch (err) {
