@@ -32,7 +32,7 @@ import { Lightbulb } from 'lucide-react';
 
 /* ────────── constants ────────── */
 const QUIZ_TOPIC = 'lessonlive-quiz'
-const LETTERS = ['A', 'B', 'C', 'D']
+const LETTERS = ['A', 'B', 'C', 'D', 'E', 'F']
 const DEFAULT_TIME = 60   // seconds
 
 /* ────────── helpers ────────── */
@@ -181,6 +181,39 @@ function reducer(state, action) {
       return { ...state, questions: qs }
     }
 
+    case 'ADD_OPTION': {
+      const qs = [...state.questions]
+      const q = qs[action.qIndex]
+      if (q.options.length >= 6) return state
+      qs[action.qIndex] = { ...q, options: [...q.options, ''] }
+      return { ...state, questions: qs }
+    }
+
+    case 'REMOVE_OPTION': {
+      const qs = [...state.questions]
+      const q = qs[action.qIndex]
+      if (q.options.length <= 2) return state
+      const opts = q.options.filter((_, i) => i !== action.optIndex)
+      const correct = q.correct >= opts.length ? opts.length - 1 : q.correct
+      qs[action.qIndex] = { ...q, options: opts, correct }
+      return { ...state, questions: qs }
+    }
+
+    case 'SET_PRESET': {
+      const qs = [...state.questions]
+      const q = qs[action.qIndex]
+      if (action.preset === 'tf') {
+        qs[action.qIndex] = { ...q, options: ['True', 'False'], correct: 0 }
+      } else if (action.preset === 'mc4') {
+        qs[action.qIndex] = { ...q, options: ['', '', '', ''], correct: 0 }
+      }
+      return { ...state, questions: qs }
+    }
+
+    case 'IMPORT_QUESTION': {
+      return { ...state, questions: [...state.questions, action.question] }
+    }
+
     case 'BEGIN_SETUP':
       return { ...state, phase: 'setup' }
 
@@ -268,12 +301,66 @@ export default function LiveQuizCard({
   const [backendError, setBackendError] = useState('')
   const [savingQuestions, setSavingQuestions] = useState(false)
   const [participantsCount, setParticipantsCount] = useState(null)
+  const [showQuestionBank, setShowQuestionBank] = useState(false)
+  const [bankQuestions, setBankQuestions] = useState([])
+  const [loadingBank, setLoadingBank] = useState(false)
   const room = useRoom()
   const lkCount = useParticipantCount()
   const timerRef = useRef(null)
   const liveCount = studentCount ?? lkCount
 
   const currentQ = state.questions[state.currentQIndex]
+
+  const handleFetchBank = async () => {
+    if (!classId) return
+    setLoadingBank(true)
+    setShowQuestionBank(true)
+    try {
+      const data = await apiFetch(`/examinations/classrooms/${classId}/questions/`, {}, {
+        accessToken,
+        setAccessToken,
+      })
+      setBankQuestions(data?.questions || [])
+    } catch (err) {
+      setBackendError(err.message || 'Failed to load question bank')
+    } finally {
+      setLoadingBank(false)
+    }
+  }
+
+  const handleImportBankQuestion = (serverQ) => {
+    const answers = Array.isArray(serverQ.answers) ? serverQ.answers : []
+    const options = answers.map((ans) => ans.text)
+    const correctIndex = answers.findIndex((ans) => ans.is_correct)
+    const newQ = {
+      id: `q-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+      serverId: serverQ.id,
+      serverAnswerIds: answers.map((ans) => ans.id),
+      text: serverQ.prompt || '',
+      options: options.length >= 2 ? options : ['', '', '', ''],
+      correct: correctIndex >= 0 ? correctIndex : 0,
+      contextNote: '',
+    }
+    dispatch({ type: 'IMPORT_QUESTION', question: newQ })
+  }
+
+  const handleExportCSV = () => {
+    let csv = 'Question Number,Question Prompt,Total Responses,A,B,C,D,E,F\n'
+    state.questions.forEach((q, qi) => {
+      const counts = state.responseCounts[q.id] || {}
+      const total = Object.values(counts).reduce((a, b) => a + b, 0)
+      const textEscaped = `"${(q.text || '').replace(/"/g, '""')}"`
+      csv += `Q${qi + 1},${textEscaped},${total},${counts.A || 0},${counts.B || 0},${counts.C || 0},${counts.D || 0},${counts.E || 0},${counts.F || 0}\n`
+    })
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `${(state.quizMeta.title || 'quiz').replace(/[^a-z0-9]/gi, '_')}_results.csv`
+    document.body.appendChild(a)
+    a.click()
+    document.body.removeChild(a)
+  }
 
   /* ── publish helper ── */
   const publish = useCallback(async (payload) => {
@@ -312,6 +399,23 @@ export default function LiveQuizCard({
           dispatch({ type: 'REVEAL', counts: msg.counts, total: msg.total })
         }
 
+        if (msg.type === 'QUIZ_SYNC_REQUEST' && owned && state.phase !== 'idle' && state.phase !== 'setup') {
+          const q = state.questions[state.currentQIndex]
+          const counts = state.responseCounts[q?.id] || { A: 0, B: 0, C: 0, D: 0, E: 0, F: 0 }
+          const total = Object.values(counts).reduce((a, b) => a + b, 0)
+          publish({
+            type: 'QUIZ_SYNC_RESPONSE',
+            phase: state.phase === 'live' && state.revealCorrect ? 'reveal' : state.phase,
+            quizMeta: state.quizMeta,
+            questions: state.questions.map(toBroadcastQuestion),
+            currentQIndex: state.currentQIndex,
+            timeLeft: state.timeLeft,
+            revealCounts: counts,
+            revealTotal: total,
+            correctIndex: q?.correct ?? 0,
+          })
+        }
+
         if (msg.type === 'QUIZ_END' && !owned) {
           dispatch({ type: 'END' })
         }
@@ -319,7 +423,7 @@ export default function LiveQuizCard({
     }
     room.on(_RoomEvent.DataReceived, handle)
     return () => room.off(_RoomEvent.DataReceived, handle)
-  }, [room, owned])
+  }, [room, owned, state, publish])
 
   /* ── countdown timer ── */
   useEffect(() => {
@@ -622,10 +726,31 @@ export default function LiveQuizCard({
                     />
                   </label>
 
-                  {/* Options */}
-                  <p style={{ fontSize: 'var(--font-size-xs)', color: 'var(--text-muted)', fontWeight: 600, marginTop: 'var(--space-1)' }}>
-                    Answer options — mark the correct one ✓
-                  </p>
+                  {/* Options header with presets */}
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 'var(--space-1)' }}>
+                    <p style={{ fontSize: 'var(--font-size-xs)', color: 'var(--text-muted)', fontWeight: 600 }}>
+                      Answer options — mark correct ✓
+                    </p>
+                    <div style={{ display: 'flex', gap: 'var(--space-1)' }}>
+                      <button
+                        type="button"
+                        className="ghost"
+                        style={{ padding: '0.15rem 0.4rem', fontSize: '11px' }}
+                        onClick={() => dispatch({ type: 'SET_PRESET', qIndex: qi, preset: 'tf' })}
+                      >
+                        True / False
+                      </button>
+                      <button
+                        type="button"
+                        className="ghost"
+                        style={{ padding: '0.15rem 0.4rem', fontSize: '11px' }}
+                        onClick={() => dispatch({ type: 'SET_PRESET', qIndex: qi, preset: 'mc4' })}
+                      >
+                        4 Choices
+                      </button>
+                    </div>
+                  </div>
+
                   {q.options.map((opt, oi) => (
                     <div key={oi} style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)' }}>
                       <button
@@ -655,8 +780,29 @@ export default function LiveQuizCard({
                         placeholder={`Option ${LETTERS[oi]}…`}
                         style={{ flex: 1 }}
                       />
+                      {q.options.length > 2 && (
+                        <button
+                          type="button"
+                          className="ghost danger"
+                          style={{ padding: '0.2rem 0.4rem', fontSize: '11px' }}
+                          onClick={() => dispatch({ type: 'REMOVE_OPTION', qIndex: qi, optIndex: oi })}
+                        >
+                          ✕
+                        </button>
+                      )}
                     </div>
                   ))}
+
+                  {q.options.length < 6 && (
+                    <button
+                      type="button"
+                      className="ghost"
+                      style={{ alignSelf: 'flex-start', padding: '0.2rem 0.5rem', fontSize: 'var(--font-size-xs)' }}
+                      onClick={() => dispatch({ type: 'ADD_OPTION', qIndex: qi })}
+                    >
+                      + Add option choice
+                    </button>
+                  )}
 
                   {/* Context note */}
                   <label style={{ marginTop: 'var(--space-1)' }}>
@@ -671,14 +817,69 @@ export default function LiveQuizCard({
               </div>
             ))}
 
-            <button
-              type="button"
-              className="ghost"
-              onClick={() => dispatch({ type: 'ADD_QUESTION' })}
-              style={{ alignSelf: 'flex-start' }}
-            >
-              + Add question
-            </button>
+            <div style={{ display: 'flex', gap: 'var(--space-2)', flexWrap: 'wrap' }}>
+              <button
+                type="button"
+                className="ghost"
+                onClick={() => dispatch({ type: 'ADD_QUESTION' })}
+              >
+                + Add question
+              </button>
+              {classId && (
+                <button
+                  type="button"
+                  className="ghost"
+                  onClick={handleFetchBank}
+                >
+                  Import from Question Bank
+                </button>
+              )}
+            </div>
+
+            {showQuestionBank && (
+              <div style={{
+                background: 'var(--bg-card)',
+                border: '1px solid var(--border-bright)',
+                borderRadius: 'var(--radius-md)',
+                padding: 'var(--space-3)',
+                marginTop: 'var(--space-2)',
+              }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--space-2)' }}>
+                  <span style={{ fontWeight: 600, fontSize: 'var(--font-size-sm)' }}>Classroom Question Bank</span>
+                  <button type="button" className="ghost" style={{ padding: '0.1rem 0.4rem' }} onClick={() => setShowQuestionBank(false)}>Close</button>
+                </div>
+                {loadingBank ? (
+                  <p style={{ fontSize: 'var(--font-size-xs)', color: 'var(--text-muted)' }}>Loading saved questions…</p>
+                ) : bankQuestions.length === 0 ? (
+                  <p style={{ fontSize: 'var(--font-size-xs)', color: 'var(--text-muted)' }}>No saved questions found in this classroom.</p>
+                ) : (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-2)', maxHeight: 200, overflowY: 'auto' }}>
+                    {bankQuestions.map((bq) => (
+                      <div key={bq.id} style={{
+                        display: 'flex',
+                        justify: 'space-between',
+                        alignItems: 'center',
+                        padding: 'var(--space-2)',
+                        background: 'var(--bg-surface)',
+                        borderRadius: 'var(--radius-sm)',
+                      }}>
+                        <div style={{ fontSize: 'var(--font-size-xs)', flex: 1, paddingRight: 'var(--space-2)' }}>
+                          <strong>{bq.prompt}</strong> ({bq.answers?.length || 0} choices)
+                        </div>
+                        <button
+                          type="button"
+                          className="ghost"
+                          style={{ padding: '0.2rem 0.5rem', fontSize: 'var(--font-size-xs)' }}
+                          onClick={() => handleImportBankQuestion(bq)}
+                        >
+                          + Add
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
           </div>
 
           {backendError && (
@@ -999,7 +1200,10 @@ export default function LiveQuizCard({
         </div>
 
         {owned && (
-          <div className="quiz-footer">
+          <div className="quiz-footer" style={{ gap: 'var(--space-2)' }}>
+            <button type="button" className="ghost" onClick={handleExportCSV}>
+              Export CSV
+            </button>
             <button type="button" className="ghost" onClick={() => dispatch({ type: 'RESET' })}>
               Clear quiz
             </button>
