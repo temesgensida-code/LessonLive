@@ -466,7 +466,7 @@ export default function StudentQuizPage({
               <span className="sq-question-label">Question {state.currentQIndex + 1}</span>
               {currentQ?.contextNote && (
                 <div className="sq-context-inline">
-                  <span aria-hidden="true"><LightBulb /></span>
+                  <span aria-hidden="true"><Lightbulb size={14} /></span>
                   <span>{currentQ.contextNote}</span>
                 </div>
               )}
