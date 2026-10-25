@@ -1,25 +1,21 @@
 import { Link } from 'react-router-dom'
-import { Radio } from 'lucide-react';
-import { ChartColumnIncreasing } from 'lucide-react';
-import { Lock } from 'lucide-react';
-import { Users } from 'lucide-react';
-import { Star } from 'lucide-react';
+import { Radio, ChartColumnIncreasing, Lock, Users, Star, Play } from 'lucide-react'
 
-/* ─── Design tokens (Stitch / Lumina Academic) ─── */
+/* ─── Harmonized Design tokens ─── */
 const T = {
-  bg: '#0b0f10',
-  bgCard: 'rgba(29, 32, 34, 0.70)',
-  bgCardHigh: 'rgba(39, 42, 44, 0.85)',
-  bgSurface: '#191c1e',
-  primary: '#4d8eff',
-  primaryDim: 'rgba(77,142,255,0.12)',
-  primaryGlow: 'rgba(77,142,255,0.35)',
+  bg: '#06090f',
+  bgCard: 'rgba(15, 23, 40, 0.75)',
+  bgCardHigh: 'rgba(19, 30, 49, 0.85)',
+  bgSurface: '#0b1120',
+  primary: '#3b82f6',
+  primaryDim: 'rgba(59, 130, 246, 0.12)',
+  primaryGlow: 'rgba(59, 130, 246, 0.35)',
   onPrimary: '#ffffff',
-  text: '#e0e3e5',
-  textSub: '#c2c6d6',
-  textMuted: '#8c909f',
-  outline: 'rgba(255,255,255,0.08)',
-  outlineMd: 'rgba(255,255,255,0.12)',
+  text: '#f1f5f9',
+  textSub: '#cbd5e1',
+  textMuted: '#8fa4be',
+  outline: 'rgba(255, 255, 255, 0.08)',
+  outlineMd: 'rgba(255, 255, 255, 0.14)',
   radius: '0.75rem',
   radiusLg: '1.25rem',
   radiusFull: '9999px',
@@ -28,7 +24,7 @@ const T = {
 const features = [
   {
     icon: (
-      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={T.primary} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={T.primary} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
         <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" />
         <path d="M23 21v-2a4 4 0 0 0-3-3.87" /><path d="M16 3.13a4 4 0 0 1 0 7.75" />
       </svg>
@@ -38,7 +34,7 @@ const features = [
   },
   {
     icon: (
-      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={T.primary} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={T.primary} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
         <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
         <polyline points="14 2 14 8 20 8" /><line x1="16" y1="13" x2="8" y2="13" />
         <line x1="16" y1="17" x2="8" y2="17" /><polyline points="10 9 9 9 8 9" />
@@ -49,7 +45,7 @@ const features = [
   },
   {
     icon: (
-      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={T.primary} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={T.primary} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
         <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
       </svg>
     ),
@@ -58,7 +54,7 @@ const features = [
   },
   {
     icon: (
-      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={T.primary} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={T.primary} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
         <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" />
         <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" />
       </svg>
@@ -87,13 +83,10 @@ const glassCard = {
 
 export default function LandingPage() {
   return (
-    <div style={{ width: '100%', overflowX: 'hidden', background: T.bg, fontFamily: "'Inter', sans-serif", color: T.text }}>
-      {/* ── Google Fonts ── */}
+    <div style={{ width: '100%', overflowX: 'hidden', background: T.bg, fontFamily: "var(--font-family, sans-serif)", color: T.text }}>
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Geist:wght@400;600;700;800&display=swap');
-
         .ll-hero-accent {
-          background: linear-gradient(135deg, #adc6ff 0%, #4d8eff 60%);
+          background: linear-gradient(135deg, #93c5fd 0%, #3b82f6 60%);
           -webkit-background-clip: text;
           -webkit-text-fill-color: transparent;
           background-clip: text;
@@ -103,20 +96,20 @@ export default function LandingPage() {
           align-items: center;
           gap: 8px;
           padding: 0.8rem 1.75rem;
-          background: #4d8eff;
+          background: var(--primary, #3b82f6);
           color: #fff;
-          font-family: 'Geist', sans-serif;
-          font-size: 0.9rem;
+          font-size: 0.95rem;
           font-weight: 600;
           border-radius: 0.5rem;
           border: none;
           cursor: pointer;
-          box-shadow: 0 0 24px rgba(77,142,255,0.4);
+          box-shadow: 0 0 24px rgba(59,130,246,0.35);
           transition: box-shadow 0.2s, transform 0.2s;
           text-decoration: none;
+          min-height: 44px;
         }
         .ll-cta-primary:hover {
-          box-shadow: 0 0 36px rgba(77,142,255,0.6);
+          box-shadow: 0 0 36px rgba(59,130,246,0.6);
           transform: translateY(-1px);
         }
         .ll-cta-primary--large {
@@ -129,38 +122,38 @@ export default function LandingPage() {
           gap: 8px;
           padding: 0.8rem 1.5rem;
           background: rgba(255,255,255,0.06);
-          color: #c2c6d6;
-          font-family: 'Geist', sans-serif;
-          font-size: 0.9rem;
+          color: var(--text-primary, #f1f5f9);
+          font-size: 0.95rem;
           font-weight: 600;
           border-radius: 0.5rem;
-          border: 1px solid rgba(255,255,255,0.12);
+          border: 1px solid rgba(255,255,255,0.14);
           cursor: pointer;
           backdrop-filter: blur(8px);
           transition: background 0.2s, border-color 0.2s, color 0.2s;
           text-decoration: none;
+          min-height: 44px;
         }
         .ll-cta-ghost:hover {
-          background: rgba(255,255,255,0.10);
-          border-color: rgba(77,142,255,0.5);
-          color: #e0e3e5;
+          background: rgba(255,255,255,0.12);
+          border-color: rgba(59,130,246,0.5);
+          color: #ffffff;
         }
         .ll-feature-card {
-          background: rgba(29,32,34,0.6);
-          border: 1px solid rgba(255,255,255,0.08);
+          background: var(--bg-card, #0f1728);
+          border: 1px solid var(--border, #1e2d44);
           border-radius: 1.25rem;
           padding: 2rem;
           backdrop-filter: blur(12px);
           transition: border-color 0.2s, box-shadow 0.2s, transform 0.2s;
         }
         .ll-feature-card:hover {
-          border-color: rgba(77,142,255,0.35);
-          box-shadow: 0 0 32px rgba(77,142,255,0.12);
+          border-color: rgba(59,130,246,0.4);
+          box-shadow: 0 0 32px rgba(59,130,246,0.15);
           transform: translateY(-3px);
         }
         .ll-step-card {
-          background: rgba(29,32,34,0.6);
-          border: 1px solid rgba(255,255,255,0.08);
+          background: var(--bg-card, #0f1728);
+          border: 1px solid var(--border, #1e2d44);
           border-radius: 1.25rem;
           padding: 2rem;
           backdrop-filter: blur(12px);
@@ -168,28 +161,46 @@ export default function LandingPage() {
           transition: border-color 0.2s;
         }
         .ll-step-card:hover {
-          border-color: rgba(77,142,255,0.3);
+          border-color: rgba(59,130,246,0.4);
+        }
+        .ll-play-btn {
+          width: 64px;
+          height: 64px;
+          border-radius: 50%;
+          background: rgba(59,130,246,0.18);
+          border: 2px solid rgba(59,130,246,0.5);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          cursor: pointer;
+          margin: 0 auto 1rem;
+          box-shadow: 0 0 40px rgba(59,130,246,0.35);
+          backdrop-filter: blur(12px);
+          transition: transform 0.2s, box-shadow 0.2s;
+          color: #ffffff;
+        }
+        .ll-play-btn:hover {
+          transform: scale(1.08);
+          box-shadow: 0 0 60px rgba(59,130,246,0.6);
         }
         .ll-logo-badge {
-          color: #8c909f;
-          font-family: 'Geist', sans-serif;
-          font-size: 1rem;
-          font-weight: 600;
-          letter-spacing: 0.02em;
+          color: var(--text-muted, #8fa4be);
+          font-size: 1.05rem;
+          font-weight: 700;
+          letter-spacing: 0.05em;
           transition: color 0.2s;
         }
-        .ll-logo-badge:hover { color: #c2c6d6; }
-
+        .ll-logo-badge:hover { color: var(--text-primary, #f1f5f9); }
         .ll-trust-divider {
           width: 1px;
           height: 1.2rem;
-          background: rgba(255,255,255,0.12);
+          background: rgba(255,255,255,0.16);
         }
         @media (max-width: 900px) {
           .ll-hero-layout { flex-direction: column !important; text-align: center; }
           .ll-hero-inner { max-width: 100% !important; }
           .ll-hero-cta { justify-content: center !important; }
-          .ll-hero-badge { margin: 0 auto var(--space-6) !important; }
+          .ll-hero-badge { margin: 0 auto 1.5rem !important; }
           .ll-preview-wrap { width: 100% !important; max-width: 380px; margin: 0 auto; }
           .ll-features-grid { grid-template-columns: repeat(2,1fr) !important; }
           .ll-steps-row { grid-template-columns: 1fr !important; }
@@ -213,7 +224,7 @@ export default function LandingPage() {
         <div style={{
           position: 'absolute', top: '-200px', left: '50%', transform: 'translateX(-50%)',
           width: '900px', height: '600px', borderRadius: '50%',
-          background: 'radial-gradient(ellipse, rgba(77,142,255,0.13) 0%, transparent 65%)',
+          background: 'radial-gradient(ellipse, rgba(59,130,246,0.12) 0%, transparent 65%)',
           pointerEvents: 'none',
         }} aria-hidden="true" />
 
@@ -230,124 +241,136 @@ export default function LandingPage() {
               padding: '0.35rem 0.9rem',
               border: `1px solid ${T.outlineMd}`,
               borderRadius: T.radiusFull,
-              background: 'rgba(77,142,255,0.08)',
-              color: '#adc6ff',
-              fontSize: '0.72rem', fontFamily: "'Geist', sans-serif",
+              background: 'rgba(59,130,246,0.08)',
+              color: '#93c5fd',
+              fontSize: '0.75rem',
               fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase',
               marginBottom: '1.5rem',
             }}>
-              <span style={{ width: 6, height: 6, borderRadius: '50%', background: T.primary, flexShrink: 0 }} />
+              <span style={{ width: 6, height: 6, borderRadius: '50%', background: T.primary, flexShrink: 0 }} aria-hidden="true" />
               Built for modern classrooms
             </div>
 
             <h1 className="ll-hero-title" style={{
-              fontFamily: "'Geist', sans-serif",
-              fontSize: '3.2rem', fontWeight: 700, lineHeight: 1.1,
-              letterSpacing: '-0.025em', marginBottom: '1.25rem', color: T.text,
+              fontSize: '3.25rem', fontWeight: 800,
+              letterSpacing: '-0.03em', lineHeight: 1.15,
+              color: T.text, marginBottom: '1.25rem',
             }}>
-              Teach smarter,<br />
-              <span className="ll-hero-accent">connect deeper.</span>
+              Interactive learning <br />
+              <span className="ll-hero-accent">in real time.</span>
             </h1>
 
             <p style={{
-              fontSize: '1.1rem', color: T.textSub, lineHeight: 1.65,
-              marginBottom: '2rem', maxWidth: '460px',
+              fontSize: '1.1rem', color: T.textSub,
+              lineHeight: 1.65, marginBottom: '2.5rem',
             }}>
-              LessonLive brings live audio, shared notes, and interactive quizzes into one
-              seamless classroom experience — for teachers and students.
+              Audio streaming, instant quizzes, and shared lecture notes — designed for teachers who demand active student engagement.
             </p>
 
             <div className="ll-hero-cta" style={{ display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap', marginBottom: '1rem' }}>
-              <Link to="/auth" className="ll-cta-primary">
-                Get started free →
+              <Link to="/auth" className="ll-cta-primary ll-cta-primary--large">
+                Get started free <span aria-hidden="true">→</span>
               </Link>
               <a href="#features" className="ll-cta-ghost">
-                See how it works
+                Explore features
               </a>
             </div>
 
-            <p style={{ fontSize: '0.75rem', color: T.textMuted }}>
-              No credit card required · Free for teachers
+            <p style={{ fontSize: '0.8rem', color: T.textMuted }}>
+              No credit card required · Free for individual teachers
             </p>
           </div>
 
-          {/* Right: floating preview card */}
-          <div className="ll-preview-wrap" style={{ flexShrink: 0, width: '380px' }}>
+          {/* Right preview card */}
+          <div className="ll-preview-wrap" style={{ flex: '0 0 420px' }}>
             <div style={{
               ...glassCard,
-              boxShadow: '0 24px 64px rgba(0,0,0,0.5), 0 0 40px rgba(77,142,255,0.10)',
+              padding: '1.5rem',
+              boxShadow: '0 24px 64px rgba(0,0,0,0.6), 0 0 40px rgba(59,130,246,0.1)',
             }}>
-              {/* Topbar */}
+              {/* Header of card */}
               <div style={{
-                display: 'flex', alignItems: 'center', gap: '8px',
-                padding: '0.75rem 1rem',
-                background: 'rgba(15,18,20,0.8)',
-                borderBottom: `1px solid ${T.outline}`,
-                borderRadius: `${T.radiusLg} ${T.radiusLg} 0 0`,
+                display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                paddingBottom: '1rem', borderBottom: `1px solid ${T.outline}`,
+                marginBottom: '1rem',
               }}>
-                <span style={{ width: 10, height: 10, borderRadius: '50%', background: '#f87171' }} />
-                <span style={{ width: 10, height: 10, borderRadius: '50%', background: '#fbbf24' }} />
-                <span style={{ width: 10, height: 10, borderRadius: '50%', background: '#4ade80' }} />
-                <span style={{ flex: 1, fontSize: '0.72rem', fontWeight: 600, color: T.textSub, textAlign: 'center', fontFamily: "'Geist', sans-serif" }}>
-                  Biology 101 · Live
-                </span>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <span style={{
+                    width: 8, height: 8, borderRadius: '50%',
+                    background: '#22c55e', display: 'inline-block',
+                  }} aria-hidden="true" />
+                  <span style={{ fontSize: '0.82rem', fontWeight: 600, color: T.text }}>
+                    Live Session
+                  </span>
+                </div>
                 <span style={{
-                  fontSize: '0.65rem', fontWeight: 700, color: '#f87171',
-                  background: 'rgba(248,113,113,0.12)', border: '1px solid rgba(248,113,113,0.25)',
-                  borderRadius: '4px', padding: '2px 6px', letterSpacing: '0.05em',
-                  fontFamily: "'Geist', sans-serif",
+                  fontSize: '0.72rem', padding: '0.2rem 0.55rem',
+                  background: 'rgba(239,68,68,0.15)', color: '#f87171',
+                  borderRadius: T.radiusFull, fontWeight: 700,
+                  border: '1px solid rgba(239,68,68,0.3)',
+                  display: 'flex', alignItems: 'center', gap: '4px',
                 }}>
-                  <Radio /> LIVE
+                  <Radio size={14} aria-hidden="true" /> LIVE
                 </span>
               </div>
 
-              {/* Body */}
-              <div style={{ padding: '1rem', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-                {/* Note */}
-                <div style={{
-                  background: 'rgba(15,18,20,0.6)',
-                  border: `1px solid ${T.outline}`,
-                  borderRadius: '0.75rem', padding: '0.75rem 1rem',
-                }}>
-                  <strong style={{ display: 'block', fontSize: '0.7rem', fontWeight: 700, color: T.primary, marginBottom: '0.25rem', fontFamily: "'Geist', sans-serif", letterSpacing: '0.04em' }}>
-                    Today's topic
-                  </strong>
-                  <p style={{ fontSize: '0.75rem', color: T.textSub, lineHeight: 1.5, margin: 0 }}>
-                    Cell division and mitosis — phases, checkpoints, and regulation.
-                  </p>
-                </div>
+              {/* Classroom name */}
+              <div style={{ marginBottom: '1rem' }}>
+                <p style={{ fontSize: '0.72rem', color: T.textMuted, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '0.25rem' }}>
+                  Current Class
+                </p>
+                <p style={{ fontSize: '1.05rem', fontWeight: 700, color: T.text }}>
+                  AP Biology · Period 3
+                </p>
+                <p style={{ fontSize: '0.8rem', color: T.textSub }}>
+                  Teacher: Dr. Aris Thorne
+                </p>
+              </div>
 
-                {/* Chat */}
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                  <div style={{
-                    alignSelf: 'flex-start', maxWidth: '80%',
-                    background: 'rgba(39,42,44,0.8)', border: `1px solid ${T.outline}`,
-                    borderRadius: '0.75rem 0.75rem 0.75rem 2px',
-                    padding: '0.4rem 0.75rem', fontSize: '0.72rem', color: T.textSub, lineHeight: 1.4,
-                  }}>
-                    How long does S phase take?
-                  </div>
-                  <div style={{
-                    alignSelf: 'flex-end', maxWidth: '80%',
-                    background: T.primary,
-                    borderRadius: '0.75rem 0.75rem 2px 0.75rem',
-                    padding: '0.4rem 0.75rem', fontSize: '0.72rem', color: '#fff', lineHeight: 1.4,
-                  }}>
-                    Great question — roughly 6-8 hours in human cells.
-                  </div>
-                </div>
+              {/* Active note preview */}
+              <div style={{
+                background: 'rgba(59,130,246,0.06)',
+                border: '1px solid rgba(59,130,246,0.2)',
+                borderRadius: T.radius,
+                padding: '0.9rem', marginBottom: '1rem',
+              }}>
+                <span style={{ fontSize: '0.68rem', fontWeight: 700, color: T.primary, textTransform: 'uppercase', letterSpacing: '0.08em', display: 'block', marginBottom: '0.35rem' }}>
+                  Shared Note
+                </span>
+                <p style={{ fontSize: '0.85rem', color: T.text, lineHeight: 1.5, margin: 0 }}>
+                  "Key concept: Cellular respiration occurs in three main stages — glycolysis, Krebs cycle, and oxidative phosphorylation."
+                </p>
+              </div>
 
-                {/* Quiz bar */}
-                <div style={{
-                  background: 'rgba(77,142,255,0.08)',
-                  border: '1px solid rgba(77,142,255,0.2)',
-                  borderRadius: '0.5rem', padding: '0.5rem 0.75rem',
-                  fontSize: '0.72rem', color: T.primary, fontWeight: 600,
-                  fontFamily: "'Geist', sans-serif",
-                  display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                }}>
-                  <span><ChartColumnIncreasing /> Quiz active — 18/24 answered</span>
-                  <span style={{ fontSize: '0.65rem', color: T.textMuted }}>▸ ▸ ▪</span>
+              {/* Live Quiz preview */}
+              <div style={{
+                background: 'rgba(255,255,255,0.03)',
+                border: `1px solid ${T.outline}`,
+                borderRadius: T.radius,
+                padding: '0.9rem',
+              }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
+                  <span style={{ fontSize: '0.75rem', fontWeight: 600, color: T.text }}>
+                    Quick Poll · Question 1
+                  </span>
+                  <span style={{ fontSize: '0.72rem', color: '#fbbf24', fontWeight: 600 }}>
+                    18s left
+                  </span>
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+                  {['A. Cytoplasm (38%)', 'B. Mitochondria (54%)', 'C. Nucleus (8%)'].map((opt, i) => (
+                    <div key={opt} style={{
+                      padding: '0.35rem 0.65rem',
+                      borderRadius: '0.35rem',
+                      background: i === 1 ? 'rgba(59,130,246,0.18)' : 'rgba(255,255,255,0.04)',
+                      border: i === 1 ? `1px solid rgba(59,130,246,0.4)` : `1px solid ${T.outline}`,
+                      fontSize: '0.78rem',
+                      color: i === 1 ? '#93c5fd' : T.textSub,
+                      fontWeight: i === 1 ? 600 : 400,
+                    }}>
+                      {opt}
+                    </div>
+                  ))}
                 </div>
               </div>
             </div>
@@ -361,43 +384,90 @@ export default function LandingPage() {
       <div style={{
         borderTop: `1px solid ${T.outline}`,
         borderBottom: `1px solid ${T.outline}`,
-        padding: '1.5rem 3rem',
-        background: 'rgba(15,18,20,0.5)',
+        padding: '1.75rem 3rem',
+        background: 'rgba(11,17,32,0.6)',
       }}>
         <div style={{ maxWidth: '1280px', margin: '0 auto', textAlign: 'center' }}>
           <p style={{
-            fontSize: '0.65rem', fontFamily: "'Geist', sans-serif",
+            fontSize: '0.72rem',
             fontWeight: 600, letterSpacing: '0.12em', textTransform: 'uppercase',
-            color: T.textMuted, marginBottom: '1rem',
+            color: T.textMuted, marginBottom: '1.25rem',
           }}>
-            Trusted by institutions worldwide
+            Trusted by modern educators and learning institutions worldwide
           </p>
-          {/* <div className="ll-logos-row" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '2.5rem' }}>
+          <div className="ll-logos-row" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '3rem' }}>
             {logos.map((l, i) => (
-              <span key={l} style={{ display: 'flex', alignItems: 'center', gap: '2.5rem' }}>
+              <span key={l} style={{ display: 'flex', alignItems: 'center', gap: '3rem' }}>
                 <span className="ll-logo-badge">{l}</span>
-                {i < logos.length - 1 && <span className="ll-trust-divider" />}
+                {i < logos.length - 1 && <span className="ll-trust-divider" aria-hidden="true" />}
               </span>
             ))}
-          </div> */}
+          </div>
         </div>
       </div>
 
       {/* ══════════════════════════════════════
+          FEATURES
+      ══════════════════════════════════════ */}
+      <section id="features" style={{ padding: '6rem 0' }}>
+        <div className="ll-section-inner" style={{ maxWidth: '1280px', margin: '0 auto', padding: '0 3rem' }}>
+          <div style={{ textAlign: 'center', maxWidth: '640px', margin: '0 auto 4rem' }}>
+            <p style={{
+              fontSize: '0.75rem',
+              fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase',
+              color: T.primary, marginBottom: '0.75rem',
+            }}>
+              Features Built for Education
+            </p>
+            <h2 style={{
+              fontSize: '2.5rem', fontWeight: 800, letterSpacing: '-0.025em',
+              color: T.text, lineHeight: 1.2,
+            }}>
+              Everything you need to deliver engaging live lessons
+            </h2>
+          </div>
+
+          <div className="ll-features-grid" style={{
+            display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '1.5rem',
+          }}>
+            {features.map((f) => (
+              <div key={f.title} className="ll-feature-card">
+                <div style={{
+                  width: 44, height: 44, borderRadius: '0.5rem',
+                  background: T.primaryDim, border: `1px solid rgba(59,130,246,0.3)`,
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  marginBottom: '1.25rem',
+                }}>
+                  {f.icon}
+                </div>
+                <h3 style={{
+                  fontSize: '1.1rem', fontWeight: 700, color: T.text, marginBottom: '0.5rem',
+                }}>
+                  {f.title}
+                </h3>
+                <p style={{ fontSize: '0.9rem', color: T.textSub, lineHeight: 1.6 }}>
+                  {f.desc}
+                </p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ══════════════════════════════════════
           HOW IT WORKS
       ══════════════════════════════════════ */}
-      <section style={{ padding: '6rem 0' }}>
+      <section style={{ padding: '6rem 0', background: 'rgba(11,17,32,0.4)' }}>
         <div className="ll-section-inner" style={{ maxWidth: '1280px', margin: '0 auto', padding: '0 3rem' }}>
           <p style={{
-            fontSize: '0.7rem', fontFamily: "'Geist', sans-serif",
+            fontSize: '0.75rem',
             fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase',
             color: T.primary, marginBottom: '0.75rem',
           }}>
             How it works
           </p>
           <h2 style={{
-            fontFamily: "'Geist', sans-serif",
-            fontSize: '2.2rem', fontWeight: 700, letterSpacing: '-0.02em',
+            fontSize: '2.25rem', fontWeight: 800, letterSpacing: '-0.02em',
             color: T.text, marginBottom: '3rem', lineHeight: 1.2,
           }}>
             Up and running in minutes
@@ -411,20 +481,18 @@ export default function LandingPage() {
                 <span style={{
                   display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
                   width: 40, height: 40, borderRadius: '0.5rem',
-                  background: T.primaryDim, border: `1px solid rgba(77,142,255,0.3)`,
-                  color: T.primary, fontSize: '0.8rem', fontWeight: 800,
-                  fontFamily: "'Geist', sans-serif", letterSpacing: '-0.01em',
+                  background: T.primaryDim, border: `1px solid rgba(59,130,246,0.3)`,
+                  color: T.primary, fontSize: '0.85rem', fontWeight: 800,
                   marginBottom: '1.25rem',
                 }}>
                   {s.step}
                 </span>
                 <h3 style={{
-                  fontFamily: "'Geist', sans-serif",
-                  fontSize: '1rem', fontWeight: 700, color: T.text, marginBottom: '0.5rem',
+                  fontSize: '1.1rem', fontWeight: 700, color: T.text, marginBottom: '0.5rem',
                 }}>
                   {s.label}
                 </h3>
-                <p style={{ fontSize: '0.875rem', color: T.textSub, lineHeight: 1.6 }}>
+                <p style={{ fontSize: '0.9rem', color: T.textSub, lineHeight: 1.6 }}>
                   {s.desc}
                 </p>
                 {i < steps.length - 1 && (
@@ -440,272 +508,30 @@ export default function LandingPage() {
       </section>
 
       {/* ══════════════════════════════════════
-          CTA BANNER
-      ══════════════════════════════════════ */}
-      <section style={{
-        position: 'relative', overflow: 'hidden',
-        padding: '6rem 3rem',
-        background: 'rgba(15,18,20,0.6)',
-        borderTop: `1px solid ${T.outline}`,
-        borderBottom: `1px solid ${T.outline}`,
-      }}>
-        <div style={{
-          position: 'absolute', top: '50%', left: '50%',
-          transform: 'translate(-50%,-50%)',
-          width: '900px', height: '500px', borderRadius: '50%',
-          background: 'radial-gradient(ellipse, rgba(77,142,255,0.09) 0%, transparent 65%)',
-          pointerEvents: 'none',
-        }} aria-hidden="true" />
-
-        <div style={{ maxWidth: '1280px', margin: '0 auto', position: 'relative' }}>
-          {/* Inner glass card */}
-          <div style={{
-            ...glassCard,
-            padding: '3.5rem 2rem',
-            textAlign: 'center',
-            maxWidth: '760px',
-            margin: '0 auto',
-            boxShadow: '0 0 60px rgba(77,142,255,0.08)',
-          }}>
-            <h2 style={{
-              fontFamily: "'Geist', sans-serif",
-              fontSize: '2rem', fontWeight: 700, letterSpacing: '-0.025em',
-              color: T.text, marginBottom: '0.75rem', lineHeight: 1.2,
-            }}>
-              Ready to transform your classroom?
-            </h2>
-            <p style={{ fontSize: '1rem', color: T.textSub, marginBottom: '2rem' }}>
-              Join teachers already using LessonLive to deliver engaging live lessons.
-            </p>
-            <Link to="/auth" className="ll-cta-primary ll-cta-primary--large">
-              Start teaching today →
-            </Link>
-
-            {/* Trust chips */}
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '2rem', marginTop: '2rem' }}>
-              {[
-                { icon: <Lock />, label: 'Secure Portal' },
-                { icon: <Users />, label: 'Teachers are joining' },
-                { icon: <Star />, label: 'Top Rated EdTech' },
-              ].map(({ icon, label }) => (
-                <span key={label} style={{
-                  display: 'flex', alignItems: 'center', gap: '6px',
-                  fontSize: '0.75rem', color: T.textMuted,
-                  fontFamily: "'Geist', sans-serif",
-                }}>
-                  {icon} {label}
-                </span>
-              ))}
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* ══════════════════════════════════════
-          DASHBOARD MOCKUP
+          VIDEO / INTERACTIVE PREVIEW
       ══════════════════════════════════════ */}
       <section style={{ padding: '6rem 3rem' }}>
-        <div style={{ maxWidth: '1280px', margin: '0 auto' }}>
+        <div style={{ maxWidth: '1000px', margin: '0 auto', textAlign: 'center' }}>
           <div style={{
-            ...glassCard,
+            position: 'relative',
+            borderRadius: '1.5rem',
             overflow: 'hidden',
-            boxShadow: '0 32px 80px rgba(0,0,0,0.5), 0 0 60px rgba(77,142,255,0.07)',
+            border: `1px solid ${T.outlineMd}`,
+            boxShadow: '0 25px 60px rgba(0,0,0,0.6), 0 0 50px rgba(59,130,246,0.15)',
+            padding: '5rem 2rem',
+            background: 'linear-gradient(135deg, #0b1120 0%, #0f1728 100%)',
           }}>
-            {/* Mock topbar */}
-            <div style={{
-              display: 'flex', alignItems: 'center', gap: '8px',
-              padding: '0.75rem 1.25rem',
-              borderBottom: `1px solid ${T.outline}`,
-              background: 'rgba(11,15,16,0.9)',
-            }}>
-              <span style={{ width: 10, height: 10, borderRadius: '50%', background: '#f87171' }} />
-              <span style={{ width: 10, height: 10, borderRadius: '50%', background: '#fbbf24' }} />
-              <span style={{ width: 10, height: 10, borderRadius: '50%', background: '#4ade80' }} />
-              <div style={{
-                flex: 1, marginLeft: '0.75rem',
-                background: 'rgba(255,255,255,0.05)', border: `1px solid ${T.outline}`,
-                borderRadius: '0.35rem', padding: '0.25rem 0.75rem',
-                fontSize: '0.72rem', color: T.textMuted, maxWidth: '280px',
-                fontFamily: "'Geist', sans-serif",
-              }}>
-                app.lessonlive.com/dashboard
-              </div>
-            </div>
-
-            <div className="ll-dashboard-mockup" style={{
-              height: '280px',
-              background: 'linear-gradient(135deg, #0d1520 0%, #101820 40%, #0a1020 100%)',
-              display: 'grid', gridTemplateColumns: '1fr 1fr 1fr',
-              padding: '1.5rem', gap: '1rem',
-            }}>
-              {/* Chart 1 — bar */}
-              <div style={{
-                ...glassCard, padding: '1rem', display: 'flex', flexDirection: 'column', gap: '0.5rem',
-              }}>
-                <span style={{ fontSize: '0.65rem', color: T.textMuted, fontFamily: "'Geist', sans-serif", fontWeight: 600, letterSpacing: '0.06em', textTransform: 'uppercase' }}>
-                  Weekly Engagement
-                </span>
-                <div style={{ flex: 1, display: 'flex', alignItems: 'flex-end', gap: '6px', paddingTop: '0.5rem' }}>
-                  {[55, 80, 65, 90, 72, 88, 95].map((h, i) => (
-                    <div key={i} style={{
-                      flex: 1, height: `${h}%`,
-                      background: i === 6
-                        ? `linear-gradient(to top, ${T.primary}, rgba(77,142,255,0.4))`
-                        : `rgba(77,142,255,${0.15 + i * 0.04})`,
-                      borderRadius: '3px 3px 0 0',
-                    }} />
-                  ))}
-                </div>
-              </div>
-
-              {/* Chart 2 — area */}
-              <div style={{
-                ...glassCard, padding: '1rem', display: 'flex', flexDirection: 'column', gap: '0.5rem',
-              }}>
-                <span style={{ fontSize: '0.65rem', color: T.textMuted, fontFamily: "'Geist', sans-serif", fontWeight: 600, letterSpacing: '0.06em', textTransform: 'uppercase' }}>
-                  Active Students
-                </span>
-                <div style={{ flex: 1, position: 'relative', overflow: 'hidden', paddingTop: '0.5rem' }}>
-                  <svg viewBox="0 0 100 60" preserveAspectRatio="none" style={{ width: '100%', height: '100%' }}>
-                    <defs>
-                      <linearGradient id="areaGrad" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stopColor="#4d8eff" stopOpacity="0.35" />
-                        <stop offset="100%" stopColor="#4d8eff" stopOpacity="0.02" />
-                      </linearGradient>
-                    </defs>
-                    <path d="M0,55 C10,50 20,35 30,30 C40,25 50,40 60,28 C70,16 80,10 100,5 L100,60 Z" fill="url(#areaGrad)" />
-                    <path d="M0,55 C10,50 20,35 30,30 C40,25 50,40 60,28 C70,16 80,10 100,5" fill="none" stroke="#4d8eff" strokeWidth="1.5" />
-                  </svg>
-                </div>
-              </div>
-
-              {/* Stats */}
-              <div style={{
-                ...glassCard, padding: '1rem', display: 'flex', flexDirection: 'column', justifyContent: 'space-between',
-              }}>
-                <span style={{ fontSize: '0.65rem', color: T.textMuted, fontFamily: "'Geist', sans-serif", fontWeight: 600, letterSpacing: '0.06em', textTransform: 'uppercase' }}>
-                  Quick Stats
-                </span>
-                {[
-                  { label: 'Classes today', val: '4' },
-                  { label: 'Students online', val: '124' },
-                  { label: 'Avg. score', val: '91%' },
-                ].map(({ label, val }) => (
-                  <div key={label} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <span style={{ fontSize: '0.72rem', color: T.textSub }}>{label}</span>
-                    <span style={{ fontSize: '0.9rem', fontWeight: 700, color: T.text, fontFamily: "'Geist', sans-serif" }}>{val}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* ══════════════════════════════════════
-          FEATURES
-      ══════════════════════════════════════ */}
-      <section id="features" style={{
-        padding: '6rem 0',
-        background: 'rgba(15,18,20,0.5)',
-        borderTop: `1px solid ${T.outline}`,
-        borderBottom: `1px solid ${T.outline}`,
-      }}>
-        <div className="ll-section-inner" style={{ maxWidth: '1280px', margin: '0 auto', padding: '0 3rem' }}>
-          <p style={{
-            fontSize: '0.7rem', fontFamily: "'Geist', sans-serif",
-            fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase',
-            color: T.primary, marginBottom: '0.75rem',
-          }}>
-            Features
-          </p>
-          <h2 style={{
-            fontFamily: "'Geist', sans-serif",
-            fontSize: '2.2rem', fontWeight: 700, letterSpacing: '-0.02em',
-            color: T.text, marginBottom: '3rem', lineHeight: 1.2,
-          }}>
-            Everything you need to run a live class
-          </h2>
-
-          <div className="ll-features-grid" style={{
-            display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: '1rem',
-          }}>
-            {features.map((f) => (
-              <div key={f.title} className="ll-feature-card">
-                <div style={{
-                  width: 44, height: 44, borderRadius: '0.75rem',
-                  background: T.primaryDim, border: `1px solid rgba(77,142,255,0.2)`,
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  marginBottom: '1.25rem', flexShrink: 0,
-                }}>
-                  {f.icon}
-                </div>
-                <h3 style={{
-                  fontFamily: "'Geist', sans-serif",
-                  fontSize: '0.95rem', fontWeight: 700, color: T.text, marginBottom: '0.5rem',
-                }}>
-                  {f.title}
-                </h3>
-                <p style={{ fontSize: '0.85rem', color: T.textSub, lineHeight: 1.65 }}>
-                  {f.desc}
-                </p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ══════════════════════════════════════
-          VIDEO SECTION
-      ══════════════════════════════════════ */}
-      <section style={{ padding: '6rem 3rem' }}>
-        <div style={{ maxWidth: '1280px', margin: '0 auto' }}>
-          <div style={{
-            ...glassCard,
-            height: '320px', position: 'relative', overflow: 'hidden',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            boxShadow: '0 24px 64px rgba(0,0,0,0.5)',
-          }}>
-            {/* Faux cinematic background */}
-            <div style={{
-              position: 'absolute', inset: 0,
-              background: 'linear-gradient(135deg, #080e18 0%, #0a121e 50%, #060d15 100%)',
-            }} />
-            <div style={{
-              position: 'absolute', inset: 0,
-              backgroundImage: `
-                repeating-linear-gradient(0deg, transparent, transparent 39px, rgba(77,142,255,0.04) 40px),
-                repeating-linear-gradient(90deg, transparent, transparent 39px, rgba(77,142,255,0.04) 40px)
-              `,
-            }} />
-            {/* Overlay gradient fade */}
-            <div style={{
-              position: 'absolute', inset: 0,
-              background: 'linear-gradient(to top, rgba(11,15,16,0.7) 0%, transparent 50%, rgba(11,15,16,0.5) 100%)',
-            }} />
-
             {/* Play button */}
             <div style={{ position: 'relative', zIndex: 1, textAlign: 'center' }}>
-              <button style={{
-                width: 64, height: 64, borderRadius: '50%',
-                background: 'rgba(77,142,255,0.15)',
-                border: `1px solid rgba(77,142,255,0.4)`,
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                cursor: 'pointer', margin: '0 auto 1rem',
-                boxShadow: '0 0 40px rgba(77,142,255,0.3)',
-                backdropFilter: 'blur(12px)',
-                transition: 'transform 0.2s, box-shadow 0.2s',
-              }}
-                onMouseEnter={e => { e.currentTarget.style.transform = 'scale(1.08)'; e.currentTarget.style.boxShadow = '0 0 60px rgba(77,142,255,0.5)'; }}
-                onMouseLeave={e => { e.currentTarget.style.transform = 'scale(1)'; e.currentTarget.style.boxShadow = '0 0 40px rgba(77,142,255,0.3)'; }}
+              <button
+                type="button"
+                className="ll-play-btn"
+                aria-label="Preview LessonLive classroom interactive demo"
               >
-                <svg width="22" height="22" viewBox="0 0 24 24" fill={T.primary}>
-                  <polygon points="5 3 19 12 5 21 5 3" />
-                </svg>
+                <Play fill="#ffffff" size={26} aria-hidden="true" style={{ marginLeft: 4 }} />
               </button>
               <p style={{
-                fontSize: '0.8rem', color: T.textSub,
-                fontFamily: "'Geist', sans-serif", fontWeight: 500,
+                fontSize: '0.95rem', color: T.textSub, fontWeight: 600,
               }}>
                 Experience LessonLive in Action
               </p>
@@ -714,36 +540,61 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ── Footer ── */}
-      <footer style={{
-        display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '0.5rem',
-        padding: '1.5rem 3rem',
+      {/* ══════════════════════════════════════
+          CTA BANNER
+      ══════════════════════════════════════ */}
+      <section style={{
+        position: 'relative', overflow: 'hidden',
+        padding: '6rem 3rem',
+        background: 'rgba(11,17,32,0.7)',
         borderTop: `1px solid ${T.outline}`,
-        maxWidth: '1280px', margin: '0 auto',
       }}>
-        <div>
-          <span style={{
-            fontFamily: "'Geist', sans-serif", fontSize: '0.9rem', fontWeight: 700,
-            letterSpacing: '-0.02em', color: T.primary,
+        <div style={{ maxWidth: '760px', margin: '0 auto', textAlign: 'center' }}>
+          <h2 style={{
+            fontSize: '2.25rem', fontWeight: 800, letterSpacing: '-0.025em',
+            color: T.text, marginBottom: '0.75rem', lineHeight: 1.2,
           }}>
-            LessonLive
-          </span>
-          <p style={{ fontSize: '0.72rem', color: T.textMuted, marginTop: '0.2rem' }}>
-            Transforming the next generation of educators through real-time digital engagement.
+            Ready to transform your classroom?
+          </h2>
+          <p style={{ fontSize: '1.05rem', color: T.textSub, marginBottom: '2rem' }}>
+            Join teachers and students already using LessonLive to deliver engaging live lessons.
           </p>
+          <Link to="/auth" className="ll-cta-primary ll-cta-primary--large">
+            Start teaching today →
+          </Link>
+
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '2rem', marginTop: '2.5rem' }}>
+            {[
+              { icon: <Lock size={16} aria-hidden="true" />, label: 'Secure Portal' },
+              { icon: <Users size={16} aria-hidden="true" />, label: 'Teachers are joining' },
+              { icon: <Star size={16} aria-hidden="true" />, label: 'Top Rated EdTech' },
+            ].map(({ icon, label }) => (
+              <span key={label} style={{
+                display: 'flex', alignItems: 'center', gap: '6px',
+                fontSize: '0.82rem', color: T.textMuted,
+              }}>
+                {icon} {label}
+              </span>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ─── Footer ─── */}
+      <footer style={{
+        display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '1rem',
+        padding: '2rem 3rem',
+        borderTop: `1px solid ${T.outline}`,
+        background: '#06090f',
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <span style={{ fontWeight: 800, color: T.text, fontSize: '1.05rem' }}>LessonLive</span>
+          <span style={{ fontSize: '0.8rem', color: T.textMuted }}>© {new Date().getFullYear()} LessonLive. All rights reserved.</span>
         </div>
         <div style={{ display: 'flex', gap: '2rem', flexWrap: 'wrap' }}>
-          {['Privacy Policy', 'Terms of Service', 'Help Center', 'Contact Us'].map(l => (
-            <a key={l} href="#" style={{ fontSize: '0.75rem', color: T.textMuted, textDecoration: 'none', transition: 'color 0.2s' }}
-              onMouseEnter={e => e.currentTarget.style.color = T.textSub}
-              onMouseLeave={e => e.currentTarget.style.color = T.textMuted}>
-              {l}
-            </a>
-          ))}
+          <a href="#features" style={{ fontSize: '0.85rem', color: T.textMuted, transition: 'color 0.2s' }}>Features</a>
+          <Link to="/auth" style={{ fontSize: '0.85rem', color: T.textMuted, transition: 'color 0.2s' }}>Sign In</Link>
         </div>
-        <span style={{ fontSize: '0.72rem', color: T.textMuted }}>
-          © {new Date().getFullYear()} LessonLive. All rights reserved.
-        </span>
       </footer>
     </div>
   )

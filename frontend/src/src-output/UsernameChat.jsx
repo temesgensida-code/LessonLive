@@ -1,149 +1,109 @@
-import { useEffect, useRef, useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useRoomContext } from '@livekit/components-react'
-import { DataPacket_Kind, RoomEvent } from 'livekit-client'
 import { FiSend } from 'react-icons/fi'
+import { Smile } from 'lucide-react'
 
 const CHAT_TOPIC = 'lessonlive-chat'
-const EMOJI_CHOICES = ['😀', '😂', '😍', '😎', '🤔', '👍', '👏', '🙏', '🎉', '🔥', '❤️', '✅']
-const CHAT_HISTORY_LIMIT = 50
-const CHAT_STORAGE_PREFIX = 'lessonlive-chat-history'
+const MAX_MESSAGES = 100
+const EMOJI_CHOICES = ['👍', '👋', '🎉', '❤️', '🔥', '🤔', '🙌', '💡', '✅', '🚀', '👏', '⭐']
 
-function getParticipantName(participant) {
-  if (!participant) return 'Unknown'
-  const name = (participant.name || '').trim()
-  if (name) return name
-  const identity = (participant.identity || '').trim()
-  if (!identity) return 'Unknown'
-  return identity.includes('@') ? identity.split('@')[0] : identity
-}
-
-function getParticipantRole(participant) {
-  const metadata = participant?.metadata
-  if (!metadata) return null
-  if (metadata === 'teacher' || metadata === 'student') return metadata
+function safeParsePayload(payload) {
   try {
-    return JSON.parse(metadata)?.role || null
+    return JSON.parse(payload)
   } catch {
     return null
   }
 }
 
-function keepRecentMessages(items) {
-  return items.slice(-CHAT_HISTORY_LIMIT)
+function keepRecentMessages(messages) {
+  if (messages.length <= MAX_MESSAGES) return messages
+  return messages.slice(messages.length - MAX_MESSAGES)
 }
 
-function getResolvedStorageKey(chatStorageKey, room) {
-  const scope = chatStorageKey || room?.name || room?.sid || room?.metadata || 'default'
-  return `${CHAT_STORAGE_PREFIX}:${scope}`
-}
-
-export default function UsernameChat({ isTeacher = false, chatStorageKey = '' }) {
+export default function UsernameChat({ chatStorageKey, isTeacher = false }) {
   const room = useRoomContext()
   const [messages, setMessages] = useState([])
   const [draft, setDraft] = useState('')
   const [isEmojiPickerOpen, setIsEmojiPickerOpen] = useState(false)
-  const [historyReady, setHistoryReady] = useState(false)
-  const emojiPickerRef = useRef(null)
   const listRef = useRef(null)
-  const localIdentity = room?.localParticipant?.identity || ''
-  const localName = getParticipantName(room?.localParticipant)
-  const resolvedStorageKey = getResolvedStorageKey(chatStorageKey, room)
+  const emojiPickerRef = useRef(null)
+  const emojiButtonRef = useRef(null)
 
-  // Load history
-  useEffect(() => {
-    setHistoryReady(false)
-    try {
-      const raw = window.localStorage.getItem(resolvedStorageKey)
-      if (!raw) { setMessages([]); setHistoryReady(true); return }
-      const parsed = JSON.parse(raw)
-      if (!Array.isArray(parsed)) { setMessages([]); setHistoryReady(true); return }
-      const normalized = parsed
-        .filter((item) => item && item.id && item.text)
-        .map((item) => ({
-          id: item.id,
-          sender: item.sender || 'Unknown',
-          senderIdentity: item.senderIdentity || '',
-          senderRole: item.senderRole || null,
-          text: item.text,
-        }))
-      setMessages(keepRecentMessages(normalized))
-    } catch {
-      setMessages([])
-    } finally {
-      setHistoryReady(true)
-    }
-  }, [resolvedStorageKey])
+  const localParticipant = room?.localParticipant
+  const localIdentity = localParticipant?.identity || ''
+  const localName = localParticipant?.name || (isTeacher ? 'Teacher' : 'Student')
 
-  // Persist history
-  useEffect(() => {
-    if (!historyReady) return
-    try {
-      window.localStorage.setItem(resolvedStorageKey, JSON.stringify(keepRecentMessages(messages)))
-    } catch { /* ignore */ }
-  }, [historyReady, messages, resolvedStorageKey])
-
-  // Auto-scroll to latest message
+  // Auto-scroll to bottom on new message
   useEffect(() => {
     if (listRef.current) {
       listRef.current.scrollTop = listRef.current.scrollHeight
     }
   }, [messages])
 
-  // Close emoji picker on outside click
+  // Escape key handler to close emoji picker
   useEffect(() => {
-    if (!isEmojiPickerOpen) return undefined
-    const handleOutside = (e) => {
-      if (!emojiPickerRef.current?.contains(e.target)) {
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape' && isEmojiPickerOpen) {
+        setIsEmojiPickerOpen(false)
+        emojiButtonRef.current?.focus()
+      }
+    }
+
+    const handleClickOutside = (e) => {
+      if (emojiPickerRef.current && !emojiPickerRef.current.contains(e.target)) {
         setIsEmojiPickerOpen(false)
       }
     }
-    document.addEventListener('pointerdown', handleOutside)
-    return () => document.removeEventListener('pointerdown', handleOutside)
+
+    window.addEventListener('keydown', handleKeyDown)
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown)
+      document.removeEventListener('mousedown', handleClickOutside)
+    }
   }, [isEmojiPickerOpen])
 
-  // Receive messages
+  // Handle incoming LiveKit data messages
   useEffect(() => {
-    if (!room) return undefined
+    if (!room) return
 
-    const handleData = (payload, participant, kind, topic) => {
-      if (kind !== DataPacket_Kind.RELIABLE || topic !== CHAT_TOPIC) return
-      try {
-        const raw = new TextDecoder().decode(payload)
-        const parsed = JSON.parse(raw)
-        if (!parsed?.id || !parsed?.text) return
-        setMessages((prev) => {
-          if (prev.some((item) => item.id === parsed.id)) return prev
-          return keepRecentMessages([
-            ...prev,
-            {
-              id: parsed.id,
-              sender: parsed.sender && parsed.sender !== 'Unknown'
-                ? parsed.sender
-                : getParticipantName(participant),
-              senderIdentity: parsed.senderIdentity || participant?.identity || '',
-              senderRole: parsed.senderRole || getParticipantRole(participant),
-              text: parsed.text,
-            },
-          ])
-        })
-      } catch { /* ignore */ }
+    const handleDataReceived = (payload, participant, kind, topic) => {
+      if (topic !== CHAT_TOPIC) return
+
+      const text = new TextDecoder().decode(payload)
+      const data = safeParsePayload(text)
+      if (!data || !data.text) return
+
+      const incomingMsg = {
+        id: data.id || `${Date.now()}-${Math.random()}`,
+        sender: data.sender || participant?.name || 'Participant',
+        senderIdentity: participant?.identity || '',
+        senderRole: data.senderRole || (data.isTeacher ? 'teacher' : 'student'),
+        text: data.text,
+        timestamp: data.timestamp || Date.now(),
+      }
+
+      setMessages((prev) => keepRecentMessages([...prev, incomingMsg]))
     }
 
-    room.on(RoomEvent.DataReceived, handleData)
-    return () => room.off(RoomEvent.DataReceived, handleData)
+    room.on('dataReceived', handleDataReceived)
+    return () => {
+      room.off('dataReceived', handleDataReceived)
+    }
   }, [room])
 
   const handleSend = async (e) => {
     e.preventDefault()
-    const text = draft.trim()
-    if (!text || !room?.localParticipant) return
+    const trimmed = draft.trim()
+    if (!trimmed || !room?.localParticipant) return
 
     const outgoing = {
-      id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
-      sender: getParticipantName(room.localParticipant),
-      senderIdentity: room.localParticipant.identity || '',
-      senderRole: isTeacher ? 'teacher' : null,
-      text,
+      id: `${Date.now()}-${Math.random()}`,
+      sender: localName,
+      senderIdentity: localIdentity,
+      senderRole: isTeacher ? 'teacher' : 'student',
+      text: trimmed,
+      timestamp: Date.now(),
     }
 
     try {
@@ -154,20 +114,31 @@ export default function UsernameChat({ isTeacher = false, chatStorageKey = '' })
       setMessages((prev) => keepRecentMessages([...prev, outgoing]))
       setDraft('')
       setIsEmojiPickerOpen(false)
-    } catch { /* ignore */ }
+    } catch {
+      /* ignore send failure */
+    }
   }
 
   const handleInsertEmoji = (emoji) => {
     setDraft((prev) => `${prev}${emoji}`)
     setIsEmojiPickerOpen(false)
+    emojiButtonRef.current?.focus()
   }
 
   return (
     <div className="username-chat">
       {/* Message list */}
-      <div className="username-chat-list" ref={listRef}>
+      <div
+        className="username-chat-list"
+        ref={listRef}
+        tabIndex={0}
+        role="log"
+        aria-label="Classroom chat messages"
+      >
         {messages.length === 0 ? (
-          <p className="muted">No messages yet — say hello!</p>
+          <p className="muted" style={{ padding: '1rem', textAlign: 'center' }}>
+            No messages yet — say hello!
+          </p>
         ) : (
           messages.map((message) => {
             const isSelf = message.senderIdentity
@@ -202,22 +173,28 @@ export default function UsernameChat({ isTeacher = false, chatStorageKey = '' })
       </div>
 
       {/* Input area */}
-      <form className="username-chat-form" onSubmit={handleSend}>
+      <form className="username-chat-form" onSubmit={handleSend} aria-label="Send chat message">
+        <label htmlFor="chat-message-input" className="sr-only">
+          Type a message
+        </label>
         <input
+          id="chat-message-input"
           value={draft}
           onChange={(e) => setDraft(e.target.value)}
           placeholder="Type a message…"
           autoComplete="off"
+          aria-label="Type a message"
         />
         <div className="username-chat-actions" ref={emojiPickerRef}>
           <button
+            ref={emojiButtonRef}
             type="button"
             className="chatEmojiButton"
             onClick={() => setIsEmojiPickerOpen((prev) => !prev)}
             aria-label="Open emoji picker"
             aria-expanded={isEmojiPickerOpen}
           >
-            😊
+            <Smile size={18} aria-hidden="true" />
           </button>
 
           {isEmojiPickerOpen && (
@@ -226,6 +203,8 @@ export default function UsernameChat({ isTeacher = false, chatStorageKey = '' })
                 <button
                   key={emoji}
                   type="button"
+                  role="option"
+                  aria-selected="false"
                   className="chat-emoji-item"
                   onClick={() => handleInsertEmoji(emoji)}
                   aria-label={`Insert ${emoji}`}
@@ -242,7 +221,7 @@ export default function UsernameChat({ isTeacher = false, chatStorageKey = '' })
             aria-label="Send message"
             disabled={!draft.trim()}
           >
-            <FiSend size={15} />
+            <FiSend size={15} aria-hidden="true" />
           </button>
         </div>
       </form>

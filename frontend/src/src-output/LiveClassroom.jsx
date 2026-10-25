@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react'
 import {
   LiveKitRoom,
   GridLayout,
@@ -7,226 +7,318 @@ import {
   ControlBar,
   useTracks,
   useLocalParticipant,
-} from '@livekit/components-react';
-import '@livekit/components-styles';
-import { Track } from 'livekit-client';
-import { useParams } from 'react-router-dom';
-import UsernameChat from './UsernameChat';
-import { API_BASE, LIVEKIT_SERVER_URL } from './components/apiClient';
+} from '@livekit/components-react'
+import '@livekit/components-styles'
+import { Track } from 'livekit-client'
+import { useParams } from 'react-router-dom'
+import UsernameChat from './UsernameChat'
+import { API_BASE, LIVEKIT_SERVER_URL } from './components/apiClient'
+import { MessageSquare, FileText, Mic, MicOff } from 'lucide-react'
 
-const serverUrl = import.meta.env.VITE_LIVEKIT_URL || LIVEKIT_SERVER_URL;
+const serverUrl = import.meta.env.VITE_LIVEKIT_URL || LIVEKIT_SERVER_URL
+
 export default function LiveClassroom({ accessToken }) {
-  const { classId } = useParams();
-  const [token, setToken] = useState(null);
-  const [tokenLoading, setTokenLoading] = useState(true);
-  const [tokenError, setTokenError] = useState('');
-  const [isTeacher, setIsTeacher] = useState(false); 
+  const { classId } = useParams()
+  const [token, setToken] = useState(null)
+  const [tokenLoading, setTokenLoading] = useState(true)
+  const [tokenError, setTokenError] = useState('')
+  const [isTeacher, setIsTeacher] = useState(false)
 
   useEffect(() => {
     const fetchToken = async () => {
-      setTokenLoading(true);
-      setTokenError('');
+      setTokenLoading(true)
+      setTokenError('')
       try {
         const response = await fetch(`${API_BASE}/classrooms/${classId}/token/`, {
-            headers: { 'Authorization': `Bearer ${accessToken}` }
-        });
+          headers: { Authorization: `Bearer ${accessToken}` },
+        })
         if (!response.ok) {
-            setTokenError(`Unable to start live class (${response.status}).`);
-            setToken(null);
-            return;
+          setTokenError(`Unable to start live class (${response.status}).`)
+          setToken(null)
+          return
         }
-        const data = await response.json();
+        const data = await response.json()
         if (data?.livekit_enabled === false) {
-            setTokenError(data.detail || 'Live class is unavailable in this environment.');
-            setToken(null);
-            return;
+          setTokenError(data.detail || 'Live class is unavailable in this environment.')
+          setToken(null)
+          return
         }
 
         if (!data?.token) {
-            setTokenError(data?.detail || 'Unable to start live class.');
-            setToken(null);
-            return;
+          setTokenError(data?.detail || 'Unable to start live class.')
+          setToken(null)
+          return
         }
 
-        setToken(data.token);
-        
+        setToken(data.token)
+
         const userRes = await fetch(`${API_BASE}/auth/me/`, {
-            headers: { 'Authorization': `Bearer ${accessToken}` }
-        }); 
-        if(userRes.ok) {
-            const userData = await userRes.json();
-            if (userData.role === 'teacher') {
-                setIsTeacher(true);
-            }
+          headers: { Authorization: `Bearer ${accessToken}` },
+        })
+        if (userRes.ok) {
+          const userData = await userRes.json()
+          if (userData.role === 'teacher') {
+            setIsTeacher(true)
+          }
         }
       } catch (e) {
-        console.error(e);
-        setTokenError('Unable to start live class.');
-        setToken(null);
+        console.error(e)
+        setTokenError('Unable to start live class.')
+        setToken(null)
       } finally {
-        setTokenLoading(false);
+        setTokenLoading(false)
       }
-    };
-    if (accessToken) fetchToken();
-    else {
-      setTokenLoading(false);
     }
-  }, [classId, accessToken]);
+    if (accessToken) fetchToken()
+    else {
+      setTokenLoading(false)
+    }
+  }, [classId, accessToken])
 
   if (tokenLoading) {
-    return <div style={{display:'flex', justifyContent:'center', alignItems:'center', height:'100vh'}}>Loading Live Classroom...</div>;
+    return (
+      <div
+        style={{
+          display: 'flex',
+          flexDirection: 'column',
+          justifyContent: 'center',
+          alignItems: 'center',
+          height: '100vh',
+          background: 'var(--bg-base)',
+          color: 'var(--text-primary)',
+          gap: '1rem',
+        }}
+        role="status"
+        aria-label="Loading live classroom"
+      >
+        <div className="loading-spinner" aria-hidden="true" />
+        <p className="muted">Connecting to live session…</p>
+      </div>
+    )
   }
 
   if (!token) {
     return (
-      <div style={{ display:'flex', justifyContent:'center', alignItems:'center', height:'100vh', textAlign:'center', padding:'1rem' }}>
-        {tokenError || 'Live classroom is unavailable right now.'}
+      <div
+        style={{
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          height: '100vh',
+          textAlign: 'center',
+          padding: '1.5rem',
+          background: 'var(--bg-base)',
+          color: 'var(--text-primary)',
+        }}
+        role="alert"
+      >
+        <div className="card" style={{ maxWidth: '440px', padding: '2rem' }}>
+          <p className="error">{tokenError || 'Live classroom is unavailable right now.'}</p>
+        </div>
       </div>
-    );
+    )
   }
 
   return (
-    <div style={{ height: '100vh', display: 'flex', flexDirection: 'column' }}>
+    <div style={{ height: '100vh', display: 'flex', flexDirection: 'column', background: 'var(--bg-base)' }}>
       <LiveKitRoom
-        video={true} 
-        audio={true} 
+        video={true}
+        audio={true}
         token={token}
         serverUrl={serverUrl}
         data-lk-theme="default"
         style={{ flex: 1, display: 'flex' }}
       >
-        {/* Left 3/5 - Main Stage */}
-        <div style={{ flex: 3, borderRight: '1px solid #333', display: 'flex', flexDirection: 'column', background: '#000' }}>
-            <Stage />
-            <div style={{ padding: '10px', display: 'flex', justifyContent: 'center', background: '#111' }}>
-                <ControlBar variation="minimal" controls={{ screenShare: isTeacher, chat: false }} />
-            </div>
+        {/* Main Stage */}
+        <div
+          style={{
+            flex: 3,
+            borderRight: '1px solid var(--border)',
+            display: 'flex',
+            flexDirection: 'column',
+            background: 'var(--bg-base)',
+          }}
+        >
+          <Stage />
+          <div
+            style={{
+              padding: '10px',
+              display: 'flex',
+              justifyContent: 'center',
+              background: 'var(--bg-surface)',
+              borderTop: '1px solid var(--border)',
+            }}
+          >
+            <ControlBar variation="minimal" controls={{ screenShare: isTeacher, chat: false }} />
+          </div>
         </div>
 
-        {/* Right 2/5 - Sidebar */}
-        <div style={{ flexBasis: '40%', flexGrow: 2, minWidth: 0, display: 'flex', flexDirection: 'column', background: '#121212', borderLeft: '1px solid #333' }}>
+        {/* Sidebar */}
+        <div
+          style={{
+            flexBasis: '40%',
+            flexGrow: 2,
+            minWidth: 0,
+            display: 'flex',
+            flexDirection: 'column',
+            background: 'var(--bg-card)',
+            borderLeft: '1px solid var(--border)',
+          }}
+        >
           <RightPanel isTeacher={isTeacher} classId={classId} accessToken={accessToken} />
         </div>
 
         <RoomAudioRenderer />
       </LiveKitRoom>
     </div>
-  );
+  )
 }
 
 function Stage() {
-  const screenTracks = useTracks([Track.Source.ScreenShare]);
-  const cameraTracks = useTracks([Track.Source.Camera]);
-  const tracks = screenTracks.length > 0 ? screenTracks : cameraTracks;
+  const screenTracks = useTracks([Track.Source.ScreenShare])
+  const cameraTracks = useTracks([Track.Source.Camera])
+  const tracks = screenTracks.length > 0 ? screenTracks : cameraTracks
 
   return (
     <div style={{ flex: 1 }}>
-        <GridLayout tracks={tracks}>
-            <ParticipantTile />
-        </GridLayout>
+      <GridLayout tracks={tracks}>
+        <ParticipantTile />
+      </GridLayout>
     </div>
-  );
+  )
 }
 
 function RightPanel({ isTeacher, classId, accessToken }) {
-  const [teacherMode, setTeacherMode] = useState('chat');
+  const [teacherMode, setTeacherMode] = useState('chat')
 
   if (isTeacher) {
     return (
       <div style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
-         <button 
-            onClick={() => setTeacherMode(teacherMode === 'chat' ? 'notes' : 'chat')}
-            style={{
-                width: '100%',
-                padding: '20px',
-                fontSize: '18px',
-                fontWeight: 'bold',
-                backgroundColor: teacherMode === 'chat' ? '#007bff' : '#28a745',
-                color: 'white',
-                border: 'none',
-                cursor: 'pointer',
-            }}
-         >
-            {teacherMode === 'chat' ? 'Switch to Writing Note' : 'Switch to Chat'}
-         </button>
-         
-         <div style={{ flex: 1, overflow: 'hidden', position: 'relative' }}>
-            {teacherMode === 'chat' ? (
-              <UsernameChat isTeacher={isTeacher} chatStorageKey={`classroom-${classId}`} />
-            ) : (
-                 <NotesComponent classId={classId} accessToken={accessToken} />
-            )}
-         </div>
+        <button
+          type="button"
+          onClick={() => setTeacherMode(teacherMode === 'chat' ? 'notes' : 'chat')}
+          className="primary"
+          style={{
+            width: '100%',
+            padding: '14px',
+            fontSize: '15px',
+            fontWeight: 700,
+            background: teacherMode === 'chat' ? 'var(--primary)' : 'var(--success-bg)',
+            color: teacherMode === 'chat' ? '#ffffff' : 'var(--success)',
+            border: 'none',
+            borderBottom: '1px solid var(--border)',
+            borderRadius: 0,
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: '8px',
+          }}
+        >
+          {teacherMode === 'chat' ? (
+            <>
+              <FileText size={16} aria-hidden="true" /> Switch to Writing Notes
+            </>
+          ) : (
+            <>
+              <MessageSquare size={16} aria-hidden="true" /> Switch to Classroom Chat
+            </>
+          )}
+        </button>
+
+        <div style={{ flex: 1, overflow: 'hidden', position: 'relative' }}>
+          {teacherMode === 'chat' ? (
+            <UsernameChat isTeacher={isTeacher} chatStorageKey={`classroom-${classId}`} />
+          ) : (
+            <NotesComponent classId={classId} accessToken={accessToken} />
+          )}
+        </div>
       </div>
-    );
+    )
   }
 
   // Student View
   return (
     <div style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
-       <div style={{ flex: 1, overflow: 'hidden' }}>
-         <UsernameChat isTeacher={isTeacher} chatStorageKey={`classroom-${classId}`} />
-       </div>
-       
-       <div style={{ padding: '20px', backgroundColor: '#1e1e1e', borderTop: '1px solid #333' }}>
-          <h4>Audio Controls</h4>
-          <AudioStreamButton />
-       </div>
+      <div style={{ flex: 1, overflow: 'hidden' }}>
+        <UsernameChat isTeacher={isTeacher} chatStorageKey={`classroom-${classId}`} />
+      </div>
+
+      <div
+        style={{
+          padding: '16px',
+          backgroundColor: 'var(--bg-surface)',
+          borderTop: '1px solid var(--border)',
+        }}
+      >
+        <h4 style={{ marginBottom: '8px', fontSize: '0.9rem', color: 'var(--text-secondary)' }}>
+          Audio Controls
+        </h4>
+        <AudioStreamButton />
+      </div>
     </div>
-  );
+  )
 }
 
 function AudioStreamButton() {
-    const { localParticipant, isMicrophoneEnabled } = useLocalParticipant();
+  const { localParticipant, isMicrophoneEnabled } = useLocalParticipant()
 
-    const toggleAudio = async () => {
-        if (localParticipant) {
-            const desired = !isMicrophoneEnabled;
-            // Usually we enable/disable the track
-            if (desired) {
-                await localParticipant.setMicrophoneEnabled(true);
-            } else {
-                await localParticipant.setMicrophoneEnabled(false);
-            }
-        }
-    };
+  const toggleAudio = async () => {
+    if (localParticipant) {
+      const desired = !isMicrophoneEnabled
+      await localParticipant.setMicrophoneEnabled(desired)
+    }
+  }
 
-    return (
-        <button
-            onClick={toggleAudio}
-            style={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                width: '100%',
-                padding: '15px',
-                backgroundColor: isMicrophoneEnabled ? '#dc3545' : '#28a745',
-                color: 'white',
-                border: 'none',
-                borderRadius: '8px',
-                fontSize: '16px',
-                cursor: 'pointer',
-                fontWeight: 'bold'
-            }}
-        >
-            {isMicrophoneEnabled ? 'Mute Microphone' : 'Unmute Microphone'}
-        </button>
-    )
+  return (
+    <button
+      type="button"
+      onClick={toggleAudio}
+      aria-pressed={isMicrophoneEnabled}
+      style={{
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: '8px',
+        width: '100%',
+        padding: '12px',
+        backgroundColor: isMicrophoneEnabled ? 'var(--error-bg)' : 'var(--success-bg)',
+        color: isMicrophoneEnabled ? 'var(--error)' : 'var(--success)',
+        border: `1px solid ${isMicrophoneEnabled ? 'var(--error-border)' : 'var(--success-border)'}`,
+        borderRadius: 'var(--radius-md)',
+        fontSize: '15px',
+        cursor: 'pointer',
+        fontWeight: 600,
+        minHeight: '44px',
+        transition: 'background-color var(--ease-fast), border-color var(--ease-fast)',
+      }}
+    >
+      {isMicrophoneEnabled ? (
+        <>
+          <MicOff size={18} aria-hidden="true" /> Mute Microphone
+        </>
+      ) : (
+        <>
+          <Mic size={18} aria-hidden="true" /> Unmute Microphone
+        </>
+      )}
+    </button>
+  )
 }
 
 function NotesComponent({ classId, accessToken }) {
-    const [note, setNote] = useState('');
-  const [status, setStatus] = useState('');
+  const [note, setNote] = useState('')
+  const [status, setStatus] = useState('')
 
-    const handleSave = async () => {
-    const trimmed = note.trim();
+  const handleSave = async () => {
+    const trimmed = note.trim()
     if (!trimmed) {
-      setStatus('Type a note before saving.');
-      return;
+      setStatus('Type a note before saving.')
+      return
     }
 
     try {
-      setStatus('Saving...');
+      setStatus('Saving…')
       const response = await fetch(`${API_BASE}/classrooms/${classId}/notes/`, {
         method: 'POST',
         headers: {
@@ -237,54 +329,57 @@ function NotesComponent({ classId, accessToken }) {
           title: `Live note ${new Date().toLocaleString()}`,
           content: trimmed,
         }),
-      });
+      })
 
       if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        setStatus(errorData.detail || 'Unable to save note.');
-        return;
+        const errorData = await response.json().catch(() => ({}))
+        setStatus(errorData.detail || 'Unable to save note.')
+        return
       }
 
-      setStatus('Saved.');
+      setStatus('Saved successfully.')
     } catch {
-      setStatus('Unable to save note.');
+      setStatus('Unable to save note.')
     }
-    };
+  }
 
-    return (
-        <div style={{ padding: '20px', height: '100%', display: 'flex', flexDirection: 'column' }}>
-            <h3>Private Notes</h3>
-            <textarea
-                value={note}
-                onChange={(e) => setNote(e.target.value)}
-                style={{
-                    flex: 1,
-                    width: '100%',
-                    padding: '10px',
-                    marginBottom: '15px',
-                    borderRadius: '5px',
-                    border: '1px solid #ccc',
-                    resize: 'none',
-                    fontSize: '14px',
-                    fontFamily: 'sans-serif'
-                }}
-                placeholder="Type your notes regarding this class here..."
-            />
-            <button
-                onClick={handleSave}
-                style={{
-                    padding: '12px',
-                    backgroundColor: '#007bff',
-                    color: 'white',
-                    border: 'none',
-                    borderRadius: '5px',
-                    cursor: 'pointer',
-                    fontSize: '16px'
-                }}
-            >
-                Save Note
-            </button>
-            {status ? <p style={{ marginTop: '8px' }}>{status}</p> : null}
-        </div>
-    );
+  return (
+    <div style={{ padding: '20px', height: '100%', display: 'flex', flexDirection: 'column' }}>
+      <h3 style={{ marginBottom: '12px', fontSize: '1.1rem' }}>Private Notes</h3>
+      <label htmlFor="live-private-note" className="sr-only">
+        Private Notes
+      </label>
+      <textarea
+        id="live-private-note"
+        value={note}
+        onChange={(e) => setNote(e.target.value)}
+        placeholder="Take notes during the live lecture…"
+        style={{
+          flex: 1,
+          width: '100%',
+          padding: '12px',
+          marginBottom: '15px',
+          borderRadius: 'var(--radius-md)',
+          border: '1px solid var(--border-bright)',
+          backgroundColor: 'var(--bg-input)',
+          color: 'var(--text-primary)',
+          resize: 'none',
+          fontSize: '14px',
+          fontFamily: 'inherit',
+        }}
+      />
+      {status && (
+        <p
+          className={status.includes('Unable') || status.includes('Type') ? 'error' : 'success'}
+          role={status.includes('Unable') ? 'alert' : 'status'}
+          style={{ marginBottom: '10px' }}
+        >
+          {status}
+        </p>
+      )}
+      <button type="button" className="primary" onClick={handleSave}>
+        Save Note
+      </button>
+    </div>
+  )
 }

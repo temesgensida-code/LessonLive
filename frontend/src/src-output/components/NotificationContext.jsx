@@ -43,4 +43,4 @@ function useNotificationContext() {
   return useContext(NotificationContext)
 }
 
-export { NotificationProvider, useNotificationContext }
+export { NotificationContext, NotificationProvider, useNotificationContext }

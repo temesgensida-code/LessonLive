@@ -11,6 +11,10 @@ frontend/.env
 __pycache__/
 *.pyc
 venv/
+backend/media/
+media/
 
 # Frontend
 node_modules/
+.agents/
+

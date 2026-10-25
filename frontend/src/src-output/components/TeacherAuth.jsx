@@ -92,27 +92,29 @@ function TeacherAuth({ onSuccess }) {
 
   if (pendingVerification) {
     return (
-      <div className="verification-pending text-center">
-        <div style={{ fontSize: '48px', marginBottom: '15px' }}><Mail size={48} aria-hidden="true" /></div>
+      <div className="verification-pending text-center" role="region" aria-label="Verification pending">
+        <div style={{ fontSize: '48px', marginBottom: '15px' }}>
+          <Mail size={48} aria-hidden="true" />
+        </div>
         <h3>Check your email</h3>
         <p>We've sent a verification link to <strong>{form.email}</strong>.</p>
         <p className="muted" style={{ fontSize: '14px', marginBottom: '25px' }}>
           Please click the link to activate your teacher account.
         </p>
-        
+
         <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-          <button 
-            type="button" 
-            className="primary btn-full" 
+          <button
+            type="button"
+            className="primary btn-full"
             onClick={handleResend}
             disabled={resendStatus === 'Sending...' || resendStatus === 'Email sent!'}
           >
             {resendStatus || 'Resend verification email'}
           </button>
-          
-          <button 
-            type="button" 
-            className="link-button" 
+
+          <button
+            type="button"
+            className="link-button"
             onClick={() => {
               setPendingVerification(false)
               setResendStatus('')
@@ -128,17 +130,18 @@ function TeacherAuth({ onSuccess }) {
 
   if (mode === 'forgot_password') {
     return (
-      <form onSubmit={handleForgotPassword} className="form">
+      <form onSubmit={handleForgotPassword} className="form" aria-label="Teacher password reset">
         <div className="auth-card-header" style={{ marginBottom: '15px' }}>
           <h3>Forgot Password</h3>
           <p className="muted">Enter your email address to receive a password reset link.</p>
         </div>
 
-        <label>
-          Email address
+        <div className="form-group">
+          <label htmlFor="teacher-reset-email">Email address</label>
           <div className="input-icon-wrap">
             <Mail className="input-icon" aria-hidden="true" size={18} />
             <input
+              id="teacher-reset-email"
               name="email"
               type="email"
               value={form.email}
@@ -146,12 +149,22 @@ function TeacherAuth({ onSuccess }) {
               placeholder="teacher@school.edu"
               required
               autoComplete="email"
+              aria-invalid={Boolean(error)}
+              aria-describedby={error ? 'teacher-reset-error' : resendStatus ? 'teacher-reset-status' : undefined}
             />
           </div>
-        </label>
+        </div>
 
-        {resendStatus && <p className="success">{resendStatus}</p>}
-        {error && <p className="error">{error}</p>}
+        {resendStatus && (
+          <p id="teacher-reset-status" className="success" role="status">
+            {resendStatus}
+          </p>
+        )}
+        {error && (
+          <p id="teacher-reset-error" className="error" role="alert">
+            {error}
+          </p>
+        )}
 
         <button type="submit" className="primary btn-full" disabled={loading}>
           {loading ? 'Sending…' : 'Send Reset Link →'}
@@ -175,25 +188,42 @@ function TeacherAuth({ onSuccess }) {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="form">
+    <form onSubmit={handleSubmit} className="form" aria-label={mode === 'signup' ? 'Teacher sign up' : 'Teacher sign in'}>
       {mode === 'signup' && (
         <div className="form-name-row">
-          <label>
-            First name
-            <input name="first_name" value={form.first_name} onChange={handleChange} placeholder="Jane" required />
-          </label>
-          <label>
-            Last name
-            <input name="last_name" value={form.last_name} onChange={handleChange} placeholder="Smith" required />
-          </label>
+          <div className="form-group">
+            <label htmlFor="teacher-first-name">First name</label>
+            <input
+              id="teacher-first-name"
+              name="first_name"
+              value={form.first_name}
+              onChange={handleChange}
+              placeholder="Jane"
+              required
+              autoComplete="given-name"
+            />
+          </div>
+          <div className="form-group">
+            <label htmlFor="teacher-last-name">Last name</label>
+            <input
+              id="teacher-last-name"
+              name="last_name"
+              value={form.last_name}
+              onChange={handleChange}
+              placeholder="Smith"
+              required
+              autoComplete="family-name"
+            />
+          </div>
         </div>
       )}
 
-      <label>
-        Email address
+      <div className="form-group">
+        <label htmlFor="teacher-email">Email address</label>
         <div className="input-icon-wrap">
           <Mail className="input-icon" aria-hidden="true" size={18} />
           <input
+            id="teacher-email"
             name="email"
             type="email"
             value={form.email}
@@ -201,18 +231,19 @@ function TeacherAuth({ onSuccess }) {
             placeholder="teacher@school.edu"
             required
             autoComplete="email"
+            aria-invalid={Boolean(error)}
+            aria-describedby={error ? 'teacher-auth-error' : undefined}
           />
         </div>
-      </label>
+      </div>
 
-      <label>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <span>Password</span>
+      <div className="form-group">
+        <div className="label-with-action">
+          <label htmlFor="teacher-password">Password</label>
           {mode === 'login' && (
             <button
               type="button"
-              className="link-button"
-              style={{ fontSize: '12px', fontWeight: '500', padding: 0 }}
+              className="link-button forgot-link"
               onClick={() => {
                 setMode('forgot_password')
                 setError('')
@@ -226,6 +257,7 @@ function TeacherAuth({ onSuccess }) {
         <div className="input-icon-wrap">
           <LockKeyhole className="input-icon" aria-hidden="true" size={18} />
           <input
+            id="teacher-password"
             name="password"
             type="password"
             value={form.password}
@@ -233,11 +265,17 @@ function TeacherAuth({ onSuccess }) {
             placeholder="••••••••"
             required
             autoComplete={mode === 'signup' ? 'new-password' : 'current-password'}
+            aria-invalid={Boolean(error)}
+            aria-describedby={error ? 'teacher-auth-error' : undefined}
           />
         </div>
-      </label>
+      </div>
 
-      {error && <p className="error">{error}</p>}
+      {error && (
+        <p id="teacher-auth-error" className="error" role="alert">
+          {error}
+        </p>
+      )}
 
       <button type="submit" className="primary btn-full" disabled={loading}>
         {loading ? 'Please wait…' : mode === 'signup' ? 'Create account →' : 'Sign in →'}

@@ -446,6 +446,7 @@ function useClassroomPageController({ classId, accessToken, setAccessToken }) {
     inviteLinks,
     error,
     savedNotes,
+    setSavedNotes,
     displayedNotes,
     noteTitle,
     setNoteTitle,

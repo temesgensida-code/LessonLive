@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { apiFetch, API_BASE } from '../apiClient'
 import {
   BarChart3,
@@ -31,6 +31,22 @@ export default function AttendanceDashboard({ classId, accessToken, setAccessTok
   const [searchQuery, setSearchQuery] = useState('')
   const [statusFilter, setStatusFilter] = useState('all')
 
+  const modalRef = useRef(null)
+  const closeButtonRef = useRef(null)
+
+  // Close on Escape key & focus modal on open
+  useEffect(() => {
+    closeButtonRef.current?.focus()
+
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape') {
+        onClose()
+      }
+    }
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [onClose])
+
   useEffect(() => {
     fetchAttendance()
   }, [selectedSessionId])
@@ -53,10 +69,6 @@ export default function AttendanceDashboard({ classId, accessToken, setAccessTok
 
   const handleExportCSV = () => {
     const exportUrl = `${API_BASE}/classrooms/${classId}/attendance/export/`
-    const link = document.createElement('a')
-    link.href = exportUrl
-    link.setAttribute('download', `attendance_${classId}.csv`)
-    // Pass bearer token in query parameter if credentials needed or rely on cookie / new window
     window.open(exportUrl, '_blank')
   }
 
@@ -79,25 +91,25 @@ export default function AttendanceDashboard({ classId, accessToken, setAccessTok
       case 'High':
         return (
           <span className="badge badge-high" style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
-            <Flame size={12} /> High ({'>'}15m)
+            <Flame size={12} aria-hidden="true" /> High ({'>'}15m)
           </span>
         )
       case 'Moderate':
         return (
           <span className="badge badge-moderate" style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
-            <Zap size={12} /> Moderate
+            <Zap size={12} aria-hidden="true" /> Moderate
           </span>
         )
       case 'Low':
         return (
           <span className="badge badge-low" style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
-            <AlertTriangle size={12} /> Low ({'<'}5m)
+            <AlertTriangle size={12} aria-hidden="true" /> Low ({'<'}5m)
           </span>
         )
       default:
         return (
           <span className="badge badge-none" style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
-            <UserX size={12} /> Absent
+            <UserX size={12} aria-hidden="true" /> Absent
           </span>
         )
     }
@@ -107,7 +119,7 @@ export default function AttendanceDashboard({ classId, accessToken, setAccessTok
     if (status === 'Active Now') {
       return (
         <span className="status-badge status-active">
-          <span className="pulse-dot"></span> Active Now
+          <span className="pulse-dot" aria-hidden="true"></span> Active Now
         </span>
       )
     }
@@ -124,25 +136,49 @@ export default function AttendanceDashboard({ classId, accessToken, setAccessTok
   }
 
   return (
-    <div className="attendance-modal-backdrop" onClick={onClose}>
-      <div className="attendance-modal-card" onClick={(e) => e.stopPropagation()}>
+    <div
+      className="attendance-modal-backdrop"
+      onClick={onClose}
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="attendance-modal-title"
+      aria-describedby="attendance-modal-subtitle"
+    >
+      <div
+        ref={modalRef}
+        className="attendance-modal-card"
+        onClick={(e) => e.stopPropagation()}
+      >
         {/* Header */}
         <div className="modal-header">
           <div className="title-group">
-            <div className="header-icon-box">
+            <div className="header-icon-box" aria-hidden="true">
               <BarChart3 size={22} color="#ffffff" />
             </div>
             <div>
-              <h2>Classroom Attendance & Insights</h2>
-              <p className="subtitle">Real-time student stay duration and participation stats</p>
+              <h2 id="attendance-modal-title">Classroom Attendance &amp; Insights</h2>
+              <p id="attendance-modal-subtitle" className="subtitle">
+                Real-time student stay duration and participation stats
+              </p>
             </div>
           </div>
           <div className="header-actions">
-            <button className="btn-export" onClick={handleExportCSV} style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
-              <Download size={14} /> Export CSV
+            <button
+              type="button"
+              className="btn-export"
+              onClick={handleExportCSV}
+              style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}
+            >
+              <Download size={14} aria-hidden="true" /> Export CSV
             </button>
-            <button className="btn-close" onClick={onClose} aria-label="Close">
-              <X size={18} />
+            <button
+              ref={closeButtonRef}
+              type="button"
+              className="btn-close"
+              onClick={onClose}
+              aria-label="Close attendance dialog"
+            >
+              <X size={18} aria-hidden="true" />
             </button>
           </div>
         </div>
@@ -150,16 +186,20 @@ export default function AttendanceDashboard({ classId, accessToken, setAccessTok
         {/* Content Body */}
         <div className="modal-body">
           {error && (
-            <div className="error-alert" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <AlertCircle size={16} /> {error}
+            <div
+              className="error-alert"
+              role="alert"
+              style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '1rem' }}
+            >
+              <AlertCircle size={16} aria-hidden="true" /> {error}
             </div>
           )}
 
           {/* Metric Cards Grid */}
           <div className="metrics-grid">
             <div className="metric-card card-enrolled">
-              <span className="metric-icon">
-                <Users size={22} color="#818cf8" />
+              <span className="metric-icon" aria-hidden="true">
+                <Users size={22} />
               </span>
               <div className="metric-info">
                 <span className="metric-value">{summary.total_enrolled}</span>
@@ -168,8 +208,8 @@ export default function AttendanceDashboard({ classId, accessToken, setAccessTok
             </div>
 
             <div className="metric-card card-attended">
-              <span className="metric-icon">
-                <UserCheck size={22} color="#34d399" />
+              <span className="metric-icon" aria-hidden="true">
+                <UserCheck size={22} />
               </span>
               <div className="metric-info">
                 <span className="metric-value">
@@ -180,8 +220,8 @@ export default function AttendanceDashboard({ classId, accessToken, setAccessTok
             </div>
 
             <div className="metric-card card-active">
-              <span className="metric-icon">
-                <Zap size={22} color="#fbbf24" />
+              <span className="metric-icon" aria-hidden="true">
+                <Zap size={22} />
               </span>
               <div className="metric-info">
                 <span className="metric-value live-count">
@@ -192,11 +232,13 @@ export default function AttendanceDashboard({ classId, accessToken, setAccessTok
             </div>
 
             <div className="metric-card card-duration">
-              <span className="metric-icon">
-                <Clock size={22} color="#60a5fa" />
+              <span className="metric-icon" aria-hidden="true">
+                <Clock size={22} />
               </span>
               <div className="metric-info">
-                <span className="metric-value">{summary.avg_duration_minutes} <small>mins</small></span>
+                <span className="metric-value">
+                  {summary.avg_duration_minutes} <small>mins</small>
+                </span>
                 <span className="metric-label">Avg. Stay Duration</span>
               </div>
             </div>
@@ -205,20 +247,29 @@ export default function AttendanceDashboard({ classId, accessToken, setAccessTok
           {/* Controls Bar */}
           <div className="controls-bar">
             <div className="search-box">
-              <Search size={16} color="#9ca3af" />
+              <Search size={16} color="var(--text-muted)" aria-hidden="true" />
+              <label htmlFor="attendance-search-input" className="sr-only">
+                Search students by name or email
+              </label>
               <input
+                id="attendance-search-input"
                 type="text"
-                placeholder="Search by student name or email..."
+                placeholder="Search by student name or email…"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
             </div>
 
             <div className="filter-group">
+              <label htmlFor="session-filter-select" className="sr-only">
+                Filter by session
+              </label>
               <select
+                id="session-filter-select"
                 className="select-filter"
                 value={selectedSessionId}
                 onChange={(e) => setSelectedSessionId(e.target.value)}
+                aria-label="Select classroom session"
               >
                 <option value="">All Sessions Summary</option>
                 {sessions.map((sess) => (
@@ -228,10 +279,15 @@ export default function AttendanceDashboard({ classId, accessToken, setAccessTok
                 ))}
               </select>
 
+              <label htmlFor="status-filter-select" className="sr-only">
+                Filter by status
+              </label>
               <select
+                id="status-filter-select"
                 className="select-filter"
                 value={statusFilter}
                 onChange={(e) => setStatusFilter(e.target.value)}
+                aria-label="Filter by attendance status"
               >
                 <option value="all">All Statuses</option>
                 <option value="active">Active Now</option>
@@ -243,28 +299,28 @@ export default function AttendanceDashboard({ classId, accessToken, setAccessTok
 
           {/* Attendance Table */}
           {loading ? (
-            <div className="loading-state">
-              <div className="spinner"></div>
-              <span>Gathering live classroom insights...</span>
+            <div className="loading-state" role="status" aria-label="Loading attendance data">
+              <div className="spinner" aria-hidden="true"></div>
+              <span>Gathering live classroom insights…</span>
             </div>
           ) : (
             <div className="table-wrapper">
-              <table className="attendance-table">
+              <table className="attendance-table" aria-label="Student attendance summary">
                 <thead>
                   <tr>
-                    <th>Student</th>
-                    <th>Status</th>
-                    <th>Join Time</th>
-                    <th>Leave Time</th>
-                    <th>Stay Duration</th>
-                    <th>Topic Joined</th>
-                    <th>Engagement</th>
+                    <th scope="col">Student</th>
+                    <th scope="col">Status</th>
+                    <th scope="col">Join Time</th>
+                    <th scope="col">Leave Time</th>
+                    <th scope="col">Stay Duration</th>
+                    <th scope="col">Topic Joined</th>
+                    <th scope="col">Engagement</th>
                   </tr>
                 </thead>
                 <tbody>
                   {filteredStudents.length === 0 ? (
                     <tr>
-                      <td colSpan="7" className="empty-row">
+                      <td colSpan={7} className="empty-row">
                         No student records match your criteria.
                       </td>
                     </tr>
@@ -272,7 +328,9 @@ export default function AttendanceDashboard({ classId, accessToken, setAccessTok
                     filteredStudents.map((st) => (
                       <tr key={st.student_id} className={st.status === 'Active Now' ? 'row-active' : ''}>
                         <td className="student-cell">
-                          <div className="avatar">{st.full_name?.charAt(0).toUpperCase() || 'S'}</div>
+                          <div className="avatar" aria-hidden="true">
+                            {st.full_name?.charAt(0).toUpperCase() || 'S'}
+                          </div>
                           <div className="student-names">
                             <span className="student-name">{st.full_name}</span>
                             <span className="student-email">{st.email}</span>
@@ -285,7 +343,7 @@ export default function AttendanceDashboard({ classId, accessToken, setAccessTok
                           <div className="duration-text">
                             <strong>{st.total_duration_minutes}</strong> mins
                           </div>
-                          <div className="duration-bar-bg">
+                          <div className="duration-bar-bg" aria-hidden="true">
                             <div
                               className="duration-bar-fill"
                               style={{

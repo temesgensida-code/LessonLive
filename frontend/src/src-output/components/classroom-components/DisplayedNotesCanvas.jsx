@@ -1,9 +1,10 @@
 import ScreenShareView from '../ScreenShareView'
-import { X } from 'lucide-react';
+import { X, BookOpen } from 'lucide-react'
+import MarkdownMathRenderer from '../canvas/MarkdownMathRenderer'
 
 function DisplayedNotesCanvas({
   classroom,
-  displayedNotes,
+  displayedNotes = [],
   owned,
   formatDate,
   onRemoveDisplayed,
@@ -34,17 +35,20 @@ function DisplayedNotesCanvas({
               height: '100%',
               width: '100%',
               display: 'flex',
+              flexDirection: 'column',
               alignItems: 'center',
               justifyContent: 'center',
               padding: 'var(--space-6)',
+              gap: '0.5rem',
             }}
           >
+            <BookOpen size={36} className="muted" aria-hidden="true" />
             <p className="muted" style={{ textAlign: 'center' }}>
               No notes displayed yet.
             </p>
           </div>
         ) : (
-          <div className="displayed-list" style={{ height: '100%', overflowY: 'auto' }}>
+          <div className="displayed-list" style={{ height: '100%', overflowY: 'auto' }} tabIndex={0} aria-label="Displayed notes list">
             {displayedNotes.map((item) => (
               <article key={item.id} className="displayed-item">
                 <div className="row" style={{ marginBottom: 'var(--space-2)' }}>
@@ -57,16 +61,15 @@ function DisplayedNotesCanvas({
                   {owned && (
                     <button
                       type="button"
-                      className="ghost danger"
+                      className="ghost danger canvas-remove-btn"
                       onClick={() => onRemoveDisplayed(item.id)}
-                      title="Remove displayed note"
-                      style={{ flexShrink: 0 ,outline: 'none', background: 'transparent', border: 'none'}}
+                      aria-label={`Remove note "${item.title}" from display`}
                     >
-                      <X />
+                      <X size={18} aria-hidden="true" />
                     </button>
                   )}
                 </div>
-                <p>{item.content}</p>
+                <MarkdownMathRenderer content={item.content} />
               </article>
             ))}
           </div>

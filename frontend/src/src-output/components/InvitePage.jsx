@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { apiFetch, setSessionHint } from './apiClient'
-import { LockKeyhole, Link2, Sparkles, Mail } from 'lucide-react'
+import { LockKeyhole, Link2, Sparkles, Mail, UserCheck } from 'lucide-react'
 
 function InvitePage({ accessToken, setAccessToken }) {
   const { token } = useParams()
@@ -45,15 +45,19 @@ function InvitePage({ accessToken, setAccessToken }) {
     event.preventDefault()
     setError('')
     try {
-      const data = await apiFetch('/auth/login/', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          email: status.email,
-          password: form.password,
-          invite_token: token,
-        }),
-      }, { skipAuthRefresh: true })
+      const data = await apiFetch(
+        '/auth/login/',
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            email: status.email,
+            password: form.password,
+            invite_token: token,
+          }),
+        },
+        { skipAuthRefresh: true }
+      )
 
       setAccessToken(data?.access || '')
       setSessionHint(Boolean(data?.access))
@@ -69,16 +73,20 @@ function InvitePage({ accessToken, setAccessToken }) {
     event.preventDefault()
     setError('')
     try {
-      const data = await apiFetch('/auth/register-from-invite/', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          token,
-          password: form.password,
-          first_name: form.first_name,
-          last_name: form.last_name,
-        }),
-      }, { skipAuthRefresh: true })
+      const data = await apiFetch(
+        '/auth/register-from-invite/',
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            token,
+            password: form.password,
+            first_name: form.first_name,
+            last_name: form.last_name,
+          }),
+        },
+        { skipAuthRefresh: true }
+      )
 
       setAccessToken(data?.access || '')
       setSessionHint(Boolean(data?.access))
@@ -91,15 +99,15 @@ function InvitePage({ accessToken, setAccessToken }) {
   if (error && !status) {
     return (
       <div className="stack" style={{ maxWidth: 480, margin: '0 auto', paddingTop: 'var(--space-8)' }}>
-        <section className="card">
+        <section className="card" aria-labelledby="invite-error-title">
           <div className="card-header">
             <Link2 className="card-icon" aria-hidden="true" />
             <div>
-              <h2>Invitation</h2>
+              <h2 id="invite-error-title">Invitation</h2>
               <p className="muted card-sub">Something went wrong</p>
             </div>
           </div>
-          <p className="error">{error}</p>
+          <p className="error" role="alert">{error}</p>
           <Link to="/" className="ghost" style={{ marginTop: 'var(--space-4)', display: 'inline-flex' }}>
             ← Back to home
           </Link>
@@ -110,8 +118,9 @@ function InvitePage({ accessToken, setAccessToken }) {
 
   if (!status) {
     return (
-      <div className="loading-screen">
-        <div className="loading-spinner" aria-label="Loading invitation" />
+      <div className="loading-screen" role="status" aria-label="Loading invitation">
+        <div className="loading-spinner" aria-hidden="true" />
+        <span className="sr-only">Loading invitation details…</span>
       </div>
     )
   }
@@ -119,15 +128,15 @@ function InvitePage({ accessToken, setAccessToken }) {
   if (status.auto_enrolled) {
     return (
       <div className="stack" style={{ maxWidth: 480, margin: '0 auto', paddingTop: 'var(--space-8)' }}>
-        <section className="card">
+        <section className="card" aria-labelledby="enrolled-title">
           <div className="card-header">
             <Sparkles className="card-icon" aria-hidden="true" />
             <div>
-              <h2>Welcome to {status.classroom_name}</h2>
+              <h2 id="enrolled-title">Welcome to {status.classroom_name}</h2>
             </div>
           </div>
-          <p className="success" style={{ marginBottom: 'var(--space-4)' }}>
-            You have been enrolled automatically.
+          <p className="success" role="status" style={{ marginBottom: 'var(--space-4)', display: 'flex', alignItems: 'center', gap: '6px' }}>
+            <UserCheck size={16} aria-hidden="true" /> You have been enrolled automatically.
           </p>
           <Link className="primary btn-full" to={`/classrooms/${status.class_id}`}>
             Go to classroom →
@@ -139,19 +148,23 @@ function InvitePage({ accessToken, setAccessToken }) {
 
   return (
     <div className="stack" style={{ maxWidth: 480, margin: '0 auto', paddingTop: 'var(--space-8)' }}>
-      <section className="card">
+      <section className="card" aria-labelledby="join-class-title">
         <div className="card-header">
           <Mail className="card-icon" aria-hidden="true" />
           <div>
-            <h2>Join {status.classroom_name}</h2>
+            <h2 id="join-class-title">Join {status.classroom_name}</h2>
             <p className="muted card-sub">Invitation for {status.email}</p>
           </div>
         </div>
 
         {status.requires_registration && (
-          <div className="tabs">
+          <div className="tabs" role="tablist" aria-label="Account setup choices">
             <button
               type="button"
+              role="tab"
+              id="invite-tab-signin"
+              aria-selected={mode === 'login'}
+              aria-controls="invite-panel-signin"
               className={mode === 'login' ? 'tab active' : 'tab'}
               onClick={() => setMode('login')}
             >
@@ -159,6 +172,10 @@ function InvitePage({ accessToken, setAccessToken }) {
             </button>
             <button
               type="button"
+              role="tab"
+              id="invite-tab-register"
+              aria-selected={mode === 'register'}
+              aria-controls="invite-panel-register"
               className={mode === 'register' ? 'tab active' : 'tab'}
               onClick={() => setMode('register')}
             >
@@ -168,16 +185,24 @@ function InvitePage({ accessToken, setAccessToken }) {
         )}
 
         {mode === 'login' ? (
-          <form onSubmit={handleLogin} className="form">
-            <label>
-              Email
-              <input value={status.email} disabled />
-            </label>
-            <label>
-              Password
+          <form
+            id="invite-panel-signin"
+            role="tabpanel"
+            aria-labelledby="invite-tab-signin"
+            onSubmit={handleLogin}
+            className="form"
+            aria-label="Join via existing account"
+          >
+            <div className="form-group">
+              <label htmlFor="invite-email-display">Email</label>
+              <input id="invite-email-display" value={status.email} disabled />
+            </div>
+            <div className="form-group">
+              <label htmlFor="invite-login-password">Password</label>
               <div className="input-icon-wrap">
                 <LockKeyhole className="input-icon" aria-hidden="true" size={18} />
                 <input
+                  id="invite-login-password"
                   name="password"
                   type="password"
                   value={form.password}
@@ -185,33 +210,60 @@ function InvitePage({ accessToken, setAccessToken }) {
                   placeholder="••••••••"
                   required
                   autoComplete="current-password"
+                  aria-invalid={Boolean(error)}
                 />
               </div>
-            </label>
-            {error && <p className="error">{error}</p>}
-            <button type="submit" className="primary btn-full">Log in &amp; join classroom →</button>
+            </div>
+            {error && <p className="error" role="alert">{error}</p>}
+            <button type="submit" className="primary btn-full">
+              Log in &amp; join classroom →
+            </button>
           </form>
         ) : (
-          <form onSubmit={handleRegister} className="form">
-            <label>
-              Email
-              <input value={status.email} disabled />
-            </label>
-            <div className="form-name-row">
-              <label>
-                First name
-                <input name="first_name" value={form.first_name} onChange={handleChange} required />
-              </label>
-              <label>
-                Last name
-                <input name="last_name" value={form.last_name} onChange={handleChange} required />
-              </label>
+          <form
+            id="invite-panel-register"
+            role="tabpanel"
+            aria-labelledby="invite-tab-register"
+            onSubmit={handleRegister}
+            className="form"
+            aria-label="Create account from invitation"
+          >
+            <div className="form-group">
+              <label htmlFor="invite-reg-email">Email</label>
+              <input id="invite-reg-email" value={status.email} disabled />
             </div>
-            <label>
-              Password
+            <div className="form-name-row">
+              <div className="form-group">
+                <label htmlFor="invite-reg-first-name">First name</label>
+                <input
+                  id="invite-reg-first-name"
+                  name="first_name"
+                  value={form.first_name}
+                  onChange={handleChange}
+                  placeholder="Jane"
+                  required
+                  autoComplete="given-name"
+                />
+              </div>
+              <div className="form-group">
+                <label htmlFor="invite-reg-last-name">Last name</label>
+                <input
+                  id="invite-reg-last-name"
+                  name="last_name"
+                  value={form.last_name}
+                  onChange={handleChange}
+                  placeholder="Doe"
+                  required
+                  autoComplete="family-name"
+                />
+              </div>
+            </div>
+            <div className="form-group">
+              <label htmlFor="invite-reg-password">Password</label>
               <div className="input-icon-wrap">
                 <LockKeyhole className="input-icon" aria-hidden="true" size={18} />
                 <input
+                  id="invite-reg-password"
                   name="password"
                   type="password"
                   value={form.password}
@@ -219,11 +271,14 @@ function InvitePage({ accessToken, setAccessToken }) {
                   placeholder="••••••••"
                   required
                   autoComplete="new-password"
+                  aria-invalid={Boolean(error)}
                 />
               </div>
-            </label>
-            {error && <p className="error">{error}</p>}
-            <button type="submit" className="primary btn-full">Create account &amp; join →</button>
+            </div>
+            {error && <p className="error" role="alert">{error}</p>}
+            <button type="submit" className="primary btn-full">
+              Create account &amp; join →
+            </button>
           </form>
         )}
       </section>

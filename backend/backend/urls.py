@@ -35,6 +35,7 @@ urlpatterns = [
     path('api/auth/', include('authentication.urls')),
     path('api/classrooms/', include('classroom.urls')),
     path('api/examinations/', include('examination.urls')),
+    path('api/ai/', include('classroom.ai.urls')),
     
     # Frontend Redirection Fallbacks
     path('verify-email/', redirect_verify_email),
@@ -44,3 +45,7 @@ urlpatterns = [
     path('reset-password/', redirect_reset_password),
     path('reset-password', redirect_reset_password),
 ]
+
+if settings.DEBUG:
+    from django.conf.urls.static import static
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

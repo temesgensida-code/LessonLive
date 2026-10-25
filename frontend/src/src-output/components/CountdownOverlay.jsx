@@ -1,4 +1,5 @@
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useState, useCallback, useRef } from 'react'
+import { X } from 'lucide-react'
 
 function CountdownOverlay({ notification, onClose }) {
   const [remaining, setRemaining] = useState(() => {
@@ -7,6 +8,7 @@ function CountdownOverlay({ notification, onClose }) {
     return Math.max(0, Math.floor((endsAt - Date.now()) / 1000))
   })
 
+  const closeButtonRef = useRef(null)
   const totalSeconds = notification.countdown_seconds
 
   const tick = useCallback(() => {
@@ -19,6 +21,19 @@ function CountdownOverlay({ notification, onClose }) {
     }
     return true
   }, [notification])
+
+  // Escape key handler and focus management
+  useEffect(() => {
+    closeButtonRef.current?.focus()
+
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape') {
+        onClose()
+      }
+    }
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [onClose])
 
   useEffect(() => {
     if (remaining <= 0) return undefined
@@ -48,24 +63,32 @@ function CountdownOverlay({ notification, onClose }) {
   const isUrgent = remaining <= 30 && remaining > 0
 
   return (
-    <div className={`countdown-overlay ${isFinished ? 'finished' : ''}`}>
+    <div
+      className={`countdown-overlay ${isFinished ? 'finished' : ''}`}
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="countdown-title"
+    >
       <div className="countdown-overlay-backdrop" onClick={onClose} aria-hidden="true" />
       <div className="countdown-overlay-content">
         <button
+          ref={closeButtonRef}
           type="button"
           className="countdown-close-btn"
           onClick={onClose}
-          aria-label="Close countdown"
+          aria-label="Close countdown modal"
         >
-          ✕
+          <X size={20} aria-hidden="true" />
         </button>
 
-        <p className="countdown-message">{notification.message}</p>
+        <h2 id="countdown-title" className="countdown-message">
+          {notification.message}
+        </h2>
         <p className="countdown-from">
           From: {notification.created_by?.split('@')[0] || 'Teacher'}
         </p>
 
-        <div className="countdown-ring-wrap">
+        <div className="countdown-ring-wrap" aria-hidden="true">
           <svg
             width={size}
             height={size}
@@ -87,7 +110,7 @@ function CountdownOverlay({ notification, onClose }) {
               cy={size / 2}
               r={radius}
               fill="none"
-              stroke={isUrgent ? '#ef4444' : isFinished ? '#22c55e' : '#3b82f6'}
+              stroke={isUrgent ? 'var(--error)' : isFinished ? 'var(--success)' : 'var(--primary)'}
               strokeWidth={strokeWidth}
               strokeLinecap="round"
               strokeDasharray={circumference}
@@ -108,6 +131,13 @@ function CountdownOverlay({ notification, onClose }) {
               </>
             )}
           </div>
+        </div>
+
+        {/* Live region for screen readers */}
+        <div className="sr-only" role="status" aria-live="polite">
+          {isFinished
+            ? "Time is up!"
+            : `${minutes} minutes and ${seconds} seconds remaining`}
         </div>
 
         {isFinished && (

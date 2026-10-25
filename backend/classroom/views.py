@@ -20,8 +20,15 @@ from asgiref.sync import async_to_sync
 from channels.layers import get_channel_layer
 
 from authentication.jwt_auth import get_user_from_request
-from authentication.models import UserProfile
-from classroom.models import Classroom, ClassroomInvitation, ClassroomNote, ClassroomNotification, DisplayedClassroomNote, Enrollment, ClassroomSession, StudentAttendanceRecord
+from classroom.models import (
+	Classroom, ClassroomInvitation, ClassroomNote, ClassroomNotification,
+	DisplayedClassroomNote, Enrollment, ClassroomSession, StudentAttendanceRecord,
+	ClassroomResource, Assignment, AssignmentSubmission, ClassroomSchedule, ScheduleReminderLog
+)
+from examination.models import ExamAttempt
+from classroom.schedule_utils import (
+	get_classroom_next_session, generate_classroom_ics, generate_calendar_links, DAY_NAMES
+)
 
 
 logger = logging.getLogger(__name__)
@@ -851,5 +858,716 @@ def export_attendance_csv(request, class_id):
 			r.status.capitalize()
 		])
 
+	return response
+
+
+def _serialize_resource(resource, request=None):
+	file_url = None
+	if resource.file:
+		file_url = resource.file.url
+		if request and not file_url.startswith('http'):
+			file_url = request.build_absolute_uri(file_url)
+
+	return {
+		'id': resource.id,
+		'title': resource.title,
+		'description': resource.description,
+		'resource_type': resource.resource_type,
+		'file_url': file_url,
+		'link_url': resource.link_url,
+		'file_size_bytes': resource.file_size_bytes,
+		'uploaded_by': resource.uploaded_by.first_name or resource.uploaded_by.username,
+		'uploaded_at': resource.uploaded_at.isoformat(),
+	}
+
+
+@csrf_exempt
+def classroom_resources(request, class_id):
+	user, classroom, is_owner, err = _require_class_member(request, class_id)
+	if err:
+		return err
+
+	if request.method == 'GET':
+		resources = ClassroomResource.objects.filter(classroom=classroom).order_by('-uploaded_at')
+		return JsonResponse({
+			'resources': [_serialize_resource(r, request) for r in resources]
+		})
+
+	if request.method == 'POST':
+		if not is_owner:
+			return JsonResponse({'detail': 'Only teachers can upload resources'}, status=403)
+
+		title = request.POST.get('title', '').strip()
+		description = request.POST.get('description', '').strip()
+		resource_type = request.POST.get('resource_type', ClassroomResource.TYPE_DOCUMENT)
+		link_url = request.POST.get('link_url', '').strip() or None
+		uploaded_file = request.FILES.get('file')
+
+		if not title:
+			json_data = _json_body(request)
+			title = (json_data.get('title') or '').strip()
+			description = (json_data.get('description') or '').strip()
+			resource_type = json_data.get('resource_type') or ClassroomResource.TYPE_LINK
+			link_url = (json_data.get('link_url') or '').strip() or None
+
+		if not title:
+			return JsonResponse({'detail': 'Title is required'}, status=400)
+
+		if resource_type == ClassroomResource.TYPE_LINK:
+			if not link_url:
+				return JsonResponse({'detail': 'A valid link URL is required for link resources'}, status=400)
+		elif not uploaded_file:
+			return JsonResponse({'detail': 'A file is required for document/slide/pdf resources'}, status=400)
+
+		file_size = uploaded_file.size if uploaded_file else 0
+		if file_size > settings.MAX_UPLOAD_SIZE:
+			return JsonResponse({'detail': 'File size exceeds 25 MB limit'}, status=400)
+
+		resource = ClassroomResource.objects.create(
+			classroom=classroom,
+			uploaded_by=user,
+			title=title,
+			description=description,
+			resource_type=resource_type,
+			file=uploaded_file,
+			link_url=link_url,
+			file_size_bytes=file_size,
+		)
+
+		return JsonResponse(_serialize_resource(resource, request), status=201)
+
+	return JsonResponse({'detail': 'Method not allowed'}, status=405)
+
+
+@csrf_exempt
+def delete_classroom_resource(request, class_id, resource_id):
+	if request.method != 'DELETE':
+		return JsonResponse({'detail': 'Method not allowed'}, status=405)
+
+	user, classroom, is_owner, err = _require_class_member(request, class_id)
+	if err:
+		return err
+
+	if not is_owner:
+		return JsonResponse({'detail': 'Only teachers can delete resources'}, status=403)
+
+	try:
+		resource = ClassroomResource.objects.get(id=resource_id, classroom=classroom)
+	except ClassroomResource.DoesNotExist:
+		return JsonResponse({'detail': 'Resource not found'}, status=404)
+
+	if resource.file:
+		resource.file.delete(save=False)
+	resource.delete()
+
+	return JsonResponse({'detail': 'Resource deleted successfully'}, status=200)
+
+
+def _serialize_submission(submission, request=None):
+	file_url = None
+	if submission.submission_file:
+		file_url = submission.submission_file.url
+		if request and not file_url.startswith('http'):
+			file_url = request.build_absolute_uri(file_url)
+
+	student_name = f"{submission.student.first_name} {submission.student.last_name}".strip() or submission.student.username
+	return {
+		'id': submission.id,
+		'assignment_id': submission.assignment_id,
+		'student_id': submission.student.id,
+		'student_name': student_name,
+		'student_email': submission.student.email,
+		'text_response': submission.text_response,
+		'submission_file_url': file_url,
+		'submission_file_name': os.path.basename(submission.submission_file.name) if submission.submission_file else None,
+		'submitted_at': submission.submitted_at.isoformat() if submission.submitted_at else None,
+		'status': submission.status,
+		'score': float(submission.score) if submission.score is not None else None,
+		'feedback': submission.feedback,
+		'graded_at': submission.graded_at.isoformat() if submission.graded_at else None,
+		'is_late': submission.status == AssignmentSubmission.STATUS_LATE,
+	}
+
+
+def _serialize_assignment(assignment, student_user=None, is_teacher=False, request=None):
+	attachment_url = None
+	if assignment.attachment:
+		attachment_url = assignment.attachment.url
+		if request and not attachment_url.startswith('http'):
+			attachment_url = request.build_absolute_uri(attachment_url)
+
+	data = {
+		'id': assignment.id,
+		'title': assignment.title,
+		'instructions': assignment.instructions,
+		'due_date': assignment.due_date.isoformat(),
+		'max_points': assignment.max_points,
+		'attachment_url': attachment_url,
+		'attachment_name': os.path.basename(assignment.attachment.name) if assignment.attachment else None,
+		'is_past_due': assignment.is_past_due(),
+		'created_at': assignment.created_at.isoformat(),
+		'submissions_count': assignment.submissions.count(),
+		'graded_count': assignment.submissions.filter(status=AssignmentSubmission.STATUS_GRADED).count(),
+	}
+
+	if not is_teacher and student_user:
+		sub = assignment.submissions.filter(student=student_user).first()
+		if sub:
+			data['my_submission'] = _serialize_submission(sub, request)
+			data['my_status'] = sub.status
+		else:
+			data['my_submission'] = None
+			data['my_status'] = 'late' if assignment.is_past_due() else 'pending'
+	return data
+
+
+@csrf_exempt
+def classroom_assignments(request, class_id):
+	user, classroom, is_owner, err = _require_class_member(request, class_id)
+	if err:
+		return err
+
+	if request.method == 'GET':
+		assignments = Assignment.objects.filter(classroom=classroom).order_by('-due_date')
+		return JsonResponse({
+			'assignments': [
+				_serialize_assignment(a, student_user=user, is_teacher=is_owner, request=request)
+				for a in assignments
+			]
+		})
+
+	if request.method == 'POST':
+		if not is_owner:
+			return JsonResponse({'detail': 'Only teachers can create assignments'}, status=403)
+
+		title = request.POST.get('title', '').strip()
+		instructions = request.POST.get('instructions', '').strip()
+		due_date_str = request.POST.get('due_date', '').strip()
+		max_points_str = str(request.POST.get('max_points', '100')).strip()
+		attachment = request.FILES.get('attachment')
+
+		if not title:
+			json_data = _json_body(request)
+			title = (json_data.get('title') or '').strip()
+			instructions = (json_data.get('instructions') or '').strip()
+			due_date_str = (json_data.get('due_date') or '').strip()
+			max_points_str = str(json_data.get('max_points') or '100').strip()
+
+		if not title:
+			return JsonResponse({'detail': 'Assignment title is required'}, status=400)
+		if not due_date_str:
+			return JsonResponse({'detail': 'Due date is required'}, status=400)
+
+		try:
+			from django.utils.dateparse import parse_datetime
+			due_date = parse_datetime(due_date_str)
+			if not due_date:
+				from datetime import datetime
+				due_date = datetime.fromisoformat(due_date_str.replace('Z', '+00:00'))
+			if timezone.is_naive(due_date):
+				due_date = timezone.make_aware(due_date)
+		except Exception:
+			return JsonResponse({'detail': 'Invalid due date format. Use ISO 8601 string.'}, status=400)
+
+		try:
+			max_points = int(max_points_str)
+			if max_points <= 0:
+				raise ValueError()
+		except ValueError:
+			return JsonResponse({'detail': 'max_points must be a positive integer'}, status=400)
+
+		if attachment and attachment.size > settings.MAX_UPLOAD_SIZE:
+			return JsonResponse({'detail': 'Attachment file size exceeds 25 MB limit'}, status=400)
+
+		assignment = Assignment.objects.create(
+			classroom=classroom,
+			created_by=user,
+			title=title,
+			instructions=instructions,
+			attachment=attachment,
+			due_date=due_date,
+			max_points=max_points,
+		)
+
+		return JsonResponse(_serialize_assignment(assignment, student_user=None, is_teacher=True, request=request), status=201)
+
+	return JsonResponse({'detail': 'Method not allowed'}, status=405)
+
+
+@csrf_exempt
+def assignment_detail(request, class_id, assignment_id):
+	user, classroom, is_owner, err = _require_class_member(request, class_id)
+	if err:
+		return err
+
+	try:
+		assignment = Assignment.objects.get(id=assignment_id, classroom=classroom)
+	except Assignment.DoesNotExist:
+		return JsonResponse({'detail': 'Assignment not found'}, status=404)
+
+	if request.method == 'GET':
+		return JsonResponse(_serialize_assignment(assignment, student_user=user, is_teacher=is_owner, request=request))
+
+	if request.method == 'DELETE':
+		if not is_owner:
+			return JsonResponse({'detail': 'Only teachers can delete assignments'}, status=403)
+		if assignment.attachment:
+			assignment.attachment.delete(save=False)
+		assignment.delete()
+		return JsonResponse({'detail': 'Assignment deleted successfully'})
+
+	return JsonResponse({'detail': 'Method not allowed'}, status=405)
+
+
+@csrf_exempt
+def submit_assignment(request, class_id, assignment_id):
+	if request.method != 'POST':
+		return JsonResponse({'detail': 'Method not allowed'}, status=405)
+
+	user, classroom, is_owner, err = _require_class_member(request, class_id)
+	if err:
+		return err
+
+	if is_owner:
+		return JsonResponse({'detail': 'Teachers cannot submit assignments'}, status=403)
+
+	try:
+		assignment = Assignment.objects.get(id=assignment_id, classroom=classroom)
+	except Assignment.DoesNotExist:
+		return JsonResponse({'detail': 'Assignment not found'}, status=404)
+
+	text_response = request.POST.get('text_response', '').strip()
+	submission_file = request.FILES.get('submission_file')
+
+	if not text_response and not submission_file:
+		json_data = _json_body(request)
+		text_response = (json_data.get('text_response') or '').strip()
+
+	if not text_response and not submission_file:
+		return JsonResponse({'detail': 'Please provide text response or a submission file'}, status=400)
+
+	if submission_file and submission_file.size > settings.MAX_UPLOAD_SIZE:
+		return JsonResponse({'detail': 'Submission file exceeds 25 MB limit'}, status=400)
+
+	now = timezone.now()
+	status_to_set = AssignmentSubmission.STATUS_LATE if now > assignment.due_date else AssignmentSubmission.STATUS_SUBMITTED
+
+	submission, created = AssignmentSubmission.objects.get_or_create(
+		assignment=assignment,
+		student=user,
+		defaults={'text_response': text_response, 'submission_file': submission_file, 'status': status_to_set}
+	)
+
+	if not created:
+		submission.text_response = text_response
+		if submission_file:
+			submission.submission_file = submission_file
+		submission.submitted_at = now
+		submission.status = status_to_set
+		submission.save()
+
+	return JsonResponse(_serialize_submission(submission, request), status=201 if created else 200)
+
+
+@csrf_exempt
+def assignment_submissions(request, class_id, assignment_id):
+	if request.method != 'GET':
+		return JsonResponse({'detail': 'Method not allowed'}, status=405)
+
+	user, classroom, is_owner, err = _require_class_member(request, class_id)
+	if err:
+		return err
+
+	if not is_owner:
+		return JsonResponse({'detail': 'Only teachers can view all submissions'}, status=403)
+
+	try:
+		assignment = Assignment.objects.get(id=assignment_id, classroom=classroom)
+	except Assignment.DoesNotExist:
+		return JsonResponse({'detail': 'Assignment not found'}, status=404)
+
+	submissions = AssignmentSubmission.objects.filter(assignment=assignment).select_related('student').order_by('-submitted_at')
+	return JsonResponse({
+		'assignment_id': assignment.id,
+		'assignment_title': assignment.title,
+		'max_points': assignment.max_points,
+		'submissions': [_serialize_submission(s, request) for s in submissions]
+	})
+
+
+@csrf_exempt
+def grade_submission(request, class_id, assignment_id, submission_id):
+	if request.method not in ['PATCH', 'POST']:
+		return JsonResponse({'detail': 'Method not allowed'}, status=405)
+
+	user, classroom, is_owner, err = _require_class_member(request, class_id)
+	if err:
+		return err
+
+	if not is_owner:
+		return JsonResponse({'detail': 'Only teachers can grade submissions'}, status=403)
+
+	try:
+		assignment = Assignment.objects.get(id=assignment_id, classroom=classroom)
+		submission = AssignmentSubmission.objects.get(id=submission_id, assignment=assignment)
+	except (Assignment.DoesNotExist, AssignmentSubmission.DoesNotExist):
+		return JsonResponse({'detail': 'Submission not found'}, status=404)
+
+	body = _json_body(request)
+	score_raw = body.get('score', request.POST.get('score'))
+	feedback = body.get('feedback', request.POST.get('feedback', ''))
+
+	if score_raw is None:
+		return JsonResponse({'detail': 'Score is required'}, status=400)
+
+	try:
+		score = float(score_raw)
+		if score < 0 or score > assignment.max_points:
+			return JsonResponse({'detail': f'Score must be between 0 and {assignment.max_points}'}, status=400)
+	except (ValueError, TypeError):
+		return JsonResponse({'detail': 'Invalid score number'}, status=400)
+
+	submission.score = score
+	submission.feedback = (feedback or '').strip()
+	submission.graded_by = user
+	submission.graded_at = timezone.now()
+	submission.status = AssignmentSubmission.STATUS_GRADED
+	submission.save()
+
+	return JsonResponse(_serialize_submission(submission, request))
+
+
+def _compute_gradebook_data(classroom):
+	enrollments = Enrollment.objects.filter(classroom=classroom).select_related('student')
+	students = [e.student for e in enrollments]
+	assignments = list(Assignment.objects.filter(classroom=classroom).order_by('created_at'))
+	total_sessions = ClassroomSession.objects.filter(classroom=classroom).count()
+
+	columns = [
+		{'key': 'attendance_pct', 'label': 'Attendance Rate', 'type': 'percentage'},
+		{'key': 'quiz_avg_pct', 'label': 'Quizzes Avg', 'type': 'percentage'},
+	]
+	for a in assignments:
+		columns.append({
+			'key': f'assign_{a.id}',
+			'label': a.title,
+			'max_points': a.max_points,
+			'type': 'points',
+		})
+	columns.append({'key': 'overall_pct', 'label': 'Overall Grade', 'type': 'percentage'})
+
+	student_rows = []
+	total_completed_assignments = 0
+
+	for s in students:
+		# 1. Attendance
+		if total_sessions > 0:
+			attended_count = StudentAttendanceRecord.objects.filter(
+				classroom=classroom, student=s, session__isnull=False
+			).values('session').distinct().count()
+			attendance_rate = round((attended_count / total_sessions) * 100, 1)
+		else:
+			has_any = StudentAttendanceRecord.objects.filter(classroom=classroom, student=s).exists()
+			attendance_rate = 100.0 if has_any or total_sessions == 0 else 0.0
+
+		# 2. Quizzes
+		attempts = ExamAttempt.objects.filter(classroom=classroom, student=s)
+		quizzes_taken = attempts.count()
+		if quizzes_taken > 0:
+			pct_sum = sum((att.correct_count / att.total_questions * 100) if att.total_questions > 0 else 0 for att in attempts)
+			quiz_average = round(pct_sum / quizzes_taken, 1)
+		else:
+			quiz_average = 0.0
+
+		# 3. Assignments
+		assign_map = {}
+		earned_points = 0.0
+		total_possible = 0
+		for a in assignments:
+			sub = AssignmentSubmission.objects.filter(assignment=a, student=s).first()
+			key = f'assign_{a.id}'
+			if sub and sub.score is not None:
+				assign_map[key] = {'score': float(sub.score), 'status': sub.status}
+				earned_points += float(sub.score)
+				total_possible += a.max_points
+				total_completed_assignments += 1
+			elif sub:
+				assign_map[key] = {'score': None, 'status': sub.status}
+				total_completed_assignments += 1
+			else:
+				status = 'missing' if a.is_past_due() else 'pending'
+				assign_map[key] = {'score': None, 'status': status}
+
+		assign_pct = round((earned_points / total_possible) * 100, 1) if total_possible > 0 else 100.0
+
+		if assignments and quizzes_taken > 0:
+			overall = (0.50 * assign_pct) + (0.40 * quiz_average) + (0.10 * attendance_rate)
+		elif assignments:
+			overall = (0.85 * assign_pct) + (0.15 * attendance_rate)
+		elif quizzes_taken > 0:
+			overall = (0.85 * quiz_average) + (0.15 * attendance_rate)
+		else:
+			overall = attendance_rate
+
+		overall_percentage = round(overall, 1)
+
+		if overall_percentage >= 90:
+			letter_grade = 'A'
+		elif overall_percentage >= 80:
+			letter_grade = 'B'
+		elif overall_percentage >= 70:
+			letter_grade = 'C'
+		elif overall_percentage >= 60:
+			letter_grade = 'D'
+		else:
+			letter_grade = 'F'
+
+		is_at_risk = False
+		risk_reasons = []
+		if attendance_rate < 60:
+			is_at_risk = True
+			risk_reasons.append('Attendance below 60%')
+		if overall_percentage < 60:
+			is_at_risk = True
+			risk_reasons.append('Overall score below 60%')
+
+		name = f"{s.first_name} {s.last_name}".strip() or s.username
+		student_rows.append({
+			'student_id': s.id,
+			'name': name,
+			'email': s.email,
+			'attendance_rate': attendance_rate,
+			'quizzes_taken': quizzes_taken,
+			'quiz_average': quiz_average,
+			'assignments': assign_map,
+			'overall_percentage': overall_percentage,
+			'letter_grade': letter_grade,
+			'is_at_risk': is_at_risk,
+			'risk_reasons': risk_reasons,
+		})
+
+	total_students = len(student_rows)
+	class_avg = round(sum(r['overall_percentage'] for r in student_rows) / total_students, 1) if total_students > 0 else 0.0
+	att_avg = round(sum(r['attendance_rate'] for r in student_rows) / total_students, 1) if total_students > 0 else 0.0
+	potential_submissions = total_students * len(assignments)
+	completion_rate = round((total_completed_assignments / potential_submissions) * 100, 1) if potential_submissions > 0 else 100.0
+	at_risk_count = sum(1 for r in student_rows if r['is_at_risk'])
+
+	summary = {
+		'total_students': total_students,
+		'class_average_percent': class_avg,
+		'attendance_average_percent': att_avg,
+		'assignment_completion_rate': completion_rate,
+		'at_risk_students_count': at_risk_count,
+	}
+
+	return {
+		'summary': summary,
+		'columns': columns,
+		'students': student_rows,
+		'assignments': assignments,
+	}
+
+
+@csrf_exempt
+def gradebook_insights(request, class_id):
+	if request.method != 'GET':
+		return JsonResponse({'detail': 'Method not allowed'}, status=405)
+
+	user, classroom, is_owner, err = _require_class_member(request, class_id)
+	if err:
+		return err
+
+	if not is_owner:
+		return JsonResponse({'detail': 'Only teachers can access gradebook insights'}, status=403)
+
+	data = _compute_gradebook_data(classroom)
+	return JsonResponse({
+		'summary': data['summary'],
+		'columns': data['columns'],
+		'students': data['students'],
+	})
+
+
+@csrf_exempt
+def export_gradebook_csv(request, class_id):
+	if request.method != 'GET':
+		return JsonResponse({'detail': 'Method not allowed'}, status=405)
+
+	user, classroom, is_owner, err = _require_class_member(request, class_id)
+	if err:
+		return err
+
+	if not is_owner:
+		return JsonResponse({'detail': 'Only teachers can export the gradebook'}, status=403)
+
+	data = _compute_gradebook_data(classroom)
+	assignments = data['assignments']
+	students = data['students']
+
+	response = HttpResponse(content_type='text/csv')
+	response['Content-Disposition'] = f'attachment; filename="{classroom.class_id}_gradebook.csv"'
+
+	writer = csv.writer(response)
+	header = ['Student ID', 'Student Name', 'Email', 'Attendance Rate (%)', 'Quizzes Taken', 'Quiz Average (%)']
+	for a in assignments:
+		header.append(f"{a.title} (Max: {a.max_points})")
+	header.extend(['Overall Grade (%)', 'Letter Grade', 'At Risk', 'Risk Reasons'])
+	writer.writerow(header)
+
+	for s in students:
+		row = [
+			s['student_id'],
+			s['name'],
+			s['email'],
+			s['attendance_rate'],
+			s['quizzes_taken'],
+			s['quiz_average'],
+		]
+		for a in assignments:
+			asg_data = s['assignments'].get(f"assign_{a.id}")
+			score_display = asg_data['score'] if (asg_data and asg_data['score'] is not None) else (asg_data['status'] if asg_data else 'N/A')
+			row.append(score_display)
+		row.extend([
+			s['overall_percentage'],
+			s['letter_grade'],
+			'YES' if s['is_at_risk'] else 'NO',
+			'; '.join(s['risk_reasons']) if s['risk_reasons'] else '',
+		])
+		writer.writerow(row)
+
+	return response
+
+
+@csrf_exempt
+def classroom_schedule(request, class_id):
+	user, classroom, is_owner, err = _require_class_member(request, class_id)
+	if err:
+		return err
+
+	if request.method == 'GET':
+		schedules = list(ClassroomSchedule.objects.filter(classroom=classroom, is_active=True).order_by('day_of_week', 'start_time'))
+		frontend_url = settings.FRONTEND_BASE_URL
+		next_session = get_classroom_next_session(classroom, schedules)
+		calendar_links = generate_calendar_links(classroom, next_session, frontend_url)
+
+		return JsonResponse({
+			'next_session': next_session,
+			'schedules': [
+				{
+					'id': s.id,
+					'title': s.title,
+					'day_of_week': s.day_of_week,
+					'day_name': DAY_NAMES[s.day_of_week],
+					'start_time': s.start_time.strftime('%H:%M:%S'),
+					'end_time': s.end_time.strftime('%H:%M:%S'),
+					'timezone_name': s.timezone_name,
+					'is_active': s.is_active,
+				}
+				for s in schedules
+			],
+			'calendar_links': calendar_links,
+		})
+
+	if request.method == 'POST':
+		if not is_owner:
+			return JsonResponse({'detail': 'Only teachers can create classroom schedules'}, status=403)
+
+		body = _json_body(request)
+		title = (body.get('title') or request.POST.get('title') or 'Regular Lecture').strip()
+		day_raw = body.get('day_of_week', request.POST.get('day_of_week'))
+		start_raw = str(body.get('start_time', request.POST.get('start_time', ''))).strip()
+		end_raw = str(body.get('end_time', request.POST.get('end_time', ''))).strip()
+		tz_name = (body.get('timezone_name') or request.POST.get('timezone_name') or 'UTC').strip()
+
+		if day_raw is None or not start_raw or not end_raw:
+			return JsonResponse({'detail': 'day_of_week, start_time, and end_time are required'}, status=400)
+
+		try:
+			day_of_week = int(day_raw)
+			if day_of_week < 0 or day_of_week > 6:
+				raise ValueError()
+		except (ValueError, TypeError):
+			return JsonResponse({'detail': 'day_of_week must be an integer between 0 (Monday) and 6 (Sunday)'}, status=400)
+
+		try:
+			from datetime import time
+			def _parse_time(t_str):
+				parts = [int(p) for p in t_str.split(':')]
+				if len(parts) == 2:
+					return time(parts[0], parts[1])
+				elif len(parts) == 3:
+					return time(parts[0], parts[1], parts[2])
+				raise ValueError()
+
+			start_time = _parse_time(start_raw)
+			end_time = _parse_time(end_raw)
+			if start_time >= end_time:
+				return JsonResponse({'detail': 'start_time must be earlier than end_time'}, status=400)
+		except Exception:
+			return JsonResponse({'detail': 'Invalid time format. Use HH:MM or HH:MM:SS.'}, status=400)
+
+		sched, _ = ClassroomSchedule.objects.update_or_create(
+			classroom=classroom,
+			day_of_week=day_of_week,
+			start_time=start_time,
+			defaults={
+				'created_by': user,
+				'title': title,
+				'end_time': end_time,
+				'timezone_name': tz_name,
+				'is_active': True,
+			}
+		)
+
+		return JsonResponse({
+			'id': sched.id,
+			'title': sched.title,
+			'day_of_week': sched.day_of_week,
+			'day_name': DAY_NAMES[sched.day_of_week],
+			'start_time': sched.start_time.strftime('%H:%M:%S'),
+			'end_time': sched.end_time.strftime('%H:%M:%S'),
+			'timezone_name': sched.timezone_name,
+		}, status=201)
+
+	return JsonResponse({'detail': 'Method not allowed'}, status=405)
+
+
+@csrf_exempt
+def delete_classroom_schedule(request, class_id, schedule_id):
+	if request.method != 'DELETE':
+		return JsonResponse({'detail': 'Method not allowed'}, status=405)
+
+	user, classroom, is_owner, err = _require_class_member(request, class_id)
+	if err:
+		return err
+
+	if not is_owner:
+		return JsonResponse({'detail': 'Only teachers can delete classroom schedules'}, status=403)
+
+	try:
+		sched = ClassroomSchedule.objects.get(id=schedule_id, classroom=classroom)
+	except ClassroomSchedule.DoesNotExist:
+		return JsonResponse({'detail': 'Schedule not found'}, status=404)
+
+	sched.delete()
+	return JsonResponse({'detail': 'Schedule deleted successfully'})
+
+
+@csrf_exempt
+def download_classroom_ics(request, class_id):
+	if request.method != 'GET':
+		return JsonResponse({'detail': 'Method not allowed'}, status=405)
+
+	user, classroom, is_owner, err = _require_class_member(request, class_id)
+	if err:
+		return err
+
+	schedules = ClassroomSchedule.objects.filter(classroom=classroom, is_active=True).order_by('day_of_week', 'start_time')
+	frontend_url = settings.FRONTEND_BASE_URL
+	ics_content = generate_classroom_ics(classroom, schedules, frontend_url)
+
+	response = HttpResponse(ics_content, content_type='text/calendar; charset=utf-8')
+	response['Content-Disposition'] = f'attachment; filename="{classroom.class_id}_schedule.ics"'
 	return response
 

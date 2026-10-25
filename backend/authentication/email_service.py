@@ -182,3 +182,52 @@ def send_password_reset_email(user, token, frontend_base_url):
         return True, email
     except Exception as e:
         return False, str(e)
+
+
+def send_class_reminder_email(user, classroom, schedule, time_str, join_url):
+    html_content = f"""
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <style>
+            body {{ font-family: Arial, sans-serif; background-color: #f4f4f5; margin: 0; padding: 0; }}
+            .container {{ max-width: 600px; margin: 40px auto; background-color: #ffffff; border-radius: 8px; overflow: hidden; }}
+            .header {{ background-color: #2563eb; color: #ffffff; padding: 20px; text-align: center; }}
+            .content {{ padding: 30px; color: #333333; line-height: 1.6; }}
+            .button {{ display: inline-block; padding: 12px 24px; margin: 20px 0; background-color: #2563eb; color: #ffffff !important; text-decoration: none; border-radius: 6px; font-weight: bold; }}
+            .footer {{ background-color: #f9fafb; padding: 20px; text-align: center; color: #6b7280; font-size: 14px; }}
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <div class="header">
+                <h2>Class Starting in 30 Minutes!</h2>
+            </div>
+            <div class="content">
+                <p>Hi {user.first_name or user.username},</p>
+                <p>This is a quick reminder that your live lecture for <strong>{classroom.name}</strong> ({schedule.title}) starts at <strong>{time_str}</strong>.</p>
+                <div style="text-align: center;">
+                    <a href="{join_url}" class="button">Join Live Classroom</a>
+                </div>
+                <p>Or open directly: <a href="{join_url}">{join_url}</a></p>
+            </div>
+            <div class="footer">
+                <p>LessonLive Automated Class Reminders &copy; All rights reserved.</p>
+            </div>
+        </div>
+    </body>
+    </html>
+    """
+    try:
+        resend.api_key = settings.RESEND_API_KEY
+        from_email = settings.RESEND_FROM_EMAIL
+        params = {
+            "from": from_email,
+            "to": [user.email],
+            "subject": f"Starting in 30m: {classroom.name} - LessonLive",
+            "html": html_content,
+        }
+        email = resend.Emails.send(params)
+        return True, email
+    except Exception as e:
+        return False, str(e)

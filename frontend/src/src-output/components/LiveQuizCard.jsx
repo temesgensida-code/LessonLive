@@ -26,9 +26,9 @@
 import { useCallback, useEffect, useReducer, useRef, useState } from 'react'
 import { apiFetch } from './apiClient'
 import './LiveQuizCard.css'
-import { Users } from 'lucide-react';
-import { FileQuestionMark } from 'lucide-react';
-import { Lightbulb } from 'lucide-react';
+import { Users, FileQuestionMark, Lightbulb, Sparkles } from 'lucide-react'
+import AIQuizGeneratorModal from './ai/AIQuizGeneratorModal'
+import './ai/ai.css'
 
 /* ────────── constants ────────── */
 const QUIZ_TOPIC = 'lessonlive-quiz'
@@ -214,6 +214,12 @@ function reducer(state, action) {
       return { ...state, questions: [...state.questions, action.question] }
     }
 
+    case 'IMPORT_QUESTIONS': {
+      const isSingleBlank = state.questions.length === 1 && !state.questions[0].text && !state.questions[0].options[0]
+      const existing = isSingleBlank ? [] : state.questions
+      return { ...state, questions: [...existing, ...action.questions] }
+    }
+
     case 'BEGIN_SETUP':
       return { ...state, phase: 'setup' }
 
@@ -304,10 +310,19 @@ export default function LiveQuizCard({
   const [showQuestionBank, setShowQuestionBank] = useState(false)
   const [bankQuestions, setBankQuestions] = useState([])
   const [loadingBank, setLoadingBank] = useState(false)
+  const [showAIModal, setShowAIModal] = useState(false)
+  const [classroomNotes, setClassroomNotes] = useState([])
   const room = useRoom()
   const lkCount = useParticipantCount()
   const timerRef = useRef(null)
   const liveCount = studentCount ?? lkCount
+
+  useEffect(() => {
+    if (!classId) return
+    apiFetch(`/classrooms/${classId}/notes/`, {}, { accessToken, setAccessToken })
+      .then((data) => setClassroomNotes(data?.notes || []))
+      .catch(() => {})
+  }, [classId, accessToken, setAccessToken])
 
   const currentQ = state.questions[state.currentQIndex]
 
@@ -834,6 +849,16 @@ export default function LiveQuizCard({
                   Import from Question Bank
                 </button>
               )}
+              {classId && (
+                <button
+                  type="button"
+                  className="ai-sparkle-btn"
+                  onClick={() => setShowAIModal(true)}
+                  style={{ fontSize: 'var(--font-size-xs)', padding: '0.35rem 0.75rem' }}
+                >
+                  <Sparkles size={14} /> Generate with AI
+                </button>
+              )}
             </div>
 
             {showQuestionBank && (
@@ -915,6 +940,20 @@ export default function LiveQuizCard({
               : `Launch quiz (${state.questions.length} Q${state.questions.length !== 1 ? 's' : ''})`}
           </button>
         </div>
+
+        {showAIModal && (
+          <AIQuizGeneratorModal
+            classId={classId}
+            isOpen={showAIModal}
+            onClose={() => setShowAIModal(false)}
+            notes={classroomNotes}
+            accessToken={accessToken}
+            setAccessToken={setAccessToken}
+            onAddQuestions={(newQuestions) => {
+              dispatch({ type: 'IMPORT_QUESTIONS', questions: newQuestions })
+            }}
+          />
+        )}
       </div>
     )
   }

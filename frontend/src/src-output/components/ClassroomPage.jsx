@@ -3,17 +3,24 @@ import { useParams } from 'react-router-dom'
 import { LiveKitRoom } from '@livekit/components-react'
 import { LIVEKIT_SERVER_URL } from './apiClient'
 import useClassroomPageController from './classroom-components/useClassroomPageController'
-import LiveQuizCard from './LiveQuizCard';
+import LiveQuizCard from './LiveQuizCard'
 import StudentQuizPage from './StudentQuizPage'
 import CountdownOverlay from './CountdownOverlay'
 import { useNotificationContext } from './NotificationContext'
 import AttendanceDashboard from './classroom-components/AttendanceDashboard'
 import './classroom-components/AttendanceDashboard.css'
+import StudentMicroPollToast from './engagement/StudentMicroPollToast'
+import GradebookDashboard from './gradebook/GradebookDashboard'
+import ClassroomScheduleBanner from './schedule/ClassroomScheduleBanner'
+import AIStudyGuideModal from './ai/AIStudyGuideModal'
+import AIKeyConfigModal from './ai/AIKeyConfigModal'
 
 const ClassroomSidebarPortal = lazy(() => import('./classroom-components/ClassroomSidebarPortal'))
 const DisplayedNotesCanvas = lazy(() => import('./classroom-components/DisplayedNotesCanvas'))
 const LiveNotesPanel = lazy(() => import('./classroom-components/LiveNotesPanel'))
 const TeacherNotesPanel = lazy(() => import('./classroom-components/TeacherNotesPanel'))
+const CanvasViewSwitcher = lazy(() => import('./canvas/CanvasViewSwitcher'))
+const WhiteboardCanvas = lazy(() => import('./canvas/WhiteboardCanvas'))
 
 const MOBILE_BREAKPOINT = 900
 
@@ -22,8 +29,9 @@ function clamp(value, min, max) {
 }
 
 const classroomLoadingFallback = (
-  <section className="card">
-    <p className="muted">Loading classroom…</p>
+  <section className="card" role="status" aria-label="Loading classroom">
+    <div className="loading-spinner-sm" aria-hidden="true" style={{ margin: '0 auto var(--space-2)' }} />
+    <p className="muted" style={{ textAlign: 'center' }}>Loading classroom…</p>
   </section>
 )
 
@@ -33,6 +41,10 @@ function ClassroomPage({ accessToken, setAccessToken }) {
   const [showQuizCard, setShowQuizCard] = useState(false)
   const [showStudentQuiz, setShowStudentQuiz] = useState(false)
   const [showAttendanceModal, setShowAttendanceModal] = useState(false)
+  const [showGradebookModal, setShowGradebookModal] = useState(false)
+  const [showStudyGuideModal, setShowStudyGuideModal] = useState(false)
+  const [showAIConfigModal, setShowAIConfigModal] = useState(false)
+  const [canvasView, setCanvasView] = useState('notes') // 'notes' | 'whiteboard' | 'screen'
   const mobileSplitLayoutRef = useRef(null)
 
   const updateMobileSplit = (clientY) => {
@@ -84,6 +96,7 @@ function ClassroomPage({ accessToken, setAccessToken }) {
     inviteLinks,
     error,
     savedNotes,
+    setSavedNotes,
     displayedNotes,
     noteTitle,
     setNoteTitle,
@@ -163,6 +176,9 @@ function ClassroomPage({ accessToken, setAccessToken }) {
 
         <ClassroomSidebarPortal
           owned={owned}
+          classId={classId}
+          accessToken={accessToken}
+          setAccessToken={setAccessToken}
           sidebarPortalTarget={sidebarPortalTarget}
           sidebarTab={sidebarTab}
           setSidebarTab={setSidebarTab}
@@ -178,83 +194,109 @@ function ClassroomPage({ accessToken, setAccessToken }) {
 
         {owned && liveError && (
           <section className="card">
-            <p className="error">{liveError}</p>
+            <p className="error" role="alert">{liveError}</p>
           </section>
         )}
 
+        <ClassroomScheduleBanner
+          classId={classId}
+          owned={owned}
+          accessToken={accessToken}
+          setAccessToken={setAccessToken}
+          onGoLive={handleToggleLiveClass}
+        />
+
         {liveMode && liveToken ? (
           <LiveKitRoom
-            connect
-            video={false}
-            audio
-            token={liveToken}
             serverUrl={LIVEKIT_SERVER_URL}
+            token={liveToken}
+            connect={true}
             data-lk-theme="default"
-            className="live-room"
+            style={{ width: '100%' }}
           >
             <section className="card notes-shell">
               <div
                 ref={mobileSplitLayoutRef}
-                className="notes-layout mobile-resizable"
+                className="notes-layout"
                 style={{
                   '--mobile-notes-ratio': `${mobileSplitTop}%`,
                   '--mobile-live-ratio': `${100 - mobileSplitTop}%`,
                 }}
               >
-                {owned ? (
-                  showQuizCard ? (
-                    <div className="notes-canvas-slot">
-                      <LiveQuizCard
-                        owned={owned}
-                        classId={classId}
-                        sessionLabel={classroom?.name || 'LessonLive'}
-                        accessToken={accessToken}
-                        setAccessToken={setAccessToken}
-                      />
-                    </div>
-                  ) : (
-                    <DisplayedNotesCanvas
-                      classroom={classroom}
-                      displayedNotes={displayedNotes}
+                {owned && showQuizCard ? (
+                  <div className="notes-canvas-slot">
+                    <LiveQuizCard
                       owned={owned}
-                      formatDate={formatDate}
-                      onRemoveDisplayed={handleRemoveDisplayed}
-                      showScreenShare
+                      classId={classId}
+                      sessionLabel="Your Course"
+                      accessToken={accessToken}
+                      setAccessToken={setAccessToken}
                     />
-                  )
+                  </div>
                 ) : (
                   <div className="notes-canvas-slot">
-                    <div style={{ display: showStudentQuiz ? 'none' : 'flex', height: '100%', width: '100%' }}>
-                      <DisplayedNotesCanvas
-                        classroom={classroom}
-                        displayedNotes={displayedNotes}
-                        owned={owned}
-                        formatDate={formatDate}
-                        onRemoveDisplayed={handleRemoveDisplayed}
-                        showScreenShare
-                      />
-                    </div>
-                    <div style={{ display: showStudentQuiz ? 'flex' : 'none', height: '100%', width: '100%' }}>
-                      <StudentQuizPage
+                    <CanvasViewSwitcher
+                      activeView={canvasView}
+                      onViewChange={setCanvasView}
+                      hasScreenShare={true}
+                    />
+                    {canvasView === 'whiteboard' ? (
+                      <WhiteboardCanvas
                         classId={classId}
-                        sessionLabel={classroom?.name || 'LessonLive'}
+                        owned={owned}
                         accessToken={accessToken}
                         setAccessToken={setAccessToken}
-                        onQuizVisibilityChange={setShowStudentQuiz}
+                        onNoteCreated={(note) => {
+                          setSavedNotes((prev) => [...prev, note])
+                        }}
                       />
-                    </div>
+                    ) : (
+                      <>
+                        <DisplayedNotesCanvas
+                          classroom={classroom}
+                          displayedNotes={displayedNotes}
+                          owned={owned}
+                          formatDate={formatDate}
+                          onRemoveDisplayed={handleRemoveDisplayed}
+                          showScreenShare={canvasView === 'screen'}
+                        />
+                        <div className="student-quiz-slot">
+                          <StudentQuizPage
+                            owned={owned}
+                            classId={classId}
+                            sessionLabel={classroom?.name || 'LessonLive'}
+                            accessToken={accessToken}
+                            setAccessToken={setAccessToken}
+                            onQuizVisibilityChange={setShowStudentQuiz}
+                          />
+                        </div>
+                      </>
+                    )}
                   </div>
                 )}
 
                 <div
+                  tabIndex={0}
                   className={`mobile-splitter ${isDraggingMobileSplit ? 'is-dragging' : ''}`}
                   onPointerDown={handleMobileSplitterPointerDown}
                   onPointerMove={handleMobileSplitterPointerMove}
                   onPointerUp={handleMobileSplitterPointerUp}
                   onPointerCancel={handleMobileSplitterPointerUp}
-                  aria-label="Drag to resize notes and live panel"
+                  onKeyDown={(e) => {
+                    if (e.key === 'ArrowUp' || e.key === 'ArrowLeft') {
+                      e.preventDefault()
+                      setMobileSplitTop((top) => Math.max(0, top - 5))
+                    } else if (e.key === 'ArrowDown' || e.key === 'ArrowRight') {
+                      e.preventDefault()
+                      setMobileSplitTop((top) => Math.min(78, top + 5))
+                    }
+                  }}
+                  aria-label="Resize notes and live panel"
                   role="separator"
                   aria-orientation="horizontal"
+                  aria-valuenow={Math.round(mobileSplitTop)}
+                  aria-valuemin={0}
+                  aria-valuemax={78}
                 >
                   <span className="mobile-splitter-arrow" aria-hidden="true">^</span>
                 </div>
@@ -270,10 +312,14 @@ function ClassroomPage({ accessToken, setAccessToken }) {
                   showQuizCard={showQuizCard}
                   onToggleQuizCard={handleToggleQuizCard}
                   onOpenAttendance={() => setShowAttendanceModal(true)}
+                  onOpenGradebook={() => setShowGradebookModal(true)}
+                  onOpenStudyGuide={() => setShowStudyGuideModal(true)}
+                  onOpenAIConfig={() => setShowAIConfigModal(true)}
                   {...notificationProps}
                 />
               </div>
             </section>
+            {!owned && <StudentMicroPollToast />}
           </LiveKitRoom>
         ) : (
           <section className="card notes-shell">
@@ -289,14 +335,33 @@ function ClassroomPage({ accessToken, setAccessToken }) {
                   />
                 </div>
               ) : (
-                <DisplayedNotesCanvas
-                  classroom={classroom}
-                  displayedNotes={displayedNotes}
-                  owned={owned}
-                  formatDate={formatDate}
-                  onRemoveDisplayed={handleRemoveDisplayed}
-                  showScreenShare={false}
-                />
+                <div className="notes-canvas-slot">
+                  <CanvasViewSwitcher
+                    activeView={canvasView}
+                    onViewChange={setCanvasView}
+                    hasScreenShare={false}
+                  />
+                  {canvasView === 'whiteboard' ? (
+                    <WhiteboardCanvas
+                      classId={classId}
+                      owned={owned}
+                      accessToken={accessToken}
+                      setAccessToken={setAccessToken}
+                      onNoteCreated={(note) => {
+                        setSavedNotes((prev) => [...prev, note])
+                      }}
+                    />
+                  ) : (
+                    <DisplayedNotesCanvas
+                      classroom={classroom}
+                      displayedNotes={displayedNotes}
+                      owned={owned}
+                      formatDate={formatDate}
+                      onRemoveDisplayed={handleRemoveDisplayed}
+                      showScreenShare={false}
+                    />
+                  )}
+                </div>
               )}
 
               {owned && (
@@ -320,6 +385,9 @@ function ClassroomPage({ accessToken, setAccessToken }) {
                   noteError={noteError}
                   noteMessage={noteMessage}
                   onOpenAttendance={() => setShowAttendanceModal(true)}
+                  onOpenGradebook={() => setShowGradebookModal(true)}
+                  onOpenStudyGuide={() => setShowStudyGuideModal(true)}
+                  onOpenAIConfig={() => setShowAIConfigModal(true)}
                   {...notificationProps}
                 />
               )}
@@ -333,6 +401,37 @@ function ClassroomPage({ accessToken, setAccessToken }) {
             accessToken={accessToken}
             setAccessToken={setAccessToken}
             onClose={() => setShowAttendanceModal(false)}
+          />
+        )}
+
+        {showGradebookModal && (
+          <GradebookDashboard
+            classId={classId}
+            accessToken={accessToken}
+            setAccessToken={setAccessToken}
+            isOpen={showGradebookModal}
+            onClose={() => setShowGradebookModal(false)}
+          />
+        )}
+
+        {showStudyGuideModal && (
+          <AIStudyGuideModal
+            classId={classId}
+            classroomName={classroom?.name || 'Your Course'}
+            notes={savedNotes}
+            isOpen={showStudyGuideModal}
+            onClose={() => setShowStudyGuideModal(false)}
+            accessToken={accessToken}
+            setAccessToken={setAccessToken}
+          />
+        )}
+
+        {showAIConfigModal && (
+          <AIKeyConfigModal
+            isOpen={showAIConfigModal}
+            onClose={() => setShowAIConfigModal(false)}
+            accessToken={accessToken}
+            setAccessToken={setAccessToken}
           />
         )}
       </div>

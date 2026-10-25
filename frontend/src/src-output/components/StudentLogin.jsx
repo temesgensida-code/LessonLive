@@ -54,30 +54,41 @@ function StudentLogin({ onSuccess }) {
 
   if (mode === 'forgot_password') {
     return (
-      <form onSubmit={handleForgotPassword} className="form">
+      <form onSubmit={handleForgotPassword} className="form" aria-label="Student password reset">
         <div className="auth-card-header" style={{ marginBottom: '15px' }}>
           <h3>Forgot Password</h3>
           <p className="muted">Enter your email address to receive a password reset link.</p>
         </div>
 
-        <label>
-          Email address
+        <div className="form-group">
+          <label htmlFor="student-reset-email">Email address</label>
           <div className="input-icon-wrap">
             <Mail className="input-icon" aria-hidden="true" size={18} />
             <input
+              id="student-reset-email"
               name="email"
               type="email"
               value={form.email}
               onChange={handleChange}
-              placeholder="you@school.edu"
+              placeholder="student@school.edu"
               required
               autoComplete="email"
+              aria-invalid={Boolean(error)}
+              aria-describedby={error ? 'reset-error' : resendStatus ? 'reset-status' : undefined}
             />
           </div>
-        </label>
+        </div>
 
-        {resendStatus && <p className="success">{resendStatus}</p>}
-        {error && <p className="error">{error}</p>}
+        {resendStatus && (
+          <p id="reset-status" className="success" role="status">
+            {resendStatus}
+          </p>
+        )}
+        {error && (
+          <p id="reset-error" className="error" role="alert">
+            {error}
+          </p>
+        )}
 
         <button type="submit" className="primary btn-full" disabled={loading}>
           {loading ? 'Sending…' : 'Send Reset Link →'}
@@ -101,30 +112,32 @@ function StudentLogin({ onSuccess }) {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="form">
-      <label>
-        Email address
+    <form onSubmit={handleSubmit} className="form" aria-label="Student sign in">
+      <div className="form-group">
+        <label htmlFor="student-email">Email address</label>
         <div className="input-icon-wrap">
           <Mail className="input-icon" aria-hidden="true" size={18} />
           <input
+            id="student-email"
             name="email"
             type="email"
             value={form.email}
             onChange={handleChange}
-            placeholder="you@school.edu"
+            placeholder="student@school.edu"
             required
             autoComplete="email"
+            aria-invalid={Boolean(error)}
+            aria-describedby={error ? 'student-login-error' : undefined}
           />
         </div>
-      </label>
+      </div>
 
-      <label>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <span>Password</span>
+      <div className="form-group">
+        <div className="label-with-action">
+          <label htmlFor="student-password">Password</label>
           <button
             type="button"
-            className="link-button"
-            style={{ fontSize: '12px', fontWeight: '500', padding: 0 }}
+            className="link-button forgot-link"
             onClick={() => {
               setMode('forgot_password')
               setError('')
@@ -137,6 +150,7 @@ function StudentLogin({ onSuccess }) {
         <div className="input-icon-wrap">
           <LockKeyhole className="input-icon" aria-hidden="true" size={18} />
           <input
+            id="student-password"
             name="password"
             type="password"
             value={form.password}
@@ -144,11 +158,17 @@ function StudentLogin({ onSuccess }) {
             placeholder="••••••••"
             required
             autoComplete="current-password"
+            aria-invalid={Boolean(error)}
+            aria-describedby={error ? 'student-login-error' : undefined}
           />
         </div>
-      </label>
+      </div>
 
-      {error && <p className="error">{error}</p>}
+      {error && (
+        <p id="student-login-error" className="error" role="alert">
+          {error}
+        </p>
+      )}
 
       <button type="submit" className="primary btn-full" disabled={loading}>
         {loading ? 'Signing in…' : 'Sign in →'}
