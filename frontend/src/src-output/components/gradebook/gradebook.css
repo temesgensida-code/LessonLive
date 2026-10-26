@@ -3,9 +3,9 @@
 .gradebook-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(15, 23, 42, 0.85);
+  background: var(--bg-overlay);
   backdrop-filter: blur(6px);
-  z-index: 1000;
+  z-index: var(--z-modal-backdrop, 1000);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -13,15 +13,15 @@
 }
 
 .gradebook-modal {
-  background: var(--bg-surface, #1e293b);
-  border: 1px solid var(--border-color, #334155);
-  border-radius: 12px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xl);
   width: 95vw;
   max-width: 1200px;
   height: 90vh;
   display: flex;
   flex-direction: column;
-  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+  box-shadow: var(--shadow-lg);
   overflow: hidden;
 }
 
@@ -165,12 +165,23 @@
 
 .gradebook-table td {
   padding: 0.75rem 1rem;
-  border-bottom: 1px solid rgba(51, 65, 85, 0.6);
+  border-bottom: 1px solid var(--border);
   white-space: nowrap;
 }
 
 .gradebook-table tr:hover td {
-  background: rgba(51, 65, 85, 0.25);
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.gradebook-sticky-col {
+  position: sticky;
+  left: 0;
+  z-index: 5;
+  background: var(--bg-surface);
+}
+
+th.gradebook-sticky-col {
+  z-index: 15;
 }
 
 /* Grade letter badges */

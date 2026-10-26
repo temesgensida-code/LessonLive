@@ -1,10 +1,11 @@
 import { useState } from 'react'
 import { apiFetch } from './apiClient'
-import { Mail, LockKeyhole } from 'lucide-react'
+import { Mail, LockKeyhole, Eye, EyeOff } from 'lucide-react'
 
 function TeacherAuth({ onSuccess }) {
   const [mode, setMode] = useState('login')
   const [form, setForm] = useState({ email: '', password: '', first_name: '', last_name: '' })
+  const [showPassword, setShowPassword] = useState(false)
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
 
@@ -254,12 +255,12 @@ function TeacherAuth({ onSuccess }) {
             </button>
           )}
         </div>
-        <div className="input-icon-wrap">
+        <div className="input-icon-wrap" style={{ position: 'relative' }}>
           <LockKeyhole className="input-icon" aria-hidden="true" size={18} />
           <input
             id="teacher-password"
             name="password"
-            type="password"
+            type={showPassword ? 'text' : 'password'}
             value={form.password}
             onChange={handleChange}
             placeholder="••••••••"
@@ -267,7 +268,30 @@ function TeacherAuth({ onSuccess }) {
             autoComplete={mode === 'signup' ? 'new-password' : 'current-password'}
             aria-invalid={Boolean(error)}
             aria-describedby={error ? 'teacher-auth-error' : undefined}
+            style={{ paddingRight: '2.5rem' }}
           />
+          <button
+            type="button"
+            onClick={() => setShowPassword(!showPassword)}
+            aria-label={showPassword ? 'Hide value' : 'Show value'}
+            aria-pressed={showPassword}
+            style={{
+              position: 'absolute',
+              right: '0.75rem',
+              top: '50%',
+              transform: 'translateY(-50%)',
+              background: 'none',
+              border: 'none',
+              color: 'var(--text-muted)',
+              padding: '0.25rem',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              zIndex: 2,
+            }}
+          >
+            {showPassword ? <EyeOff size={16} aria-hidden="true" /> : <Eye size={16} aria-hidden="true" />}
+          </button>
         </div>
       </div>
 

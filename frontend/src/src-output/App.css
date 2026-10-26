@@ -47,12 +47,12 @@
 .topbar {
   position: sticky;
   top: 0;
-  z-index: 100;
+  z-index: var(--z-sticky, 100);
   display: flex;
   align-items: center;
   justify-content: space-between;
   padding: 0 var(--space-8);
-  height: 60px;
+  height: 56px;
   background: var(--nav-bg);
   border-bottom: 1px solid var(--nav-border);
   backdrop-filter: blur(12px);
@@ -230,6 +230,57 @@
   margin-bottom: var(--space-1);
 }
 
+/* ── Dashboard Stats Metrics ── */
+.dashboard-stats-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: var(--space-4);
+  margin-bottom: var(--space-6);
+}
+
+.dashboard-stat-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 1.1rem 1.25rem;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  transition: border-color var(--ease-fast);
+}
+
+.dashboard-stat-card:hover {
+  border-color: var(--border-bright);
+}
+
+.dashboard-stat-icon {
+  width: 42px;
+  height: 42px;
+  border-radius: var(--radius-md);
+  background: var(--primary-dim);
+  color: var(--primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.dashboard-stat-value {
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  font-variant-numeric: tabular-nums;
+  line-height: 1.2;
+}
+
+.dashboard-stat-label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
 .dashboard-grid {
   display: grid;
   grid-template-columns: 360px 1fr;
@@ -300,6 +351,9 @@
   text-align: center;
   gap: var(--space-2);
   padding: var(--space-8) var(--space-4);
+  border: 1px dashed var(--border);
+  border-radius: var(--radius-lg);
+  background: rgba(11, 17, 32, 0.4);
 }
 
 .empty-icon {
@@ -766,7 +820,7 @@ a.ghost:hover {
   opacity: 0;
   pointer-events: none;
   transition: opacity var(--ease-base);
-  z-index: 998;
+  z-index: var(--z-modal-backdrop, 1000);
   backdrop-filter: blur(4px);
 }
 
@@ -785,7 +839,7 @@ a.ghost:hover {
   border-left: 1px solid var(--border);
   box-shadow: var(--shadow-lg);
   transition: right var(--ease-slow);
-  z-index: 999;
+  z-index: var(--z-modal, 1010);
   display: flex;
   flex-direction: column;
 }
@@ -1310,6 +1364,8 @@ a.ghost:hover {
 
 .username-chat-text {
   margin: 0;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 .username-chat-form {
@@ -1430,31 +1486,30 @@ a.ghost:hover {
   display: none;
   align-items: center;
   justify-content: center;
-  min-height: 20px;
+  min-height: 24px;
   cursor: ns-resize;
   touch-action: none;
   user-select: none;
   flex-shrink: 0;
+  z-index: var(--z-splitter, 10);
 }
 
 .mobile-splitter-arrow {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 40px;
-  height: 16px;
-  border: 1px solid var(--border-bright);
+  width: 48px;
+  height: 5px;
   border-radius: var(--radius-full);
-  background: var(--bg-card);
-  color: var(--text-secondary);
-  font-size: 0.6rem;
+  background: var(--border-bright);
+  font-size: 0;
   transition: transform var(--ease-fast), background var(--ease-fast);
 }
 
-.mobile-splitter.is-dragging .mobile-splitter-arrow {
-  transform: scale(1.08);
-  background: var(--primary-dim);
-  color: var(--primary);
+.mobile-splitter.is-dragging .mobile-splitter-arrow,
+.mobile-splitter:hover .mobile-splitter-arrow {
+  transform: scaleY(1.4);
+  background: var(--primary);
 }
 
 /* ════════════════════════════════════════════════════════════
@@ -2980,12 +3035,13 @@ a.ghost:hover {
   right: 0;
   margin-top: 0.5rem;
   width: 220px;
+  max-width: calc(100vw - 32px);
   background: rgba(13, 27, 42, 0.95);
   backdrop-filter: blur(12px);
   border: 1px solid var(--border-bright);
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-lg), 0 0 15px rgba(0, 0, 0, 0.5);
-  z-index: 1000;
+  z-index: var(--z-popover, 300);
   display: flex;
   flex-direction: column;
   padding: 0.25rem;
@@ -3033,13 +3089,108 @@ a.ghost:hover {
 .custom-modal-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(3, 7, 18, 0.8);
+  background: var(--bg-overlay, rgba(3, 7, 18, 0.8));
   backdrop-filter: blur(8px);
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 9999;
+  z-index: var(--z-modal-backdrop, 1000);
   animation: fadeInModal 0.2s ease-out;
+}
+
+/* ── Live Classroom Layout ── */
+.live-classroom-root {
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg-base);
+  overflow: hidden;
+}
+
+.live-classroom-stage-col {
+  flex: 3;
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  background: var(--bg-base);
+  min-width: 0;
+}
+
+.live-classroom-controls-bar {
+  padding: 10px;
+  display: flex;
+  justify-content: center;
+  background: var(--bg-surface);
+  border-top: 1px solid var(--border);
+}
+
+.live-classroom-sidebar-col {
+  flex-basis: 40%;
+  flex-grow: 2;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg-card);
+  border-left: 1px solid var(--border);
+}
+
+.live-classroom-teacher-toggle {
+  width: 100%;
+  padding: 14px;
+  font-size: 15px;
+  font-weight: 700;
+  border: none;
+  border-bottom: 1px solid var(--border);
+  border-radius: 0;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: background-color var(--ease-fast), color var(--ease-fast);
+}
+
+.live-classroom-teacher-toggle.chat-mode {
+  background: var(--primary);
+  color: #ffffff;
+}
+
+.live-classroom-teacher-toggle.notes-mode {
+  background: var(--success-bg);
+  color: var(--success);
+}
+
+.live-classroom-audio-section {
+  padding: 16px;
+  background-color: var(--bg-surface);
+  border-top: 1px solid var(--border);
+}
+
+.live-classroom-notes-pane {
+  padding: 20px;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.live-classroom-notes-textarea {
+  flex: 1;
+  width: 100%;
+  padding: 12px;
+  margin-bottom: 15px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-bright);
+  background-color: var(--bg-input);
+  color: var(--text-primary);
+  resize: none;
+  font-size: 14px;
+  font-family: inherit;
+}
+
+.live-classroom-notes-textarea:focus {
+  outline: none;
+  border-color: var(--border-focus);
+  box-shadow: 0 0 0 3px var(--primary-glow);
 }
 
 @keyframes fadeInModal {

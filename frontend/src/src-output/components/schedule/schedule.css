@@ -90,12 +90,12 @@
   position: absolute;
   right: 0;
   top: calc(100% + 6px);
-  background: #0f172a;
-  border: 1px solid #334155;
-  border-radius: 8px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-bright);
+  border-radius: var(--radius-md);
   min-width: 210px;
-  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.6);
-  z-index: 100;
+  box-shadow: var(--shadow-lg);
+  z-index: var(--z-popover, 300);
   overflow: hidden;
   padding: 0.35rem 0;
 }
@@ -108,7 +108,7 @@
   padding: 0.55rem 0.85rem;
   background: transparent;
   border: none;
-  color: #cbd5e1;
+  color: var(--text-secondary);
   font-size: 0.825rem;
   cursor: pointer;
   text-align: left;
@@ -117,17 +117,17 @@
 }
 
 .calendar-menu-item:hover {
-  background: rgba(59, 130, 246, 0.15);
-  color: #ffffff;
+  background: var(--primary-dim);
+  color: var(--text-primary);
 }
 
 /* Schedule Modal */
 .schedule-modal-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.75);
+  background: var(--bg-overlay);
   backdrop-filter: blur(4px);
-  z-index: 1000;
+  z-index: var(--z-modal-backdrop, 1000);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -135,9 +135,9 @@
 }
 
 .schedule-modal {
-  background: var(--bg-surface, #1e293b);
-  border: 1px solid var(--border-color, #334155);
-  border-radius: 12px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xl);
   max-width: 600px;
   width: 100%;
   max-height: 85vh;

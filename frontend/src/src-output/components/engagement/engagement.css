@@ -285,22 +285,34 @@
 /* Micro-Polls */
 .student-poll-toast {
   position: fixed;
-  bottom: 24px;
-  left: 50%;
-  transform: translateX(-50%);
-  background: rgba(15, 23, 42, 0.95);
-  border: 1px solid var(--primary, #3b82f6);
-  border-radius: 12px;
-  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.6);
+  bottom: 1.5rem;
+  right: calc(380px + 1.5rem);
+  left: auto;
+  transform: none;
+  background: var(--bg-card);
+  border: 1px solid var(--primary);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
   backdrop-filter: blur(8px);
   padding: 1rem 1.25rem;
-  width: 90vw;
-  max-width: 440px;
-  z-index: 999;
+  width: 360px;
+  max-width: calc(100vw - 420px);
+  z-index: var(--z-floating-toast, 500);
   animation: slide-in-up 0.3s cubic-bezier(0.16, 1, 0.3, 1);
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
+}
+
+@media (max-width: 900px) {
+  .student-poll-toast {
+    right: 1rem;
+    left: 1rem;
+    bottom: 80px;
+    width: auto;
+    max-width: none;
+    transform: none;
+  }
 }
 
 .poll-timer-bar {

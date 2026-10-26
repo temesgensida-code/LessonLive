@@ -37,6 +37,29 @@ function StudentDashboard({ accessToken, setAccessToken, studentName = 'Student'
         </div>
       </section>
 
+      {/* Metrics Row */}
+      <div className="dashboard-stats-row" role="region" aria-label="Enrolled statistics">
+        <div className="dashboard-stat-card">
+          <div className="dashboard-stat-icon" aria-hidden="true">
+            <BookOpen size={20} />
+          </div>
+          <div>
+            <div className="dashboard-stat-value">{classrooms.length}</div>
+            <div className="dashboard-stat-label">Enrolled Classes</div>
+          </div>
+        </div>
+
+        <div className="dashboard-stat-card">
+          <div className="dashboard-stat-icon" aria-hidden="true" style={{ background: 'var(--success-bg)', color: 'var(--success)' }}>
+            <GraduationCap size={20} />
+          </div>
+          <div>
+            <div className="dashboard-stat-value">Student Hub</div>
+            <div className="dashboard-stat-label">Active Participation</div>
+          </div>
+        </div>
+      </div>
+
       <section className="card" aria-labelledby="enrolled-classrooms-heading">
         <div className="card-header">
           <span className="card-icon-wrap" aria-hidden="true">

@@ -83,7 +83,7 @@ const glassCard = {
 
 export default function LandingPage() {
   return (
-    <div style={{ width: '100%', overflowX: 'hidden', background: T.bg, fontFamily: "var(--font-family, sans-serif)", color: T.text }}>
+    <div style={{ width: '100%', overflowX: 'clip', background: T.bg, fontFamily: "var(--font-family, sans-serif)", color: T.text }}>
       <style>{`
         .ll-hero-accent {
           background: linear-gradient(135deg, #93c5fd 0%, #3b82f6 60%);

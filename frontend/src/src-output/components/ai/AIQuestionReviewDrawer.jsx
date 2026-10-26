@@ -60,7 +60,7 @@ export default function AIQuestionReviewDrawer({ isOpen, questions = [], onClose
   }
 
   return (
-    <div className="ai-modal-overlay" role="dialog" aria-modal="true" aria-labelledby="review-drawer-title">
+    <div className="ai-modal-overlay ai-review-overlay" role="dialog" aria-modal="true" aria-labelledby="review-drawer-title">
       <div className="ai-modal large">
         <div className="ai-modal-header">
           <h3 id="review-drawer-title" className="ai-modal-title">

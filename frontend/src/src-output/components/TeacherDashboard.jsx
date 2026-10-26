@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { apiFetch } from './apiClient'
-import { Plus, School, ArrowRight, BookOpen } from 'lucide-react'
+import { Plus, School, ArrowRight, BookOpen, Users, Radio } from 'lucide-react'
 
 function TeacherDashboard({ refreshMe, accessToken, setAccessToken }) {
   const [classrooms, setClassrooms] = useState([])
@@ -52,6 +51,8 @@ function TeacherDashboard({ refreshMe, accessToken, setAccessToken }) {
     }
   }
 
+  const totalStudents = classrooms.reduce((acc, c) => acc + (c.students?.length || 0), 0)
+
   return (
     <div className="stack">
       {/* Welcome Banner */}
@@ -61,6 +62,39 @@ function TeacherDashboard({ refreshMe, accessToken, setAccessToken }) {
           <p className="muted">Manage your classrooms, invite students, and conduct real-time interactive lessons.</p>
         </div>
       </section>
+
+      {/* Metrics Row */}
+      <div className="dashboard-stats-row" role="region" aria-label="Classroom statistics">
+        <div className="dashboard-stat-card">
+          <div className="dashboard-stat-icon" aria-hidden="true">
+            <BookOpen size={20} />
+          </div>
+          <div>
+            <div className="dashboard-stat-value">{classrooms.length}</div>
+            <div className="dashboard-stat-label">Total Classrooms</div>
+          </div>
+        </div>
+
+        <div className="dashboard-stat-card">
+          <div className="dashboard-stat-icon" aria-hidden="true" style={{ background: 'var(--success-bg)', color: 'var(--success)' }}>
+            <Users size={20} />
+          </div>
+          <div>
+            <div className="dashboard-stat-value">{totalStudents}</div>
+            <div className="dashboard-stat-label">Enrolled Students</div>
+          </div>
+        </div>
+
+        <div className="dashboard-stat-card">
+          <div className="dashboard-stat-icon" aria-hidden="true" style={{ background: 'rgba(245, 158, 11, 0.15)', color: '#fbbf24' }}>
+            <Radio size={20} />
+          </div>
+          <div>
+            <div className="dashboard-stat-value">Live-Ready</div>
+            <div className="dashboard-stat-label">Interactive Platform</div>
+          </div>
+        </div>
+      </div>
 
       <div className="dashboard-grid">
         {/* Create classroom */}

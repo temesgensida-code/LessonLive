@@ -28,7 +28,7 @@ export default function GradebookTable({ columns = [], students = [], sortField 
       <table className="gradebook-table" aria-label="Classroom Gradebook">
         <thead>
           <tr>
-            <th onClick={() => onSort('name')} scope="col">
+            <th onClick={() => onSort('name')} scope="col" className="gradebook-sticky-col">
               Student {getSortIcon('name')}
             </th>
             <th onClick={() => onSort('attendance_rate')} scope="col">
@@ -58,7 +58,7 @@ export default function GradebookTable({ columns = [], students = [], sortField 
           ) : (
             students.map((student) => (
               <tr key={student.student_id}>
-                <td>
+                <td className="gradebook-sticky-col">
                   <div style={{ fontWeight: 600, color: '#f8fafc' }}>{student.name}</div>
                   <div style={{ fontSize: '0.75rem', color: '#94a3b8' }}>{student.email}</div>
                 </td>

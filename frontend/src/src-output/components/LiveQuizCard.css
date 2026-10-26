@@ -104,6 +104,7 @@
   font-family: 'JetBrains Mono', monospace;
   font-size: 0.875rem;
   font-weight: 600;
+  font-variant-numeric: tabular-nums;
   color: #e2e8f0;
   min-width: 72px;
   justify-content: center;

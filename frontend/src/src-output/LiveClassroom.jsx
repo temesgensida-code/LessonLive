@@ -120,7 +120,7 @@ export default function LiveClassroom({ accessToken }) {
   }
 
   return (
-    <div style={{ height: '100vh', display: 'flex', flexDirection: 'column', background: 'var(--bg-base)' }}>
+    <div className="live-classroom-root">
       <LiveKitRoom
         video={true}
         audio={true}
@@ -130,41 +130,15 @@ export default function LiveClassroom({ accessToken }) {
         style={{ flex: 1, display: 'flex' }}
       >
         {/* Main Stage */}
-        <div
-          style={{
-            flex: 3,
-            borderRight: '1px solid var(--border)',
-            display: 'flex',
-            flexDirection: 'column',
-            background: 'var(--bg-base)',
-          }}
-        >
+        <div className="live-classroom-stage-col">
           <Stage />
-          <div
-            style={{
-              padding: '10px',
-              display: 'flex',
-              justifyContent: 'center',
-              background: 'var(--bg-surface)',
-              borderTop: '1px solid var(--border)',
-            }}
-          >
+          <div className="live-classroom-controls-bar">
             <ControlBar variation="minimal" controls={{ screenShare: isTeacher, chat: false }} />
           </div>
         </div>
 
         {/* Sidebar */}
-        <div
-          style={{
-            flexBasis: '40%',
-            flexGrow: 2,
-            minWidth: 0,
-            display: 'flex',
-            flexDirection: 'column',
-            background: 'var(--bg-card)',
-            borderLeft: '1px solid var(--border)',
-          }}
-        >
+        <div className="live-classroom-sidebar-col">
           <RightPanel isTeacher={isTeacher} classId={classId} accessToken={accessToken} />
         </div>
 
@@ -197,23 +171,7 @@ function RightPanel({ isTeacher, classId, accessToken }) {
         <button
           type="button"
           onClick={() => setTeacherMode(teacherMode === 'chat' ? 'notes' : 'chat')}
-          className="primary"
-          style={{
-            width: '100%',
-            padding: '14px',
-            fontSize: '15px',
-            fontWeight: 700,
-            background: teacherMode === 'chat' ? 'var(--primary)' : 'var(--success-bg)',
-            color: teacherMode === 'chat' ? '#ffffff' : 'var(--success)',
-            border: 'none',
-            borderBottom: '1px solid var(--border)',
-            borderRadius: 0,
-            cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: '8px',
-          }}
+          className={`primary live-classroom-teacher-toggle ${teacherMode === 'chat' ? 'chat-mode' : 'notes-mode'}`}
         >
           {teacherMode === 'chat' ? (
             <>
@@ -244,13 +202,7 @@ function RightPanel({ isTeacher, classId, accessToken }) {
         <UsernameChat isTeacher={isTeacher} chatStorageKey={`classroom-${classId}`} />
       </div>
 
-      <div
-        style={{
-          padding: '16px',
-          backgroundColor: 'var(--bg-surface)',
-          borderTop: '1px solid var(--border)',
-        }}
-      >
+      <div className="live-classroom-audio-section">
         <h4 style={{ marginBottom: '8px', fontSize: '0.9rem', color: 'var(--text-secondary)' }}>
           Audio Controls
         </h4>
@@ -344,7 +296,7 @@ function NotesComponent({ classId, accessToken }) {
   }
 
   return (
-    <div style={{ padding: '20px', height: '100%', display: 'flex', flexDirection: 'column' }}>
+    <div className="live-classroom-notes-pane">
       <h3 style={{ marginBottom: '12px', fontSize: '1.1rem' }}>Private Notes</h3>
       <label htmlFor="live-private-note" className="sr-only">
         Private Notes
@@ -354,19 +306,7 @@ function NotesComponent({ classId, accessToken }) {
         value={note}
         onChange={(e) => setNote(e.target.value)}
         placeholder="Take notes during the live lecture…"
-        style={{
-          flex: 1,
-          width: '100%',
-          padding: '12px',
-          marginBottom: '15px',
-          borderRadius: 'var(--radius-md)',
-          border: '1px solid var(--border-bright)',
-          backgroundColor: 'var(--bg-input)',
-          color: 'var(--text-primary)',
-          resize: 'none',
-          fontSize: '14px',
-          fontFamily: 'inherit',
-        }}
+        className="live-classroom-notes-textarea"
       />
       {status && (
         <p

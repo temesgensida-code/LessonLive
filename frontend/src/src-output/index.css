@@ -110,10 +110,42 @@
   --shadow-glow: 0 0 24px rgba(59,130,246,0.2);
   --shadow-card: 0 4px 24px rgba(0,64,113,0.18), 0 1px 4px rgba(0,0,0,0.4);
 
+  /* --- Master Z-Index Registry --- */
+  --z-base:            0;
+  --z-splitter:        10;
+  --z-canvas-elem:     20;
+  --z-stage-controls:  50;
+  --z-sticky:          100;
+  --z-popover:         300;
+  --z-floating-toast:  500;
+  --z-countdown:       800;
+  --z-modal-backdrop:  1000;
+  --z-modal:           1010;
+  --z-nested-overlay:  1100;
+  --z-alert:           2000;
+
   /* --- Transitions --- */
   --ease-fast:  150ms cubic-bezier(0.4, 0, 0.2, 1);
   --ease-base:  240ms cubic-bezier(0.4, 0, 0.2, 1);
   --ease-slow:  380ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* ────────────────────────────────────────────────────────────
+   GLOBAL NOTION-GRADE SLIM SCROLLBARS
+   ──────────────────────────────────────────────────────────── */
+*::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+*::-webkit-scrollbar-thumb {
+  background: rgba(148, 163, 184, 0.22);
+  border-radius: var(--radius-full);
+}
+*::-webkit-scrollbar-thumb:hover {
+  background: rgba(148, 163, 184, 0.42);
 }
 
 /* ────────────────────────────────────────────────────────────
